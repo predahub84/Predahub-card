@@ -257,7 +257,7 @@
         const ph=await loadBitmap(imEl.src.startsWith('blob:')||imEl.src.startsWith('data:')?imEl.src:imEl.src);
         if(ph){
           const boxH=sq?720:960,boxBottom=H-(sq?250:340);const z=$('zoom').value/100,dy=+$('pos').value;
-          const sc=Math.min(boxH/ph.height,W/ph.width);const w=ph.width*sc*z,h=ph.height*sc*z;
+          const sc=Math.min(1,boxH/ph.height,W/ph.width);const w=ph.width*sc*z,h=ph.height*sc*z;
           x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=60;x.shadowOffsetY=30;
           x.drawImage(ph,540-w/2,boxBottom+dy-h,w,h);x.restore();
         }
