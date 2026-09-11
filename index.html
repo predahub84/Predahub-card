@@ -189,6 +189,7 @@
   let customLogo=null;
   function loadLogo(abbr){
     const cands=[
+      [`/api/img?url=${encodeURIComponent(`https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`)}`,true],
       [`https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`,true],
       [`https://assets.nhle.com/logos/nhl/svg/${abbr}_light.svg`,true],
       [`https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`,false],
@@ -251,7 +252,7 @@
   async function pickPlayer(pl){
     $('results').innerHTML='';$('q').value=pl.name;$('pstate').textContent='Chargement de la fiche…';
     try{
-      const r=await fetch(`https://api-web.nhle.com/v1/player/${pl.playerId}/landing`);
+      const r=await fetch(`/api/nhl?path=player/${pl.playerId}/landing`);if(!r.ok)throw new Error('proxy');
       const d=await r.json();
       const first=d.firstName?.default||pl.name.split(' ')[0], last=d.lastName?.default||pl.name.split(' ').slice(1).join(' ');
       $('first').value=first;$('cfirst').textContent=first;
@@ -271,12 +272,18 @@
         $('foot').value=`Saison ${lab} · saison régulière`;$('cfoot').textContent=$('foot').value;
       }
       /* photo officielle, chargée avec CORS pour pouvoir effacer le fond et exporter */
-      const url=d.headshot||`https://assets.nhle.com/mugs/nhl/latest/${ab}/${pl.playerId}.png`;
+      const url='/api/img?url='+encodeURIComponent(d.headshot||`https://assets.nhle.com/mugs/nhl/latest/${ab}/${pl.playerId}.png`);
       const im=new Image();im.crossOrigin='anonymous';
       im.onload=()=>{srcImg=im;$('zoom').value=150;keyOut();$('pstate').textContent='';};
       im.onerror=()=>{const im2=new Image();im2.onload=()=>{srcImg=null;let el=$('cphoto').querySelector('img');if(!el){el=document.createElement('img');$('cphoto').innerHTML='';$('cphoto').appendChild(el);}el.src=url;$('zoom').value=150;place();$('pstate').textContent='Photo affichée ; si l\'export PNG échoue, importe la photo à la main.';};im2.onerror=()=>{$('pstate').textContent='Photo introuvable : importe-la à la main.';};im2.src=url;};
       im.src=url;
-    }catch(err){$('pstate').textContent='Fiche indisponible. Remplis à la main.';}
+    }catch(err){
+      const parts=pl.name.split(' ');$('first').value=parts[0];$('cfirst').textContent=parts[0];
+      const ln=parts.slice(1).join(' ');$('last').value=ln;$('clast').textContent=ln;
+      if(pl.sweaterNumber){$('num').value=pl.sweaterNumber;$('cnum').textContent=pl.sweaterNumber;}
+      if(pl.teamAbbrev&&TEAMS.some(t=>t[0]===pl.teamAbbrev)){sel.value=pl.teamAbbrev;customLogo=null;applyTeam();}
+      $('pstate').textContent='Stats indisponibles (relais serveur absent). Nom, équipe et numéro remplis ; ajoute la photo et les stats à la main.';
+    }
   }
   function setStat(i,v,l){$('v'+i).value=v;$('cv'+i).textContent=v;$('l'+i).value=l;$('cl'+i).textContent=l;}
 
