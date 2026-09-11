@@ -121,12 +121,16 @@
     <label>Joueur B</label><input id="qb" placeholder="Nom du joueur B" autocomplete="off"><div id="rb" class="results"></div>
     <div id="dstate" style="font-size:12px;color:#FBBF24"></div>
     <label>Question</label><input id="dq" value="Qui marque le plus cette saison ?">
-    <label>Stats comparées</label>
+    <label>Préréglage des stats</label>
     <select id="dmode"><option value="skater">Buts · Points · Tirs</option><option value="skater2">Buts · Passes · Points</option><option value="goalie">Victoires · % arrêts · Matchs</option></select>
+    <label>Stats (nom · valeur A · valeur B) — modifiables</label>
+    <div class="row"><input id="dl1" value="Buts"><input id="da1" value="0"><input id="db1" value="0"></div>
+    <div class="row"><input id="dl2" value="Points"><input id="da2" value="0"><input id="db2" value="0"></div>
+    <div class="row"><input id="dl3" value="Tirs"><input id="da3" value="0"><input id="db3" value="0"></div>
     <label>Format</label>
     <select id="dfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
-    <label>Taille des photos : <span id="dzoomv">100</span> %</label>
-    <input id="dzoom" type="range" min="60" max="220" value="100">
+    <label>Taille des photos : <span id="dzoomv">165</span> %</label>
+    <input id="dzoom" type="range" min="60" max="260" value="165">
     <label>Position haut / bas</label>
     <input id="dpos" type="range" min="-300" max="300" value="0">
     <button id="ddl">Télécharger en PNG</button>
@@ -412,9 +416,11 @@
     o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.abbr}_dark.svg`);
     return o;
   }
-  hookSearch('qa','ra',async pl=>{$('dstate').textContent='Chargement A…';duel.A=await fetchPlayer(pl);$('dstate').textContent='';renderDuel();});
-  hookSearch('qb','rb',async pl=>{$('dstate').textContent='Chargement B…';duel.B=await fetchPlayer(pl);$('dstate').textContent='';renderDuel();});
-  ['dq','dmode','dfmt','dzoom','dpos'].forEach(id=>$(id).addEventListener('input',()=>{$('dzoomv').textContent=$('dzoom').value;renderDuel();}));
+  hookSearch('qa','ra',async pl=>{$('dstate').textContent='Chargement A…';duel.A=await fetchPlayer(pl);$('dstate').textContent='';fillDuelStats();renderDuel();});
+  hookSearch('qb','rb',async pl=>{$('dstate').textContent='Chargement B…';duel.B=await fetchPlayer(pl);$('dstate').textContent='';fillDuelStats();renderDuel();});
+  function fillDuelStats(){const rows=statRows($('dmode').value,duel.A,duel.B);rows.forEach((r,i)=>{$('dl'+(i+1)).value=r[0];$('da'+(i+1)).value=r[1];$('db'+(i+1)).value=r[2];});}
+  $('dmode').addEventListener('change',()=>{fillDuelStats();renderDuel();});
+  ['dq','dfmt','dzoom','dpos','dl1','dl2','dl3','da1','da2','da3','db1','db2','db3'].forEach(id=>$(id).addEventListener('input',()=>{$('dzoomv').textContent=$('dzoom').value;renderDuel();}));
 
   function statRows(m,A,B){
     const g=(o,k)=>o&&o.st?(o.st[k]??0):0;
@@ -428,7 +434,7 @@
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
     const sq=$('dfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('duelcv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
     const A=duel.A,B=duel.B;const cA=A?A.team[2]:'#FF2D55',cB=B?B.team[2]:'#BF5AF2';
-    const L=sq?{top:150,pb:610,ph:410,name:655,rows:[850,925,1000],foot:H-36}:{top:200,pb:850,ph:580,name:900,rows:[1105,1190,1275],foot:H-36};
+    const L=sq?{top:150,pb:600,ph:400,name:645,rows:[835,905,975],foot:H-30}:{top:200,pb:840,ph:570,name:890,rows:[1085,1165,1245],foot:H-30};
     x.fillStyle='#050510';x.fillRect(0,0,W,H);
     /* halos */
     x.save();x.beginPath();x.rect(0,0,W,L.pb);x.clip();
@@ -449,7 +455,7 @@
     x.save();x.textAlign='center';x.textBaseline='middle';x.font='150px Anton';x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=40;x.fillStyle='#fff';x.fillText('VS',540,L.pb-L.ph/2+40);x.restore();
     /* marque + question */
     x.textBaseline='middle';x.font='42px Anton';x.fillStyle='#fff';x.fillText('PREDA',64,80);x.fillStyle='#FF2D55';x.fillText('HUB',64+x.measureText('PREDA').width,80);
-    x.textAlign='center';x.fillStyle='#fff';let q=$('dq').value;let fs=46;x.font=`600 ${fs}px "Inter Tight"`;while(x.measureText(q).width>W-128&&fs>26){fs-=2;x.font=`600 ${fs}px "Inter Tight"`;}x.fillText(q,540,L.top-40);
+    x.textAlign='center';x.fillStyle='#fff';let q=$('dq').value;let fs=46;x.font=`600 ${fs}px "Inter Tight"`;while(x.measureText(q).width>W-128&&fs>26){fs-=2;x.font=`600 ${fs}px "Inter Tight"`;}if(q.trim())x.fillText(q,540,L.top-40);
     /* logos */
     const drawL=(o,cx)=>{if(!o||!o.logo)return;const lb=o.logo;const r=Math.min(110/lb.width,110/lb.height);x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=20;x.drawImage(lb,cx-lb.width*r/2,L.top+10,lb.width*r,lb.height*r);x.restore();};
     drawL(A,270);drawL(B,810);
@@ -459,7 +465,7 @@
       x.font='700 26px "Inter Tight"';x.fillStyle=col;x.fillText((o.team[1]||o.abbr)+(o.num?'  ·  N° '+o.num:''),cx,L.name+f*.95+40);};
     drawN(A,270,cA);drawN(B,810,cB);
     /* stats */
-    const rows=statRows($('dmode').value,A,B);
+    const rows=[1,2,3].map(i=>[$('dl'+i).value,$('da'+i).value,$('db'+i).value]);
     rows.forEach((r,i)=>{const y=L.rows[i];const a=parseFloat(r[1]),b=parseFloat(r[2]);const aw=!isNaN(a)&&!isNaN(b)&&a>b,bw=!isNaN(a)&&!isNaN(b)&&b>a;
       x.fillStyle='rgba(255,255,255,.08)';x.fillRect(64,y+28,W-128,1);
       x.textAlign='center';x.textBaseline='middle';x.font='600 28px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(r[0].toUpperCase(),540,y);
