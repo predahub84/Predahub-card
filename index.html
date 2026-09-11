@@ -16,6 +16,10 @@
   input,select{width:100%;background:#12122a;border:1px solid #23234a;color:#fff;border-radius:8px;padding:9px 10px;font:inherit;font-size:14px}
   input[type=range]{padding:0;accent-color:#BF5AF2}
   input:focus,select:focus{outline:2px solid #BF5AF2;border-color:transparent}
+  .results{display:flex;flex-direction:column;gap:4px}
+  .results button{margin:0;padding:9px 10px;text-align:left;background:#12122a;border:1px solid #23234a;color:#fff;font-weight:500;font-size:14px;border-radius:8px}
+  .results button:hover{border-color:#BF5AF2}
+  .results button small{color:#8a8aa3;margin-left:8px}
   .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .row3{display:grid;grid-template-columns:2fr 1fr;gap:8px}
@@ -77,6 +81,10 @@
 <div class="app">
   <div class="panel">
     <h1>Card joueur en forme</h1>
+    <label>Rechercher un joueur NHL</label>
+    <input id="q" placeholder="Tape un nom : caufield, suzuki, mcdavid…" autocomplete="off">
+    <div id="results" class="results"></div>
+    <div id="pstate" style="font-size:12px;color:#FBBF24"></div>
     <label>Prénom</label><input id="first" value="Cole">
     <div class="row3">
       <div><label>Nom</label><input id="last" value="Caufield"></div>
@@ -93,15 +101,13 @@
     <label>Logo (si absent ou pour l'export) — fichier PNG/SVG</label><input id="logofile" type="file" accept="image/*">
     <div id="logostate" style="font-size:12px;color:#FBBF24"></div>
     <label>Photo du joueur</label><input id="photo" type="file" accept="image/*">
-    <label>Sensibilité de l'effacement : <span id="tolv">45</span></label>
-    <input id="tol" type="range" min="5" max="120" value="45">
     <label>Taille de la photo : <span id="zoomv">100</span> %</label>
     <input id="zoom" type="range" min="60" max="220" value="130">
     <label>Position haut / bas</label>
     <input id="pos" type="range" min="-400" max="400" value="0">
     <label>Position gauche / droite</label>
     <input id="posx" type="range" min="-400" max="400" value="0">
-    <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input id="keyon" type="checkbox" checked style="width:auto"> Effacer le fond clair</label>
+
     <div class="row">
       <div><label>Stat 1</label><input id="v1" value="6"><input id="l1" value="buts / 5 m." style="margin-top:4px"></div>
       <div><label>Stat 2</label><input id="v2" value="4.8"><input id="l2" value="xG" style="margin-top:4px"></div>
@@ -207,50 +213,16 @@
   function place(){const im=$('cphoto').querySelector('img');if(!im)return;$('zoomv').textContent=$('zoom').value;
     im.style.transform=`translate(${$('posx').value}px,${$('pos').value}px) scale(${$('zoom').value/100})`;}
   ['pos','posx','zoom'].forEach(id=>$(id).addEventListener('input',place));
-  $('keyon').addEventListener('change',keyOut);
 
-  /* --- suppression du fond clair par remplissage depuis les bords
-         (le blanc du maillot, entouré de pixels non clairs, est conservé) --- */
   let srcImg=null;
   function keyOut(){
     if(!srcImg)return;
-    const tol=+$('tol').value; $('tolv').textContent=tol;
-    const W=srcImg.naturalWidth,H=srcImg.naturalHeight;
-    const c=document.createElement('canvas');c.width=W;c.height=H;
-    const x=c.getContext('2d');x.drawImage(srcImg,0,0);
-    if($('keyon').checked){
-      const d=x.getImageData(0,0,W,H),p=d.data;
-      // couleur de référence = moyenne des 4 coins
-      const corners=[0,(W-1)*4,(H-1)*W*4,((H-1)*W+W-1)*4];
-      let R=0,G=0,B=0;corners.forEach(i=>{R+=p[i];G+=p[i+1];B+=p[i+2]});R/=4;G/=4;B/=4;
-      const dist=i=>Math.abs(p[i]-R)+Math.abs(p[i+1]-G)+Math.abs(p[i+2]-B);
-      const seen=new Uint8Array(W*H),mask=new Float32Array(W*H);
-      const stack=[];
-      for(let xx=0;xx<W;xx++){stack.push(xx,(H-1)*W+xx)}
-      for(let yy=0;yy<H;yy++){stack.push(yy*W,yy*W+W-1)}
-      const lim=tol*3;
-      while(stack.length){
-        const k=stack.pop();if(seen[k])continue;seen[k]=1;
-        const dd=dist(k*4);if(dd>lim)continue;
-        mask[k]=1;
-        const xx=k%W,yy=(k-xx)/W;
-        if(xx>0)stack.push(k-1);if(xx<W-1)stack.push(k+1);if(yy>0)stack.push(k-W);if(yy<H-1)stack.push(k+W);
-      }
-      // bord doux : pixels proches du fond et adjacents au masque
-      for(let k=0;k<W*H;k++){
-        if(mask[k]){p[k*4+3]=0;continue;}
-        const xx=k%W,yy=(k-xx)/W;
-        const near=(xx>0&&mask[k-1])||(xx<W-1&&mask[k+1])||(yy>0&&mask[k-W])||(yy<H-1&&mask[k+W]);
-        if(near){const dd=dist(k*4);const a=Math.min(1,dd/(lim*1.5));p[k*4+3]=Math.round(p[k*4+3]*a);}
-      }
-      x.putImageData(d,0,0);
-    }
     let im=$('cphoto').querySelector('img');
     if(!im){im=document.createElement('img');$('cphoto').innerHTML='';$('cphoto').appendChild(im);}
-    im.src=c.toDataURL('image/png');
+    if(srcImg.crossOrigin)im.crossOrigin='anonymous';else im.removeAttribute('crossorigin');
+    im.src=srcImg.src;
     place();
   }
-  $('tol').addEventListener('input',keyOut);
   $('photo').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{srcImg=new Image();srcImg.onload=keyOut;srcImg.src=r.result;};r.readAsDataURL(f);});
 
   $('dl').addEventListener('click',async()=>{const btn=$('dl');btn.textContent='Export…';
@@ -258,6 +230,56 @@
     try{const c=await html2canvas(card,{scale:1,backgroundColor:'#050510',useCORS:true});const a=document.createElement('a');a.download=`predahub-${$('last').value.toLowerCase()}.png`;a.href=c.toDataURL('image/png');a.click();}
     catch(err){alert('Export impossible : '+err.message);}
     scaler.style.transform=prev;btn.textContent='Télécharger en PNG';});
+
+  /* ---------- Recherche joueur via l'API NHL ---------- */
+  const NUMFMT=v=>Number.isInteger(v)?String(v):String(v);
+  let timer=null;
+  $('q').addEventListener('input',e=>{clearTimeout(timer);const v=e.target.value.trim();if(v.length<3){$('results').innerHTML='';return;}timer=setTimeout(()=>searchPlayers(v),300);});
+  async function searchPlayers(q){
+    $('pstate').textContent='Recherche…';
+    try{
+      const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=8&q=${encodeURIComponent(q)}&active=true`);
+      const list=await r.json();
+      $('results').innerHTML='';
+      if(!list.length){$('pstate').textContent='Aucun joueur trouvé.';return;}
+      $('pstate').textContent='';
+      list.forEach(pl=>{const b=document.createElement('button');b.type='button';
+        b.innerHTML=`${pl.name} <small>${pl.teamAbbrev||''} ${pl.sweaterNumber?'#'+pl.sweaterNumber:''} ${pl.positionCode||''}</small>`;
+        b.addEventListener('click',()=>pickPlayer(pl));$('results').appendChild(b);});
+    }catch(err){$('pstate').textContent='Recherche indisponible (API NHL). Remplis à la main.';}
+  }
+  async function pickPlayer(pl){
+    $('results').innerHTML='';$('q').value=pl.name;$('pstate').textContent='Chargement de la fiche…';
+    try{
+      const r=await fetch(`https://api-web.nhle.com/v1/player/${pl.playerId}/landing`);
+      const d=await r.json();
+      const first=d.firstName?.default||pl.name.split(' ')[0], last=d.lastName?.default||pl.name.split(' ').slice(1).join(' ');
+      $('first').value=first;$('cfirst').textContent=first;
+      $('last').value=last;$('clast').textContent=last;
+      const num=d.sweaterNumber||pl.sweaterNumber||'';$('num').value=num;$('cnum').textContent=num;
+      const ab=d.currentTeamAbbrev||pl.teamAbbrev;if(ab&&TEAMS.some(t=>t[0]===ab)){sel.value=ab;customLogo=null;applyTeam();}
+      /* stats : dernière saison régulière NHL */
+      const seasons=(d.seasonTotals||[]).filter(x=>x.leagueAbbrev==='NHL'&&x.gameTypeId===2).sort((a,b)=>a.season-b.season);
+      const st=seasons[seasons.length-1];
+      if(st){
+        const yr=String(st.season);const lab=`${yr.slice(0,4)}-${yr.slice(6,8)}`;
+        if(d.position==='G'){
+          setStat(1,st.wins??0,'victoires');setStat(2,st.savePctg?st.savePctg.toFixed(3).replace(/^0/,''):'-','% arrêts');setStat(3,st.gamesPlayed??0,'matchs');
+        }else{
+          setStat(1,st.goals??0,'buts');setStat(2,st.points??0,'points');setStat(3,st.shots??0,'tirs');
+        }
+        $('foot').value=`Saison ${lab} · saison régulière`;$('cfoot').textContent=$('foot').value;
+      }
+      /* photo officielle, chargée avec CORS pour pouvoir effacer le fond et exporter */
+      const url=d.headshot||`https://assets.nhle.com/mugs/nhl/latest/${ab}/${pl.playerId}.png`;
+      const im=new Image();im.crossOrigin='anonymous';
+      im.onload=()=>{srcImg=im;$('zoom').value=150;keyOut();$('pstate').textContent='';};
+      im.onerror=()=>{const im2=new Image();im2.onload=()=>{srcImg=null;let el=$('cphoto').querySelector('img');if(!el){el=document.createElement('img');$('cphoto').innerHTML='';$('cphoto').appendChild(el);}el.src=url;$('zoom').value=150;place();$('pstate').textContent='Photo affichée ; si l\'export PNG échoue, importe la photo à la main.';};im2.onerror=()=>{$('pstate').textContent='Photo introuvable : importe-la à la main.';};im2.src=url;};
+      im.src=url;
+    }catch(err){$('pstate').textContent='Fiche indisponible. Remplis à la main.';}
+  }
+  function setStat(i,v,l){$('v'+i).value=v;$('cv'+i).textContent=v;$('l'+i).value=l;$('cl'+i).textContent=l;}
+
   document.fonts.ready.then(fit);fit();
 </script>
 </body>
