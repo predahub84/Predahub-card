@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PredaHUB — Card joueur</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#050510;color:#fff;font-family:'Inter Tight',sans-serif;min-height:100vh}
+  .app{display:flex;flex-wrap:wrap;gap:24px;padding:20px;justify-content:center;align-items:flex-start}
+  .panel{width:100%;max-width:360px;background:#0b0b1a;border:1px solid #1c1c33;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
+  .panel h1{font-family:Anton,sans-serif;font-size:22px;letter-spacing:.5px}
+  label{font-size:12px;color:#8a8aa3;display:block;margin-top:6px}
+  input,select{width:100%;background:#12122a;border:1px solid #23234a;color:#fff;border-radius:8px;padding:9px 10px;font:inherit;font-size:14px}
+  input[type=range]{padding:0;accent-color:#BF5AF2}
+  input:focus,select:focus{outline:2px solid #BF5AF2;border-color:transparent}
+  .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .row3{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+  button{margin-top:8px;border:0;border-radius:10px;padding:12px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;color:#fff;background:linear-gradient(90deg,#FF2D55,#BF5AF2)}
+  .preview{position:relative}
+  .scaler{transform-origin:top left}
+
+  /* ---- CARD ---- */
+  #card{width:1080px;height:1350px;position:relative;overflow:hidden;background:#050510;color:#fff;font-family:'Inter Tight',sans-serif}
+  #card.square{height:1080px}
+  .glow{position:absolute;left:50%;top:38%;width:1400px;height:1400px;transform:translate(-50%,-50%);border-radius:50%;filter:blur(40px);opacity:.75}
+  #card{--c1:#AF1E2D;--c2:#192168;--pillfg:#fff}
+  .glow{background:radial-gradient(circle,color-mix(in srgb,var(--c1) 85%,transparent) 0%,color-mix(in srgb,var(--c1) 40%,transparent) 28%,color-mix(in srgb,var(--c2) 22%,transparent) 50%,transparent 68%)}
+  .wm{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:920px;height:920px;opacity:.11;filter:grayscale(1) brightness(2.6)}
+  .wm img{width:100%;height:100%;object-fit:contain}
+  #card.square .wm{width:720px;height:720px;top:38%}
+  .rays{position:absolute;inset:-300px;background:repeating-conic-gradient(from 0deg at 50% 40%,rgba(255,255,255,.07) 0deg 4deg,transparent 4deg 14deg);opacity:.6;mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 60%);-webkit-mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 60%)}
+  .tex{position:absolute;inset:0;opacity:.09;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Cpath d='M45 6 L84 45 L45 84 L6 45 Z' fill='none' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E")}
+  .num{position:absolute;left:50%;top:9%;transform:translateX(-50%);font-family:Anton,sans-serif;font-size:640px;line-height:1;color:transparent;-webkit-text-stroke:3px rgba(255,255,255,.16);letter-spacing:-10px;white-space:nowrap}
+  #card.square .num{font-size:520px;top:6%}
+  .photo{position:absolute;left:50%;bottom:340px;transform:translateX(-50%);width:1080px;height:960px;display:flex;align-items:flex-end;justify-content:center;overflow:visible}
+  #card.square .photo{height:720px;bottom:250px}
+  .photo img{max-height:100%;max-width:100%;transform-origin:50% 100%;filter:drop-shadow(0 30px 60px rgba(0,0,0,.8)) contrast(1.06) saturate(1.05)}
+  .photo .hint{position:absolute;top:44%;left:0;right:0;text-align:center;color:#3c3c5c;font-size:38px;font-weight:600}
+  .fade{position:absolute;left:0;right:0;bottom:0;height:52%;background:linear-gradient(180deg,rgba(5,5,16,0) 0%,rgba(5,5,16,.78) 40%,#050510 78%)}
+  .top{position:absolute;top:44px;left:64px;right:64px;display:flex;justify-content:space-between;align-items:center}
+  .brand{font-family:Anton,sans-serif;font-size:42px;letter-spacing:1px}
+  .brand span{color:#FF2D55}
+  .tr{display:flex;align-items:center;gap:18px}
+  .logo{width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 6px 20px rgba(0,0,0,.6))}
+  .team{font-family:Anton,sans-serif;font-size:40px;letter-spacing:2px;padding:6px 22px;color:var(--pillfg);background:var(--c2);border:2px solid var(--c1);clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%)}
+  .badge{position:absolute;left:64px;bottom:640px;display:inline-flex;align-items:center;gap:14px;background:var(--c1);padding:12px 26px 12px 22px;font-weight:900;font-size:32px;letter-spacing:1px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);box-shadow:0 10px 40px color-mix(in srgb,var(--c1) 50%,transparent)}
+  .badge i{font-style:normal;font-size:38px;line-height:1}
+  .badge.own{background:var(--bc)!important;box-shadow:0 10px 40px color-mix(in srgb,var(--bc) 50%,transparent)!important}
+  #card.square .badge{bottom:500px}
+  .name{position:absolute;left:64px;right:64px;bottom:340px;line-height:.82}
+  .name .first{font-size:54px;font-weight:600;color:#d9d9ec;letter-spacing:3px;margin-bottom:6px;display:flex;align-items:baseline;justify-content:space-between}
+  .name .club{margin-top:22px;font-size:40px;font-weight:700;color:#fff;display:flex;align-items:center;gap:22px}
+  .name .club span{color:var(--c1);text-shadow:0 0 24px color-mix(in srgb,var(--c1) 45%,transparent)}
+  .name .club em{font-style:normal;color:#9a9ab8;font-weight:600;padding-left:22px;border-left:3px solid rgba(255,255,255,.2)}
+  .name .first b{font-family:Anton,sans-serif;font-weight:400;font-size:110px;line-height:.8;color:var(--c1);letter-spacing:0;text-shadow:0 0 30px color-mix(in srgb,var(--c1) 50%,transparent)}
+  .name .last{font-family:Anton,sans-serif;font-size:180px;text-transform:uppercase;letter-spacing:1px;text-shadow:0 14px 50px rgba(0,0,0,.9)}
+  #card.square .name{bottom:230px}
+  #card.square .name .last{font-size:150px}
+  .line{position:absolute;left:64px;right:64px;bottom:290px;height:4px;background:linear-gradient(90deg,var(--c1),var(--c2) 60%,transparent)}
+  #card.square .line{bottom:200px}
+  .stats{position:absolute;left:64px;right:64px;bottom:96px;display:grid;grid-template-columns:1fr 1fr 1fr}
+  .stat{padding:0 30px;border-left:2px solid rgba(255,255,255,.14)}
+  .stat:first-child{padding-left:0;border:0}
+  .stat .v{font-family:Anton,sans-serif;font-size:120px;color:#FBBF24;line-height:1;text-shadow:0 0 40px rgba(251,191,36,.35)}
+  .stat .l{font-size:30px;font-weight:600;color:#c9c9de;margin-top:10px}
+  #card.square .stats{bottom:66px}
+  #card.square .stat .v{font-size:100px}
+  .foot{position:absolute;left:64px;bottom:40px;font-size:22px;color:#6a6a8a;font-weight:500}
+  .foot2{position:absolute;right:64px;bottom:40px;font-size:22px;color:#6a6a8a;font-weight:500}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <h1>Card joueur en forme</h1>
+    <label>Prénom</label><input id="first" value="Cole">
+    <div class="row3">
+      <div><label>Nom</label><input id="last" value="Caufield"></div>
+      <div><label>Numéro</label><input id="num" value="13"></div>
+    </div>
+    <div class="row2">
+      <div><label>Équipe</label><select id="team"></select></div>
+      <div><label>Badge</label><select id="badgesel"></select></div>
+    </div>
+    <div class="row2">
+      <div><label>Texte du badge (libre)</label><input id="badge" value="EN FEU"></div>
+      <div><label>Icône</label><input id="icon" value="🔥"></div>
+    </div>
+    <label>Logo (si absent ou pour l'export) — fichier PNG/SVG</label><input id="logofile" type="file" accept="image/*">
+    <div id="logostate" style="font-size:12px;color:#FBBF24"></div>
+    <label>Photo du joueur</label><input id="photo" type="file" accept="image/*">
+    <label>Sensibilité de l'effacement : <span id="tolv">45</span></label>
+    <input id="tol" type="range" min="5" max="120" value="45">
+    <label>Taille de la photo : <span id="zoomv">100</span> %</label>
+    <input id="zoom" type="range" min="60" max="220" value="130">
+    <label>Position haut / bas</label>
+    <input id="pos" type="range" min="-400" max="400" value="0">
+    <label>Position gauche / droite</label>
+    <input id="posx" type="range" min="-400" max="400" value="0">
+    <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input id="keyon" type="checkbox" checked style="width:auto"> Effacer le fond clair</label>
+    <div class="row">
+      <div><label>Stat 1</label><input id="v1" value="6"><input id="l1" value="buts / 5 m." style="margin-top:4px"></div>
+      <div><label>Stat 2</label><input id="v2" value="4.8"><input id="l2" value="xG" style="margin-top:4px"></div>
+      <div><label>Stat 3</label><input id="v3" value="22"><input id="l3" value="tirs" style="margin-top:4px"></div>
+    </div>
+    <label>Pied de card</label><input id="foot" value="Stats 2025-26 · 5 derniers matchs">
+    <div class="row2">
+      <div><label>Format</label><select id="fmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select></div>
+    </div>
+    <button id="dl">Télécharger en PNG</button>
+  </div>
+
+  <div class="preview">
+    <div class="scaler" id="scaler">
+      <div id="card" class="">
+        <div class="glow"></div><div class="rays"></div><div class="tex"></div>
+        
+        <div class="photo" id="cphoto"><div class="hint">Ajoute la photo du joueur</div></div>
+        <div class="fade"></div>
+        <div class="top"><div class="brand">PREDA<span>HUB</span></div><div class="tr"><img class="logo" id="clogo" alt=""><div class="team" id="cteam" style="display:none">MTL</div></div></div>
+        <div class="badge own" id="cbadgebox"><i id="cicon">🔥</i><span id="cbadge">EN FEU</span></div>
+        <div class="name"><div class="first"><span id="cfirst">Cole</span></div><div class="last" id="clast">Caufield</div>
+          <div class="club"><span id="cteamname">Montréal Canadiens</span><em>N° <span id="cnum">13</span></em></div></div>
+        <div class="line"></div>
+        <div class="stats">
+          <div class="stat"><div class="v" id="cv1">6</div><div class="l" id="cl1">buts / 5 m.</div></div>
+          <div class="stat"><div class="v" id="cv2">4.8</div><div class="l" id="cl2">xG</div></div>
+          <div class="stat"><div class="v" id="cv3">22</div><div class="l" id="cl3">tirs</div></div>
+        </div>
+        <div class="foot" id="cfoot">Stats 2025-26 · 5 derniers matchs</div>
+        <div class="foot2">@predahub</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $=id=>document.getElementById(id);
+  const bind=(i,o)=>{const a=$(i),b=$(o);const f=()=>b.textContent=a.value;a.addEventListener('input',f);f();};
+  [['first','cfirst'],['last','clast'],['badge','cbadge'],['icon','cicon'],['num','cnum'],['v1','cv1'],['l1','cl1'],['v2','cv2'],['l2','cl2'],['v3','cv3'],['l3','cl3'],['foot','cfoot']].forEach(p=>bind(...p));
+  const card=$('card'),scaler=$('scaler'),preview=document.querySelector('.preview');
+  function fit(){const w=Math.min(window.innerWidth-40,540);const s=w/1080;scaler.style.transform=`scale(${s})`;preview.style.width=w+'px';preview.style.height=(card.offsetHeight*s)+'px';}
+  window.addEventListener('resize',fit);
+  $('fmt').addEventListener('change',e=>{card.className=e.target.value;fit();});
+
+  /* --- équipes : abréviation, nom, couleur principale (halo/badge), couleur secondaire (pastille), texte pastille --- */
+  const TEAMS=[
+   ['ANA','Anaheim Ducks','#F47A38','#B9975B','#000'],['BOS','Boston Bruins','#FFB81C','#000','#FFB81C'],
+   ['BUF','Buffalo Sabres','#FCB514','#002654','#fff'],['CGY','Calgary Flames','#C8102E','#F1BE48','#000'],
+   ['CAR','Carolina Hurricanes','#CC0000','#000','#fff'],['CHI','Chicago Blackhawks','#CF0A2C','#000','#fff'],
+   ['COL','Colorado Avalanche','#6F263D','#236192','#fff'],['CBJ','Columbus Blue Jackets','#CE1126','#002654','#fff'],
+   ['DAL','Dallas Stars','#006847','#8F8F8C','#fff'],['DET','Detroit Red Wings','#CE1126','#fff','#CE1126'],
+   ['EDM','Edmonton Oilers','#FF4C00','#041E42','#fff'],['FLA','Florida Panthers','#C8102E','#B9975B','#000'],
+   ['LAK','Los Angeles Kings','#A2AAAD','#111','#fff'],['MIN','Minnesota Wild','#A6192E','#154734','#fff'],
+   ['MTL','Montréal Canadiens','#AF1E2D','#192168','#fff'],['NSH','Nashville Predators','#FFB81C','#041E42','#FFB81C'],
+   ['NJD','New Jersey Devils','#CE1126','#000','#fff'],['NYI','New York Islanders','#F47D30','#00539B','#fff'],
+   ['NYR','New York Rangers','#CE1126','#0038A8','#fff'],['OTT','Ottawa Senators','#C52032','#000','#fff'],
+   ['PHI','Philadelphia Flyers','#F74902','#000','#fff'],['PIT','Pittsburgh Penguins','#FCB514','#000','#FCB514'],
+   ['SJS','San Jose Sharks','#006D75','#EA7200','#fff'],['SEA','Seattle Kraken','#99D9D9','#001628','#99D9D9'],
+   ['STL','St. Louis Blues','#FCB514','#002F87','#fff'],['TBL','Tampa Bay Lightning','#0067C8','#002868','#fff'],
+   ['TOR','Toronto Maple Leafs','#0062E8','#00205B','#fff'],['UTA','Utah Mammoth','#6CACE4','#010101','#fff'],
+   ['VAN','Vancouver Canucks','#00843D','#00205B','#fff'],['VGK','Vegas Golden Knights','#B4975A','#333F42','#B4975A'],
+   ['WSH','Washington Capitals','#C8102E','#041E42','#fff'],['WPG','Winnipeg Jets','#AC162C','#041E42','#fff']];
+  const BADGES=[['EN FEU','🔥','#FF2D55'],['EN FORME','⚡','#F59E0B'],['SNIPER','🎯','#EF4444'],['RECORD','🏆','#FBBF24'],
+    ['À SUIVRE','👀','#BF5AF2'],['ROOKIE','⭐','#22C55E'],['MUR','🧱','#0EA5E9'],['GLACÉ','❄️','#38BDF8'],['DISETTE','🥶','#64748B'],['BLESSÉ','🚑','#94A3B8']];
+  const bs=$('badgesel');BADGES.forEach(b=>{const o=document.createElement('option');o.value=b[0];o.textContent=b[1]+' '+b[0];bs.appendChild(o);});
+  function applyBadge(){const b=BADGES.find(b=>b[0]===bs.value);$('badge').value=b[0];$('icon').value=b[1];$('cbadge').textContent=b[0];$('cicon').textContent=b[1];$('cbadgebox').style.setProperty('--bc',b[2]);}
+  bs.addEventListener('change',applyBadge);applyBadge();
+  const sel=$('team');
+  TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];sel.appendChild(o);});
+  sel.value='MTL';
+  function applyTeam(){
+    const t=TEAMS.find(t=>t[0]===sel.value);
+    card.style.setProperty('--c1',t[2]);card.style.setProperty('--c2',t[3]);card.style.setProperty('--pillfg',t[4]);
+    $('cteam').textContent=t[0];$('cteamname').textContent=t[1];
+    loadLogo(t[0]);
+  }
+  /* essaie plusieurs sources : avec CORS (export PNG ok), puis sans (affichage seul), puis logo importé à la main */
+  let customLogo=null;
+  function loadLogo(abbr){
+    const cands=[
+      [`https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`,true],
+      [`https://assets.nhle.com/logos/nhl/svg/${abbr}_light.svg`,true],
+      [`https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`,false],
+      [`https://assets.nhle.com/logos/nhl/svg/${abbr}_light.svg`,false]];
+    const targets=['clogo'].map(id=>$(id));
+    if(customLogo){targets.forEach(im=>{im.removeAttribute('crossorigin');im.src=customLogo;im.style.display='';});return;}
+    let i=0;
+    const tryNext=()=>{
+      if(i>=cands.length){targets.forEach(im=>im.style.display='none');$('logostate').textContent='Logo introuvable en ligne : importe-le ci-dessous.';return;}
+      const [url,cors]=cands[i++];
+      const probe=new Image();if(cors)probe.crossOrigin='anonymous';
+      probe.onload=()=>{targets.forEach(im=>{if(cors)im.crossOrigin='anonymous';else im.removeAttribute('crossorigin');im.src=url;im.style.display='';});
+        $('logostate').textContent=cors?'':'Logo affiché, mais l\'export PNG peut échouer : importe-le ci-dessous pour être sûr.';};
+      probe.onerror=tryNext;
+      probe.src=url;
+    };
+    tryNext();
+  }
+  $('logofile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{customLogo=r.result;$('logostate').textContent='';loadLogo(sel.value);};r.readAsDataURL(f);});
+  sel.addEventListener('change',()=>{customLogo=null;$('logofile').value='';applyTeam();});
+  applyTeam();
+  function place(){const im=$('cphoto').querySelector('img');if(!im)return;$('zoomv').textContent=$('zoom').value;
+    im.style.transform=`translate(${$('posx').value}px,${$('pos').value}px) scale(${$('zoom').value/100})`;}
+  ['pos','posx','zoom'].forEach(id=>$(id).addEventListener('input',place));
+  $('keyon').addEventListener('change',keyOut);
+
+  /* --- suppression du fond clair par remplissage depuis les bords
+         (le blanc du maillot, entouré de pixels non clairs, est conservé) --- */
+  let srcImg=null;
+  function keyOut(){
+    if(!srcImg)return;
+    const tol=+$('tol').value; $('tolv').textContent=tol;
+    const W=srcImg.naturalWidth,H=srcImg.naturalHeight;
+    const c=document.createElement('canvas');c.width=W;c.height=H;
+    const x=c.getContext('2d');x.drawImage(srcImg,0,0);
+    if($('keyon').checked){
+      const d=x.getImageData(0,0,W,H),p=d.data;
+      // couleur de référence = moyenne des 4 coins
+      const corners=[0,(W-1)*4,(H-1)*W*4,((H-1)*W+W-1)*4];
+      let R=0,G=0,B=0;corners.forEach(i=>{R+=p[i];G+=p[i+1];B+=p[i+2]});R/=4;G/=4;B/=4;
+      const dist=i=>Math.abs(p[i]-R)+Math.abs(p[i+1]-G)+Math.abs(p[i+2]-B);
+      const seen=new Uint8Array(W*H),mask=new Float32Array(W*H);
+      const stack=[];
+      for(let xx=0;xx<W;xx++){stack.push(xx,(H-1)*W+xx)}
+      for(let yy=0;yy<H;yy++){stack.push(yy*W,yy*W+W-1)}
+      const lim=tol*3;
+      while(stack.length){
+        const k=stack.pop();if(seen[k])continue;seen[k]=1;
+        const dd=dist(k*4);if(dd>lim)continue;
+        mask[k]=1;
+        const xx=k%W,yy=(k-xx)/W;
+        if(xx>0)stack.push(k-1);if(xx<W-1)stack.push(k+1);if(yy>0)stack.push(k-W);if(yy<H-1)stack.push(k+W);
+      }
+      // bord doux : pixels proches du fond et adjacents au masque
+      for(let k=0;k<W*H;k++){
+        if(mask[k]){p[k*4+3]=0;continue;}
+        const xx=k%W,yy=(k-xx)/W;
+        const near=(xx>0&&mask[k-1])||(xx<W-1&&mask[k+1])||(yy>0&&mask[k-W])||(yy<H-1&&mask[k+W]);
+        if(near){const dd=dist(k*4);const a=Math.min(1,dd/(lim*1.5));p[k*4+3]=Math.round(p[k*4+3]*a);}
+      }
+      x.putImageData(d,0,0);
+    }
+    let im=$('cphoto').querySelector('img');
+    if(!im){im=document.createElement('img');$('cphoto').innerHTML='';$('cphoto').appendChild(im);}
+    im.src=c.toDataURL('image/png');
+    place();
+  }
+  $('tol').addEventListener('input',keyOut);
+  $('photo').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{srcImg=new Image();srcImg.onload=keyOut;srcImg.src=r.result;};r.readAsDataURL(f);});
+
+  $('dl').addEventListener('click',async()=>{const btn=$('dl');btn.textContent='Export…';
+    const prev=scaler.style.transform;scaler.style.transform='none';
+    try{const c=await html2canvas(card,{scale:1,backgroundColor:'#050510',useCORS:true});const a=document.createElement('a');a.download=`predahub-${$('last').value.toLowerCase()}.png`;a.href=c.toDataURL('image/png');a.click();}
+    catch(err){alert('Export impossible : '+err.message);}
+    scaler.style.transform=prev;btn.textContent='Télécharger en PNG';});
+  document.fonts.ready.then(fit);fit();
+</script>
+</body>
+</html>
