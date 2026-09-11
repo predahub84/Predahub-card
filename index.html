@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PredaHUB — Card joueur</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#050510;color:#fff;font-family:'Inter Tight',sans-serif;min-height:100vh}
@@ -216,67 +215,89 @@
   }
   $('photo').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{srcImg=new Image();srcImg.onload=keyOut;srcImg.src=r.result;};r.readAsDataURL(f);});
 
-  $('dl').addEventListener('click',async()=>{const btn=$('dl');btn.textContent='Export…';
-    const prev=scaler.style.transform;scaler.style.transform='none';
-    try{await document.fonts.ready;const c=await html2canvas(card,{scale:1,backgroundColor:'#050510',useCORS:true,allowTaint:false,logging:false});const a=document.createElement('a');a.download=`predahub-${$('last').value.toLowerCase()}.png`;a.href=c.toDataURL('image/png');a.click();}
-    catch(err){$('pstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}
-    scaler.style.transform=prev;btn.textContent='Télécharger en PNG';});
-
-  /* ---------- Recherche joueur via l'API NHL ---------- */
-  const NUMFMT=v=>Number.isInteger(v)?String(v):String(v);
-  let timer=null;
-  $('q').addEventListener('input',e=>{clearTimeout(timer);const v=e.target.value.trim();if(v.length<3){$('results').innerHTML='';return;}timer=setTimeout(()=>searchPlayers(v),300);});
-  async function searchPlayers(q){
-    $('pstate').textContent='Recherche…';
+  /* ---------- Export PNG : dessin direct sur canvas (fiable sur iPhone) ---------- */
+  async function loadBitmap(url){
+    if(!url)return null;
     try{
-      const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=8&q=${encodeURIComponent(q)}&active=true`);
-      const list=await r.json();
-      $('results').innerHTML='';
-      if(!list.length){$('pstate').textContent='Aucun joueur trouvé.';return;}
-      $('pstate').textContent='';
-      list.forEach(pl=>{const b=document.createElement('button');b.type='button';
-        b.innerHTML=`${pl.name} <small>${pl.teamAbbrev||''} ${pl.sweaterNumber?'#'+pl.sweaterNumber:''} ${pl.positionCode||''}</small>`;
-        b.addEventListener('click',()=>pickPlayer(pl));$('results').appendChild(b);});
-    }catch(err){$('pstate').textContent='Recherche indisponible (API NHL). Remplis à la main.';}
+      let u=url;
+      if(/^https:\/\/assets\.nhle\.com\//.test(u))u='/api/img?url='+encodeURIComponent(u);
+      const r=await fetch(u);if(!r.ok)return null;
+      let blob=await r.blob();
+      const im=new Image();
+      await new Promise((ok,ko)=>{im.onload=ok;im.onerror=ko;im.src=URL.createObjectURL(blob);});
+      if(blob.type.includes('svg')){im.width=im.naturalWidth||512;im.height=im.naturalHeight||512;}
+      return im;
+    }catch(e){return null;}
   }
-  async function pickPlayer(pl){
-    $('results').innerHTML='';$('q').value=pl.name;$('pstate').textContent='Chargement de la fiche…';
+  function skew(ctx,x,y,w,h,k){ctx.beginPath();ctx.moveTo(x+k,y);ctx.lineTo(x+w,y);ctx.lineTo(x+w-k,y+h);ctx.lineTo(x,y+h);ctx.closePath();}
+  async function exportPNG(){
+    const btn=$('dl');btn.textContent='Export…';$('pstate').textContent='';
     try{
-      const r=await fetch(`/api/nhl?path=player/${pl.playerId}/landing`);if(!r.ok)throw new Error('proxy');
-      const d=await r.json();
-      const first=d.firstName?.default||pl.name.split(' ')[0], last=d.lastName?.default||pl.name.split(' ').slice(1).join(' ');
-      $('first').value=first;$('cfirst').textContent=first;
-      $('last').value=last;$('clast').textContent=last;
-      const num=d.sweaterNumber||pl.sweaterNumber||'';$('num').value=num;$('cnum').textContent=num;
-      const ab=d.currentTeamAbbrev||pl.teamAbbrev;if(ab&&TEAMS.some(t=>t[0]===ab)){sel.value=ab;customLogo=null;applyTeam();}
-      /* stats : dernière saison régulière NHL */
-      const seasons=(d.seasonTotals||[]).filter(x=>x.leagueAbbrev==='NHL'&&x.gameTypeId===2).sort((a,b)=>a.season-b.season);
-      const st=seasons[seasons.length-1];
-      if(st){
-        const yr=String(st.season);const lab=`${yr.slice(0,4)}-${yr.slice(6,8)}`;
-        if(d.position==='G'){
-          setStat(1,st.wins??0,'victoires');setStat(2,st.savePctg?st.savePctg.toFixed(3).replace(/^0/,''):'-','% arrêts');setStat(3,st.gamesPlayed??0,'matchs');
-        }else{
-          setStat(1,st.goals??0,'buts');setStat(2,st.points??0,'points');setStat(3,st.shots??0,'tirs');
+      await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"'),document.fonts.load('900 40px "Inter Tight"')]);
+      const sq=card.classList.contains('square');const W=1080,H=sq?1080:1350;
+      const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+      const cs=getComputedStyle(card);const c1=cs.getPropertyValue('--c1').trim()||'#FF2D55',c2=cs.getPropertyValue('--c2').trim()||'#BF5AF2';
+      const bc=getComputedStyle($('cbadgebox')).getPropertyValue('--bc').trim()||c1;
+      /* fond */
+      x.fillStyle='#050510';x.fillRect(0,0,W,H);
+      /* halo */
+      let g=x.createRadialGradient(540,H*.38,0,540,H*.38,760);g.addColorStop(0,hexA(c1,.62));g.addColorStop(.3,hexA(c1,.3));g.addColorStop(.55,hexA(c2,.16));g.addColorStop(1,'rgba(0,0,0,0)');
+      x.fillStyle=g;x.fillRect(0,0,W,H);
+      /* rayons */
+      x.save();x.translate(540,540);const rg=x.createRadialGradient(0,0,0,0,0,700);rg.addColorStop(0,'rgba(255,255,255,.07)');rg.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=rg;
+      for(let a=0;a<360;a+=14){const r1=a*Math.PI/180,r2=(a+4)*Math.PI/180;x.beginPath();x.moveTo(0,0);x.lineTo(1400*Math.cos(r1),1400*Math.sin(r1));x.lineTo(1400*Math.cos(r2),1400*Math.sin(r2));x.closePath();x.fill();}
+      x.restore();
+      /* texture losanges */
+      x.save();x.strokeStyle='rgba(255,255,255,.09)';x.lineWidth=1.5;
+      for(let yy=0;yy<H+90;yy+=90)for(let xx=0;xx<W+90;xx+=90){x.beginPath();x.moveTo(xx+45,yy+6);x.lineTo(xx+84,yy+45);x.lineTo(xx+45,yy+84);x.lineTo(xx+6,yy+45);x.closePath();x.stroke();}
+      x.restore();
+      /* photo */
+      const imEl=$('cphoto').querySelector('img');
+      if(imEl&&imEl.src){
+        const ph=await loadBitmap(imEl.src.startsWith('blob:')||imEl.src.startsWith('data:')?imEl.src:imEl.src);
+        if(ph){
+          const boxH=sq?720:960,boxBottom=H-(sq?250:340);const z=$('zoom').value/100,dy=+$('pos').value;
+          const sc=Math.min(boxH/ph.height,W/ph.width);const w=ph.width*sc*z,h=ph.height*sc*z;
+          x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=60;x.shadowOffsetY=30;
+          x.drawImage(ph,540-w/2,boxBottom+dy-h,w,h);x.restore();
         }
-        $('foot').value=`Saison ${lab} · saison régulière`;$('cfoot').textContent=$('foot').value;
       }
-      /* photo officielle, chargée avec CORS pour pouvoir effacer le fond et exporter */
-      const url='/api/img?url='+encodeURIComponent(d.headshot||`https://assets.nhle.com/mugs/nhl/latest/${ab}/${pl.playerId}.png`);
-      const im=new Image();im.crossOrigin='anonymous';
-      im.onload=()=>{srcImg=im;$('zoom').value=220;$('pos').value=-200;keyOut();$('pstate').textContent='';};
-      im.onerror=()=>{const im2=new Image();im2.onload=()=>{srcImg=null;let el=$('cphoto').querySelector('img');if(!el){el=document.createElement('img');$('cphoto').innerHTML='';$('cphoto').appendChild(el);}el.src=url;$('zoom').value=220;$('pos').value=-200;place();$('pstate').textContent='Photo affichée ; si l\'export PNG échoue, importe la photo à la main.';};im2.onerror=()=>{$('pstate').textContent='Photo introuvable : importe-la à la main.';};im2.src=url;};
-      im.src=url;
-    }catch(err){
-      const parts=pl.name.split(' ');$('first').value=parts[0];$('cfirst').textContent=parts[0];
-      const ln=parts.slice(1).join(' ');$('last').value=ln;$('clast').textContent=ln;
-      if(pl.sweaterNumber){$('num').value=pl.sweaterNumber;$('cnum').textContent=pl.sweaterNumber;}
-      if(pl.teamAbbrev&&TEAMS.some(t=>t[0]===pl.teamAbbrev)){sel.value=pl.teamAbbrev;customLogo=null;applyTeam();}
-      $('pstate').textContent='Stats indisponibles (relais serveur absent). Nom, équipe et numéro remplis ; ajoute la photo et les stats à la main.';
-    }
+      /* fondu bas */
+      g=x.createLinearGradient(0,H*.48,0,H);g.addColorStop(0,'rgba(5,5,16,0)');g.addColorStop(.4,'rgba(5,5,16,.78)');g.addColorStop(.78,'#050510');x.fillStyle=g;x.fillRect(0,H*.48,W,H*.52);
+      /* marque + logo */
+      x.font='42px Anton';x.textBaseline='middle';x.fillStyle='#fff';x.fillText('PREDA',64,44+75);x.fillStyle='#FF2D55';x.fillText('HUB',64+x.measureText('PREDA').width,44+75);
+      const lg=$('clogo');if(lg&&lg.src&&lg.style.display!=='none'){const lb=await loadBitmap(lg.src);if(lb){x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=20;x.shadowOffsetY=6;const r=Math.min(150/lb.width,150/lb.height);const w=lb.width*r,h=lb.height*r;x.drawImage(lb,W-64-75-w/2,44+75-h/2,w,h);x.restore();}}
+      /* badge */
+      const bTxt=$('cbadge').textContent,bIco=$('cicon').textContent;
+      x.font='900 32px "Inter Tight"';const bw=22+38+14+x.measureText(bTxt).width+26+10;const by=H-(sq?500:640)-58;
+      x.save();x.shadowColor=hexA(bc,.5);x.shadowBlur=40;x.shadowOffsetY=10;skew(x,64,by,bw,58,10);x.fillStyle=bc;x.fill();x.restore();
+      x.fillStyle='#fff';x.font='38px "Inter Tight"';x.fillText(bIco,64+22,by+30);x.font='900 32px "Inter Tight"';x.fillText(bTxt,64+22+38+14,by+31);
+      /* nom */
+      const first=$('cfirst').textContent,last=$('clast').textContent.toUpperCase(),club=$('cteamname').textContent,num=$('cnum').textContent;
+      const nb=H-(sq?230:340);x.textBaseline='alphabetic';
+      x.fillStyle='#d9d9ec';x.font='600 54px "Inter Tight"';x.fillText(first,64,nb-(sq?150:180)-30);
+      let fs=sq?150:180;x.font=`${fs}px Anton`;while(x.measureText(last).width>W-128&&fs>80){fs-=8;x.font=`${fs}px Anton`;}
+      x.save();x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=50;x.shadowOffsetY=14;x.fillStyle='#fff';x.fillText(last,64,nb-40);x.restore();
+      x.font='700 40px "Inter Tight"';x.fillStyle=c1;x.fillText(club,64,nb+10);const cw=x.measureText(club).width;
+      x.fillStyle='rgba(255,255,255,.2)';x.fillRect(64+cw+22,nb-22,3,40);x.fillStyle='#9a9ab8';x.font='600 40px "Inter Tight"';x.fillText('N° '+num,64+cw+22+25,nb+10);
+      /* ligne */
+      g=x.createLinearGradient(64,0,W-64,0);g.addColorStop(0,c1);g.addColorStop(.6,c2);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(64,H-(sq?200:290),W-128,4);
+      /* stats */
+      const sb=H-(sq?66:96);const colW=(W-128)/3;
+      for(let i=1;i<=3;i++){const cx=64+colW*(i-1);const v=$('cv'+i).textContent,l=$('cl'+i).textContent;const px=i===1?cx:cx+30;
+        if(i>1){x.fillStyle='rgba(255,255,255,.14)';x.fillRect(cx,sb-130,2,150);}
+        x.save();x.shadowColor='rgba(251,191,36,.35)';x.shadowBlur=40;x.fillStyle='#FBBF24';x.font=`${sq?100:120}px Anton`;x.fillText(v,px,sb-40);x.restore();
+        x.fillStyle='#c9c9de';x.font='600 30px "Inter Tight"';x.fillText(l,px,sb+8);}
+      /* pied */
+      x.fillStyle='#6a6a8a';x.font='500 22px "Inter Tight"';x.fillText($('cfoot').textContent,64,H-40+8);
+      const tag='@predahub';x.fillText(tag,W-64-x.measureText(tag).width,H-40+8);
+      /* téléchargement */
+      const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+      const a=document.createElement('a');a.download=`predahub-${$('last').value.toLowerCase().replace(/\s+/g,'-')}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();
+    }catch(err){$('pstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}
+    btn.textContent='Télécharger en PNG';fit();
   }
-  function setStat(i,v,l){$('v'+i).value=v;$('cv'+i).textContent=v;$('l'+i).value=l;$('cl'+i).textContent=l;}
-
+  $('dl').addEventListener('click',exportPNG);
   $('zoomv').textContent=$('zoom').value;
   document.fonts.ready.then(fit);fit();
 </script>
