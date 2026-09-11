@@ -298,6 +298,62 @@
     btn.textContent='Télécharger en PNG';fit();
   }
   $('dl').addEventListener('click',exportPNG);
+
+  /* ---------- Recherche joueur via l'API NHL ---------- */
+  let timer=null;
+  $('q').addEventListener('input',e=>{clearTimeout(timer);const v=e.target.value.trim();if(v.length<3){$('results').innerHTML='';return;}timer=setTimeout(()=>searchPlayers(v),300);});
+  async function searchPlayers(q){
+    $('pstate').textContent='Recherche…';
+    try{
+      const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=8&q=${encodeURIComponent(q)}&active=true`);
+      const list=await r.json();
+      $('results').innerHTML='';
+      if(!list.length){$('pstate').textContent='Aucun joueur trouvé.';return;}
+      $('pstate').textContent='';
+      list.forEach(pl=>{const b=document.createElement('button');b.type='button';
+        b.innerHTML=`${pl.name} <small>${pl.teamAbbrev||''} ${pl.sweaterNumber?'#'+pl.sweaterNumber:''} ${pl.positionCode||''}</small>`;
+        b.addEventListener('click',()=>pickPlayer(pl));$('results').appendChild(b);});
+    }catch(err){$('pstate').textContent='Recherche indisponible (API NHL). Réessaie dans un instant.';}
+  }
+  function setPhoto(url){
+    let el=$('cphoto').querySelector('img');
+    if(!el){el=document.createElement('img');$('cphoto').innerHTML='';$('cphoto').appendChild(el);}
+    el.onload=()=>{$('zoom').value=220;$('pos').value=-200;place();};
+    el.onerror=()=>{$('pstate').textContent='Photo introuvable pour ce joueur.';};
+    el.src=url;
+  }
+  async function pickPlayer(pl){
+    $('results').innerHTML='';$('q').value=pl.name;$('pstate').textContent='Chargement de la fiche…';
+    const parts=pl.name.split(' ');
+    try{
+      const r=await fetch(`/api/nhl?path=player/${pl.playerId}/landing`);if(!r.ok)throw new Error('proxy');
+      const d=await r.json();
+      const first=d.firstName?.default||parts[0], last=d.lastName?.default||parts.slice(1).join(' ');
+      $('first').value=first;$('cfirst').textContent=first;
+      $('last').value=last;$('clast').textContent=last;
+      const num=d.sweaterNumber||pl.sweaterNumber||'';$('num').value=num;$('cnum').textContent=num;
+      const ab=d.currentTeamAbbrev||pl.teamAbbrev;if(ab&&TEAMS.some(t=>t[0]===ab)){sel.value=ab;customLogo=null;applyTeam();}
+      const seasons=(d.seasonTotals||[]).filter(x=>x.leagueAbbrev==='NHL'&&x.gameTypeId===2).sort((a,b)=>a.season-b.season);
+      const st=seasons[seasons.length-1];
+      if(st){
+        const yr=String(st.season);const lab=`${yr.slice(0,4)}-${yr.slice(6,8)}`;
+        if(d.position==='G'){setStat(1,st.wins??0,'victoires');setStat(2,st.savePctg?st.savePctg.toFixed(3).replace(/^0/,''):'-','% arrêts');setStat(3,st.gamesPlayed??0,'matchs');}
+        else{setStat(1,st.goals??0,'buts');setStat(2,st.points??0,'points');setStat(3,st.shots??0,'tirs');}
+        $('foot').value=`Saison ${lab} · saison régulière`;$('cfoot').textContent=$('foot').value;
+      }
+      setPhoto('/api/img?url='+encodeURIComponent(d.headshot||`https://assets.nhle.com/mugs/nhl/latest/${ab}/${pl.playerId}.png`));
+      $('pstate').textContent='';
+    }catch(err){
+      $('first').value=parts[0];$('cfirst').textContent=parts[0];
+      const ln=parts.slice(1).join(' ');$('last').value=ln;$('clast').textContent=ln;
+      if(pl.sweaterNumber){$('num').value=pl.sweaterNumber;$('cnum').textContent=pl.sweaterNumber;}
+      if(pl.teamAbbrev&&TEAMS.some(t=>t[0]===pl.teamAbbrev)){sel.value=pl.teamAbbrev;customLogo=null;applyTeam();}
+      setPhoto('/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/latest/${pl.teamAbbrev}/${pl.playerId}.png`));
+      $('pstate').textContent='Stats indisponibles pour le moment ; nom, équipe, numéro et photo remplis.';
+    }
+  }
+  function setStat(i,v,l){$('v'+i).value=v;$('cv'+i).textContent=v;$('l'+i).value=l;$('cl'+i).textContent=l;}
+
   $('zoomv').textContent=$('zoom').value;
   document.fonts.ready.then(fit);fit();
 </script>
