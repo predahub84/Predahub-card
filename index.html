@@ -15,6 +15,11 @@
   input,select{width:100%;background:#12122a;border:1px solid #23234a;color:#fff;border-radius:8px;padding:9px 10px;font:inherit;font-size:14px}
   input[type=range]{padding:0;accent-color:#BF5AF2}
   input:focus,select:focus{outline:2px solid #BF5AF2;border-color:transparent}
+  .tabs{display:flex;gap:6px;margin-bottom:6px}
+  .tabs button{margin:0;flex:1;background:#12122a;color:#8a8aa3;border:1px solid #23234a;padding:10px}
+  .tabs button.on{background:linear-gradient(90deg,#FF2D55,#BF5AF2);color:#fff;border-color:transparent}
+  .hide{display:none!important}
+  #duelcv{width:100%;height:auto;display:block;border-radius:4px}
   .results{display:flex;flex-direction:column;gap:4px}
   .results button{margin:0;padding:9px 10px;text-align:left;background:#12122a;border:1px solid #23234a;color:#fff;font-weight:500;font-size:14px;border-radius:8px}
   .results button:hover{border-color:#BF5AF2}
@@ -80,6 +85,8 @@
 <body>
 <div class="app">
   <div class="panel">
+    <div class="tabs"><button type="button" id="tabP" class="on">Card joueur</button><button type="button" id="tabD">Duel</button></div>
+    <div id="secP">
     <h1>Card joueur en forme</h1>
     <label>Rechercher un joueur NHL</label>
     <input id="q" placeholder="Tape un nom : caufield, suzuki, mcdavid…" autocomplete="off">
@@ -106,9 +113,28 @@
     <input id="pos" type="range" min="-400" max="400" value="-200">
     <input id="posx" type="hidden" value="0">
     <button id="dl">Télécharger en PNG</button>
+    </div>
+
+    <div id="secD" class="hide">
+    <h1>Duel</h1>
+    <label>Joueur A</label><input id="qa" placeholder="Nom du joueur A" autocomplete="off"><div id="ra" class="results"></div>
+    <label>Joueur B</label><input id="qb" placeholder="Nom du joueur B" autocomplete="off"><div id="rb" class="results"></div>
+    <div id="dstate" style="font-size:12px;color:#FBBF24"></div>
+    <label>Question</label><input id="dq" value="Qui marque le plus cette saison ?">
+    <label>Stats comparées</label>
+    <select id="dmode"><option value="skater">Buts · Points · Tirs</option><option value="skater2">Buts · Passes · Points</option><option value="goalie">Victoires · % arrêts · Matchs</option></select>
+    <label>Format</label>
+    <select id="dfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
+    <label>Taille des photos : <span id="dzoomv">100</span> %</label>
+    <input id="dzoom" type="range" min="60" max="220" value="100">
+    <label>Position haut / bas</label>
+    <input id="dpos" type="range" min="-300" max="300" value="0">
+    <button id="ddl">Télécharger en PNG</button>
+    </div>
   </div>
 
   <div class="preview">
+    <canvas id="duelcv" class="hide" width="1080" height="1350"></canvas>
     <div class="scaler" id="scaler">
       <div id="card" class="">
         <div class="glow"></div><div class="rays"><svg viewBox="0 0 1080 1350" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="rg" cx="540" cy="540" r="700" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><polygon points="540,540 1940,540 1937,638" fill="url(#rg)"/><polygon points="540,540 1898,879 1871,973" fill="url(#rg)"/><polygon points="540,540 1776,1197 1727,1282" fill="url(#rg)"/><polygon points="540,540 1580,1477 1513,1547" fill="url(#rg)"/><polygon points="540,540 1323,1701 1240,1752" fill="url(#rg)"/><polygon points="540,540 1019,1856 926,1886" fill="url(#rg)"/><polygon points="540,540 686,1932 589,1939" fill="url(#rg)"/><polygon points="540,540 345,1926 249,1909" fill="url(#rg)"/><polygon points="540,540 16,1838 -74,1798" fill="url(#rg)"/><polygon points="540,540 -283,1673 -360,1612" fill="url(#rg)"/><polygon points="540,540 -532,1440 -593,1363" fill="url(#rg)"/><polygon points="540,540 -718,1154 -758,1064" fill="url(#rg)"/><polygon points="540,540 -829,831 -846,735" fill="url(#rg)"/><polygon points="540,540 -859,491 -852,394" fill="url(#rg)"/><polygon points="540,540 -806,154 -776,61" fill="url(#rg)"/><polygon points="540,540 -672,-160 -621,-243" fill="url(#rg)"/><polygon points="540,540 -467,-433 -397,-500" fill="url(#rg)"/><polygon points="540,540 -202,-647 -117,-696" fill="url(#rg)"/><polygon points="540,540 107,-791 201,-818" fill="url(#rg)"/><polygon points="540,540 442,-857 540,-860" fill="url(#rg)"/><polygon points="540,540 783,-839 879,-818" fill="url(#rg)"/><polygon points="540,540 1109,-739 1197,-696" fill="url(#rg)"/><polygon points="540,540 1402,-563 1477,-500" fill="url(#rg)"/><polygon points="540,540 1643,-322 1701,-243" fill="url(#rg)"/><polygon points="540,540 1819,-29 1856,61" fill="url(#rg)"/><polygon points="540,540 1919,297 1932,394" fill="url(#rg)"/></svg></div><div class="tex"></div>
@@ -138,7 +164,7 @@
   const bind=(i,o)=>{const a=$(i),b=$(o);const f=()=>b.textContent=a.value;a.addEventListener('input',f);f();};
   [['first','cfirst'],['last','clast'],['badge','cbadge'],['icon','cicon'],['num','cnum'],['v1','cv1'],['l1','cl1'],['v2','cv2'],['l2','cl2'],['v3','cv3'],['l3','cl3'],['foot','cfoot']].forEach(p=>bind(...p));
   const card=$('card'),scaler=$('scaler'),preview=document.querySelector('.preview');
-  function fit(){const w=Math.min(window.innerWidth-40,540);const s=w/1080;scaler.style.transform=`scale(${s})`;preview.style.width=w+'px';preview.style.height=(card.offsetHeight*s)+'px';}
+  function fit(){if(typeof mode!=='undefined'&&mode==='D')return;const w=Math.min(window.innerWidth-40,540);const s=w/1080;scaler.style.transform=`scale(${s})`;preview.style.width=w+'px';preview.style.height=(card.offsetHeight*s)+'px';}
   window.addEventListener('resize',fit);
   $('fmt').addEventListener('change',e=>{card.className=e.target.value;fit();});
 
@@ -353,6 +379,94 @@
     }
   }
   function setStat(i,v,l){$('v'+i).value=v;$('cv'+i).textContent=v;$('l'+i).value=l;$('cl'+i).textContent=l;}
+
+
+  /* ==================== ONGLETS ==================== */
+  let mode='P';
+  function setMode(m){mode=m;$('tabP').classList.toggle('on',m==='P');$('tabD').classList.toggle('on',m==='D');
+    $('secP').classList.toggle('hide',m!=='P');$('secD').classList.toggle('hide',m!=='D');
+    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');
+    if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';renderDuel();}}
+  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));
+
+  /* ==================== DUEL ==================== */
+  const duel={A:null,B:null};
+  function hookSearch(inputId,resultsId,onPick){
+    let t=null;const inp=$(inputId),box=$(resultsId);
+    inp.addEventListener('input',e=>{clearTimeout(t);const v=e.target.value.trim();if(v.length<3){box.innerHTML='';return;}
+      t=setTimeout(async()=>{try{const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=8&q=${encodeURIComponent(v)}&active=true`);const list=await r.json();box.innerHTML='';
+        list.forEach(pl=>{const b=document.createElement('button');b.type='button';b.innerHTML=`${pl.name} <small>${pl.teamAbbrev||''} ${pl.sweaterNumber?'#'+pl.sweaterNumber:''} ${pl.positionCode||''}</small>`;b.addEventListener('click',()=>{box.innerHTML='';inp.value=pl.name;onPick(pl);});box.appendChild(b);});}
+        catch(e){$('dstate').textContent='Recherche indisponible.';}},300);});
+  }
+  async function fetchPlayer(pl){
+    const parts=pl.name.split(' ');
+    const o={id:pl.playerId,first:parts[0],last:parts.slice(1).join(' '),num:pl.sweaterNumber||'',abbr:pl.teamAbbrev||'',pos:pl.positionCode||'',st:null,
+      photo:'/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/latest/${pl.teamAbbrev}/${pl.playerId}.png`)};
+    try{const r=await fetch(`/api/nhl?path=player/${pl.playerId}/landing`);if(!r.ok)throw 0;const d=await r.json();
+      o.first=d.firstName?.default||o.first;o.last=d.lastName?.default||o.last;o.num=d.sweaterNumber||o.num;o.abbr=d.currentTeamAbbrev||o.abbr;o.pos=d.position||o.pos;
+      if(d.headshot)o.photo='/api/img?url='+encodeURIComponent(d.headshot);
+      const seasons=(d.seasonTotals||[]).filter(x=>x.leagueAbbrev==='NHL'&&x.gameTypeId===2).sort((a,b)=>a.season-b.season);o.st=seasons[seasons.length-1]||null;
+    }catch(e){}
+    o.team=TEAMS.find(t=>t[0]===o.abbr)||['','',"#FF2D55","#BF5AF2","#fff"];
+    o.bmp=await loadBitmap(o.photo);
+    o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.abbr}_dark.svg`);
+    return o;
+  }
+  hookSearch('qa','ra',async pl=>{$('dstate').textContent='Chargement A…';duel.A=await fetchPlayer(pl);$('dstate').textContent='';renderDuel();});
+  hookSearch('qb','rb',async pl=>{$('dstate').textContent='Chargement B…';duel.B=await fetchPlayer(pl);$('dstate').textContent='';renderDuel();});
+  ['dq','dmode','dfmt','dzoom','dpos'].forEach(id=>$(id).addEventListener('input',()=>{$('dzoomv').textContent=$('dzoom').value;renderDuel();}));
+
+  function statRows(m,A,B){
+    const g=(o,k)=>o&&o.st?(o.st[k]??0):0;
+    if(m==='goalie')return[['Victoires',g(A,'wins'),g(B,'wins')],['% arrêts',A&&A.st&&A.st.savePctg?A.st.savePctg.toFixed(3).replace(/^0/,''):'-',B&&B.st&&B.st.savePctg?B.st.savePctg.toFixed(3).replace(/^0/,''):'-'],['Matchs',g(A,'gamesPlayed'),g(B,'gamesPlayed')]];
+    if(m==='skater2')return[['Buts',g(A,'goals'),g(B,'goals')],['Passes',g(A,'assists'),g(B,'assists')],['Points',g(A,'points'),g(B,'points')]];
+    return[['Buts',g(A,'goals'),g(B,'goals')],['Points',g(A,'points'),g(B,'points')],['Tirs',g(A,'shots'),g(B,'shots')]];
+  }
+  let rd=null;
+  function renderDuel(){clearTimeout(rd);rd=setTimeout(drawDuel,30);}
+  async function drawDuel(){
+    await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
+    const sq=$('dfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('duelcv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+    const A=duel.A,B=duel.B;const cA=A?A.team[2]:'#FF2D55',cB=B?B.team[2]:'#BF5AF2';
+    const L=sq?{top:150,pb:640,ph:430,name:690,rows:[800,880,960],foot:H-40}:{top:200,pb:880,ph:600,name:940,rows:[1070,1160,1250],foot:H-40};
+    x.fillStyle='#050510';x.fillRect(0,0,W,H);
+    /* halos */
+    let g=x.createRadialGradient(270,L.pb-200,0,270,L.pb-200,560);g.addColorStop(0,hexA(cA,.7));g.addColorStop(.5,hexA(cA,.18));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+    g=x.createRadialGradient(810,L.pb-200,0,810,L.pb-200,560);g.addColorStop(0,hexA(cB,.7));g.addColorStop(.5,hexA(cB,.18));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+    /* losanges */
+    x.save();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1.5;for(let yy=0;yy<H+90;yy+=90)for(let xx=0;xx<W+90;xx+=90){x.beginPath();x.moveTo(xx+45,yy+6);x.lineTo(xx+84,yy+45);x.lineTo(xx+45,yy+84);x.lineTo(xx+6,yy+45);x.closePath();x.stroke();}x.restore();
+    /* photos */
+    const z=$('dzoom').value/100,dy=+$('dpos').value;
+    const drawP=(o,cx)=>{if(!o||!o.bmp)return;const ph=o.bmp;const sc=Math.min(1,L.ph/ph.height,520/ph.width);const w=ph.width*sc*z,h=ph.height*sc*z;
+      x.save();x.beginPath();x.rect(cx-270,0,540,L.pb);x.clip();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=50;x.shadowOffsetY=20;x.drawImage(ph,cx-w/2,L.pb+dy-h,w,h);x.restore();};
+    drawP(A,270);drawP(B,810);
+    /* fondu sous les photos */
+    g=x.createLinearGradient(0,L.pb-260,0,L.pb+10);g.addColorStop(0,'rgba(5,5,16,0)');g.addColorStop(1,'#050510');x.fillStyle=g;x.fillRect(0,L.pb-260,W,270);
+    /* séparateur central + VS */
+    g=x.createLinearGradient(0,L.top,0,L.pb);g.addColorStop(0,hexA(cA,0));g.addColorStop(.5,'rgba(255,255,255,.35)');g.addColorStop(1,hexA(cB,0));x.fillStyle=g;x.fillRect(538,L.top,4,L.pb-L.top);
+    x.save();x.textAlign='center';x.textBaseline='middle';x.font='150px Anton';x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=40;x.fillStyle='#fff';x.fillText('VS',540,L.pb-L.ph/2+40);x.restore();
+    /* marque + question */
+    x.textBaseline='middle';x.font='42px Anton';x.fillStyle='#fff';x.fillText('PREDA',64,80);x.fillStyle='#FF2D55';x.fillText('HUB',64+x.measureText('PREDA').width,80);
+    x.textAlign='center';x.fillStyle='#fff';let q=$('dq').value;let fs=46;x.font=`600 ${fs}px "Inter Tight"`;while(x.measureText(q).width>W-128&&fs>26){fs-=2;x.font=`600 ${fs}px "Inter Tight"`;}x.fillText(q,540,L.top-40);
+    /* logos */
+    const drawL=(o,cx)=>{if(!o||!o.logo)return;const lb=o.logo;const r=Math.min(110/lb.width,110/lb.height);x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=20;x.drawImage(lb,cx-lb.width*r/2,L.top+10,lb.width*r,lb.height*r);x.restore();};
+    drawL(A,270);drawL(B,810);
+    /* noms */
+    const drawN=(o,cx,col)=>{if(!o)return;x.textAlign='center';x.textBaseline='alphabetic';x.fillStyle='#d9d9ec';x.font='600 34px "Inter Tight"';x.fillText(o.first,cx,L.name);
+      let f=86;const t=o.last.toUpperCase();x.font=`${f}px Anton`;while(x.measureText(t).width>500&&f>40){f-=6;x.font=`${f}px Anton`;}x.save();x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=30;x.fillStyle='#fff';x.fillText(t,cx,L.name+f*.95);x.restore();
+      x.font='700 26px "Inter Tight"';x.fillStyle=col;x.fillText((o.team[1]||o.abbr)+(o.num?'  ·  N° '+o.num:''),cx,L.name+f*.95+40);};
+    drawN(A,270,cA);drawN(B,810,cB);
+    /* stats */
+    const rows=statRows($('dmode').value,A,B);
+    rows.forEach((r,i)=>{const y=L.rows[i];const a=parseFloat(r[1]),b=parseFloat(r[2]);const aw=!isNaN(a)&&!isNaN(b)&&a>b,bw=!isNaN(a)&&!isNaN(b)&&b>a;
+      x.fillStyle='rgba(255,255,255,.08)';x.fillRect(64,y+28,W-128,1);
+      x.textAlign='center';x.textBaseline='middle';x.font='600 28px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(r[0].toUpperCase(),540,y);
+      x.font='76px Anton';x.textAlign='left';x.fillStyle=aw?'#FBBF24':'#c9c9de';if(aw){x.shadowColor='rgba(251,191,36,.4)';x.shadowBlur=30;}x.fillText(String(r[1]),64,y);x.shadowBlur=0;
+      x.textAlign='right';x.fillStyle=bw?'#FBBF24':'#c9c9de';if(bw){x.shadowColor='rgba(251,191,36,.4)';x.shadowBlur=30;}x.fillText(String(r[2]),W-64,y);x.shadowBlur=0;});
+    /* pied */
+    x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';const st=(A&&A.st)||(B&&B.st);const yr=st?String(st.season):'';x.fillText(yr?`Saison ${yr.slice(0,4)}-${yr.slice(6,8)} · saison régulière`:'',64,L.foot);x.textAlign='right';x.fillText('@predahub',W-64,L.foot);
+  }
+  $('ddl').addEventListener('click',async()=>{const btn=$('ddl');btn.textContent='Export…';try{await drawDuel();const blob=await new Promise(r=>$('duelcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-duel-${(duel.A?duel.A.last:'a').toLowerCase()}-vs-${(duel.B?duel.B.last:'b').toLowerCase()}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('dstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
   $('zoomv').textContent=$('zoom').value;
   document.fonts.ready.then(fit);fit();
