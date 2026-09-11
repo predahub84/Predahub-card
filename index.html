@@ -428,11 +428,13 @@
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
     const sq=$('dfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('duelcv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
     const A=duel.A,B=duel.B;const cA=A?A.team[2]:'#FF2D55',cB=B?B.team[2]:'#BF5AF2';
-    const L=sq?{top:150,pb:640,ph:430,name:690,rows:[800,880,960],foot:H-40}:{top:200,pb:880,ph:600,name:940,rows:[1070,1160,1250],foot:H-40};
+    const L=sq?{top:150,pb:610,ph:410,name:655,rows:[850,925,1000],foot:H-36}:{top:200,pb:850,ph:580,name:900,rows:[1105,1190,1275],foot:H-36};
     x.fillStyle='#050510';x.fillRect(0,0,W,H);
     /* halos */
+    x.save();x.beginPath();x.rect(0,0,W,L.pb);x.clip();
     let g=x.createRadialGradient(270,L.pb-200,0,270,L.pb-200,560);g.addColorStop(0,hexA(cA,.7));g.addColorStop(.5,hexA(cA,.18));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
     g=x.createRadialGradient(810,L.pb-200,0,810,L.pb-200,560);g.addColorStop(0,hexA(cB,.7));g.addColorStop(.5,hexA(cB,.18));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+    x.restore();
     /* losanges */
     x.save();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1.5;for(let yy=0;yy<H+90;yy+=90)for(let xx=0;xx<W+90;xx+=90){x.beginPath();x.moveTo(xx+45,yy+6);x.lineTo(xx+84,yy+45);x.lineTo(xx+45,yy+84);x.lineTo(xx+6,yy+45);x.closePath();x.stroke();}x.restore();
     /* photos */
@@ -453,7 +455,7 @@
     drawL(A,270);drawL(B,810);
     /* noms */
     const drawN=(o,cx,col)=>{if(!o)return;x.textAlign='center';x.textBaseline='alphabetic';x.fillStyle='#d9d9ec';x.font='600 34px "Inter Tight"';x.fillText(o.first,cx,L.name);
-      let f=86;const t=o.last.toUpperCase();x.font=`${f}px Anton`;while(x.measureText(t).width>500&&f>40){f-=6;x.font=`${f}px Anton`;}x.save();x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=30;x.fillStyle='#fff';x.fillText(t,cx,L.name+f*.95);x.restore();
+      let f=80;const t=o.last.toUpperCase();x.font=`${f}px Anton`;while(x.measureText(t).width>500&&f>40){f-=6;x.font=`${f}px Anton`;}x.save();x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=30;x.fillStyle='#fff';x.fillText(t,cx,L.name+f*.95);x.restore();
       x.font='700 26px "Inter Tight"';x.fillStyle=col;x.fillText((o.team[1]||o.abbr)+(o.num?'  ·  N° '+o.num:''),cx,L.name+f*.95+40);};
     drawN(A,270,cA);drawN(B,810,cB);
     /* stats */
