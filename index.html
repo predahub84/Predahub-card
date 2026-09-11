@@ -32,11 +32,12 @@
   #card.square{height:1080px}
   .glow{position:absolute;left:50%;top:38%;width:1400px;height:1400px;transform:translate(-50%,-50%);border-radius:50%;filter:blur(40px);opacity:.75}
   #card{--c1:#AF1E2D;--c2:#192168;--pillfg:#fff}
-  .glow{background:radial-gradient(circle,color-mix(in srgb,var(--c1) 85%,transparent) 0%,color-mix(in srgb,var(--c1) 40%,transparent) 28%,color-mix(in srgb,var(--c2) 22%,transparent) 50%,transparent 68%)}
+  .glow{background:radial-gradient(circle,var(--c1a85) 0%,var(--c1a40) 28%,var(--c2a22) 50%,transparent 68%)}
   .wm{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:920px;height:920px;opacity:.11;filter:grayscale(1) brightness(2.6)}
   .wm img{width:100%;height:100%;object-fit:contain}
   #card.square .wm{width:720px;height:720px;top:38%}
-  .rays{position:absolute;inset:-300px;background:repeating-conic-gradient(from 0deg at 50% 40%,rgba(255,255,255,.07) 0deg 4deg,transparent 4deg 14deg);opacity:.6;mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 60%);-webkit-mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 60%)}
+  .rays{position:absolute;inset:0;opacity:.55}
+  .rays svg{width:100%;height:100%}
   .tex{position:absolute;inset:0;opacity:.09;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Cpath d='M45 6 L84 45 L45 84 L6 45 Z' fill='none' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E")}
   .num{position:absolute;left:50%;top:9%;transform:translateX(-50%);font-family:Anton,sans-serif;font-size:640px;line-height:1;color:transparent;-webkit-text-stroke:3px rgba(255,255,255,.16);letter-spacing:-10px;white-space:nowrap}
   #card.square .num{font-size:520px;top:6%}
@@ -51,16 +52,16 @@
   .tr{display:flex;align-items:center;gap:18px}
   .logo{width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 6px 20px rgba(0,0,0,.6))}
   .team{font-family:Anton,sans-serif;font-size:40px;letter-spacing:2px;padding:6px 22px;color:var(--pillfg);background:var(--c2);border:2px solid var(--c1);clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%)}
-  .badge{position:absolute;left:64px;bottom:640px;display:inline-flex;align-items:center;gap:14px;background:var(--c1);padding:12px 26px 12px 22px;font-weight:900;font-size:32px;letter-spacing:1px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);box-shadow:0 10px 40px color-mix(in srgb,var(--c1) 50%,transparent)}
+  .badge{position:absolute;left:64px;bottom:640px;display:inline-flex;align-items:center;gap:14px;background:var(--c1);padding:12px 26px 12px 22px;font-weight:900;font-size:32px;letter-spacing:1px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);box-shadow:0 10px 40px var(--c1a50)}
   .badge i{font-style:normal;font-size:38px;line-height:1}
-  .badge.own{background:var(--bc)!important;box-shadow:0 10px 40px color-mix(in srgb,var(--bc) 50%,transparent)!important}
+  .badge.own{background:var(--bc)!important;box-shadow:0 10px 40px var(--bca50)!important}
   #card.square .badge{bottom:500px}
   .name{position:absolute;left:64px;right:64px;bottom:340px;line-height:.82}
   .name .first{font-size:54px;font-weight:600;color:#d9d9ec;letter-spacing:3px;margin-bottom:6px;display:flex;align-items:baseline;justify-content:space-between}
   .name .club{margin-top:22px;font-size:40px;font-weight:700;color:#fff;display:flex;align-items:center;gap:22px}
-  .name .club span{color:var(--c1);text-shadow:0 0 24px color-mix(in srgb,var(--c1) 45%,transparent)}
+  .name .club span{color:var(--c1);text-shadow:0 0 24px var(--c1a45)}
   .name .club em{font-style:normal;color:#9a9ab8;font-weight:600;padding-left:22px;border-left:3px solid rgba(255,255,255,.2)}
-  .name .first b{font-family:Anton,sans-serif;font-weight:400;font-size:110px;line-height:.8;color:var(--c1);letter-spacing:0;text-shadow:0 0 30px color-mix(in srgb,var(--c1) 50%,transparent)}
+  .name .first b{font-family:Anton,sans-serif;font-weight:400;font-size:110px;line-height:.8;color:var(--c1);letter-spacing:0;text-shadow:0 0 30px var(--c1a50)}
   .name .last{font-family:Anton,sans-serif;font-size:180px;text-transform:uppercase;letter-spacing:1px;text-shadow:0 14px 50px rgba(0,0,0,.9)}
   #card.square .name{bottom:230px}
   #card.square .name .last{font-size:150px}
@@ -85,28 +86,11 @@
     <input id="q" placeholder="Tape un nom : caufield, suzuki, mcdavid…" autocomplete="off">
     <div id="results" class="results"></div>
     <div id="pstate" style="font-size:12px;color:#FBBF24"></div>
-    <label>Prénom</label><input id="first" value="Cole">
-    <div class="row3">
-      <div><label>Nom</label><input id="last" value="Caufield"></div>
-      <div><label>Numéro</label><input id="num" value="13"></div>
-    </div>
-    <div class="row2">
-      <div><label>Équipe</label><select id="team"></select></div>
-      <div><label>Badge</label><select id="badgesel"></select></div>
-    </div>
-    <div class="row2">
-      <div><label>Texte du badge (libre)</label><input id="badge" value="EN FEU"></div>
-      <div><label>Icône</label><input id="icon" value="🔥"></div>
-    </div>
-    <label>Logo (si absent ou pour l'export) — fichier PNG/SVG</label><input id="logofile" type="file" accept="image/*">
-    <div id="logostate" style="font-size:12px;color:#FBBF24"></div>
-    <label>Photo du joueur</label><input id="photo" type="file" accept="image/*">
-    <label>Taille de la photo : <span id="zoomv">100</span> %</label>
-    <input id="zoom" type="range" min="60" max="220" value="130">
-    <label>Position haut / bas</label>
-    <input id="pos" type="range" min="-400" max="400" value="0">
-    <label>Position gauche / droite</label>
-    <input id="posx" type="range" min="-400" max="400" value="0">
+    <div style="display:none"><input id="first" value="Cole"><input id="last" value="Caufield"><input id="num" value="13"><select id="team"></select></div>
+    <label>Badge</label><select id="badgesel"></select>
+    <div style="display:none"><input id="badge" value="EN FEU"><input id="icon" value="🔥"></div>
+    <div style="display:none"><input id="logofile" type="file"><div id="logostate"></div></div>
+    <div style="display:none"><input id="photo" type="file"></div>
 
     <div class="row">
       <div><label>Stat 1</label><input id="v1" value="6"><input id="l1" value="buts / 5 m." style="margin-top:4px"></div>
@@ -117,13 +101,18 @@
     <div class="row2">
       <div><label>Format</label><select id="fmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select></div>
     </div>
+    <label>Taille de la photo : <span id="zoomv">220</span> %</label>
+    <input id="zoom" type="range" min="60" max="300" value="220">
+    <label>Position haut / bas</label>
+    <input id="pos" type="range" min="-400" max="400" value="-200">
+    <input id="posx" type="hidden" value="0">
     <button id="dl">Télécharger en PNG</button>
   </div>
 
   <div class="preview">
     <div class="scaler" id="scaler">
       <div id="card" class="">
-        <div class="glow"></div><div class="rays"></div><div class="tex"></div>
+        <div class="glow"></div><div class="rays"><svg viewBox="0 0 1080 1350" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="rg" cx="540" cy="540" r="700" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><polygon points="540,540 1940,540 1937,638" fill="url(#rg)"/><polygon points="540,540 1898,879 1871,973" fill="url(#rg)"/><polygon points="540,540 1776,1197 1727,1282" fill="url(#rg)"/><polygon points="540,540 1580,1477 1513,1547" fill="url(#rg)"/><polygon points="540,540 1323,1701 1240,1752" fill="url(#rg)"/><polygon points="540,540 1019,1856 926,1886" fill="url(#rg)"/><polygon points="540,540 686,1932 589,1939" fill="url(#rg)"/><polygon points="540,540 345,1926 249,1909" fill="url(#rg)"/><polygon points="540,540 16,1838 -74,1798" fill="url(#rg)"/><polygon points="540,540 -283,1673 -360,1612" fill="url(#rg)"/><polygon points="540,540 -532,1440 -593,1363" fill="url(#rg)"/><polygon points="540,540 -718,1154 -758,1064" fill="url(#rg)"/><polygon points="540,540 -829,831 -846,735" fill="url(#rg)"/><polygon points="540,540 -859,491 -852,394" fill="url(#rg)"/><polygon points="540,540 -806,154 -776,61" fill="url(#rg)"/><polygon points="540,540 -672,-160 -621,-243" fill="url(#rg)"/><polygon points="540,540 -467,-433 -397,-500" fill="url(#rg)"/><polygon points="540,540 -202,-647 -117,-696" fill="url(#rg)"/><polygon points="540,540 107,-791 201,-818" fill="url(#rg)"/><polygon points="540,540 442,-857 540,-860" fill="url(#rg)"/><polygon points="540,540 783,-839 879,-818" fill="url(#rg)"/><polygon points="540,540 1109,-739 1197,-696" fill="url(#rg)"/><polygon points="540,540 1402,-563 1477,-500" fill="url(#rg)"/><polygon points="540,540 1643,-322 1701,-243" fill="url(#rg)"/><polygon points="540,540 1819,-29 1856,61" fill="url(#rg)"/><polygon points="540,540 1919,297 1932,394" fill="url(#rg)"/></svg></div><div class="tex"></div>
         
         <div class="photo" id="cphoto"><div class="hint">Ajoute la photo du joueur</div></div>
         <div class="fade"></div>
@@ -146,6 +135,7 @@
 
 <script>
   const $=id=>document.getElementById(id);
+  const hexA=(h,a)=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;};
   const bind=(i,o)=>{const a=$(i),b=$(o);const f=()=>b.textContent=a.value;a.addEventListener('input',f);f();};
   [['first','cfirst'],['last','clast'],['badge','cbadge'],['icon','cicon'],['num','cnum'],['v1','cv1'],['l1','cl1'],['v2','cv2'],['l2','cl2'],['v3','cv3'],['l3','cl3'],['foot','cfoot']].forEach(p=>bind(...p));
   const card=$('card'),scaler=$('scaler'),preview=document.querySelector('.preview');
@@ -174,14 +164,14 @@
   const BADGES=[['EN FEU','🔥','#FF2D55'],['EN FORME','⚡','#F59E0B'],['SNIPER','🎯','#EF4444'],['RECORD','🏆','#FBBF24'],
     ['À SUIVRE','👀','#BF5AF2'],['ROOKIE','⭐','#22C55E'],['MUR','🧱','#0EA5E9'],['GLACÉ','❄️','#38BDF8'],['DISETTE','🥶','#64748B'],['BLESSÉ','🚑','#94A3B8']];
   const bs=$('badgesel');BADGES.forEach(b=>{const o=document.createElement('option');o.value=b[0];o.textContent=b[1]+' '+b[0];bs.appendChild(o);});
-  function applyBadge(){const b=BADGES.find(b=>b[0]===bs.value);$('badge').value=b[0];$('icon').value=b[1];$('cbadge').textContent=b[0];$('cicon').textContent=b[1];$('cbadgebox').style.setProperty('--bc',b[2]);}
+  function applyBadge(){const b=BADGES.find(b=>b[0]===bs.value);$('badge').value=b[0];$('icon').value=b[1];$('cbadge').textContent=b[0];$('cicon').textContent=b[1];$('cbadgebox').style.setProperty('--bc',b[2]);$('cbadgebox').style.setProperty('--bca50',hexA(b[2],.5));}
   bs.addEventListener('change',applyBadge);applyBadge();
   const sel=$('team');
   TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];sel.appendChild(o);});
   sel.value='MTL';
   function applyTeam(){
     const t=TEAMS.find(t=>t[0]===sel.value);
-    card.style.setProperty('--c1',t[2]);card.style.setProperty('--c2',t[3]);card.style.setProperty('--pillfg',t[4]);
+    card.style.setProperty('--c1',t[2]);card.style.setProperty('--c2',t[3]);card.style.setProperty('--pillfg',t[4]);card.style.setProperty('--c1a85',hexA(t[2],.85));card.style.setProperty('--c1a40',hexA(t[2],.4));card.style.setProperty('--c1a50',hexA(t[2],.5));card.style.setProperty('--c1a45',hexA(t[2],.45));card.style.setProperty('--c2a22',hexA(t[3],.22));
     $('cteam').textContent=t[0];$('cteamname').textContent=t[1];
     loadLogo(t[0]);
   }
@@ -213,7 +203,7 @@
   applyTeam();
   function place(){const im=$('cphoto').querySelector('img');if(!im)return;$('zoomv').textContent=$('zoom').value;
     im.style.transform=`translate(${$('posx').value}px,${$('pos').value}px) scale(${$('zoom').value/100})`;}
-  ['pos','posx','zoom'].forEach(id=>$(id).addEventListener('input',place));
+  ['pos','zoom'].forEach(id=>$(id).addEventListener('input',place));
 
   let srcImg=null;
   function keyOut(){
@@ -228,8 +218,8 @@
 
   $('dl').addEventListener('click',async()=>{const btn=$('dl');btn.textContent='Export…';
     const prev=scaler.style.transform;scaler.style.transform='none';
-    try{const c=await html2canvas(card,{scale:1,backgroundColor:'#050510',useCORS:true});const a=document.createElement('a');a.download=`predahub-${$('last').value.toLowerCase()}.png`;a.href=c.toDataURL('image/png');a.click();}
-    catch(err){alert('Export impossible : '+err.message);}
+    try{await document.fonts.ready;const c=await html2canvas(card,{scale:1,backgroundColor:'#050510',useCORS:true,allowTaint:false,logging:false});const a=document.createElement('a');a.download=`predahub-${$('last').value.toLowerCase()}.png`;a.href=c.toDataURL('image/png');a.click();}
+    catch(err){$('pstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}
     scaler.style.transform=prev;btn.textContent='Télécharger en PNG';});
 
   /* ---------- Recherche joueur via l'API NHL ---------- */
@@ -274,8 +264,8 @@
       /* photo officielle, chargée avec CORS pour pouvoir effacer le fond et exporter */
       const url='/api/img?url='+encodeURIComponent(d.headshot||`https://assets.nhle.com/mugs/nhl/latest/${ab}/${pl.playerId}.png`);
       const im=new Image();im.crossOrigin='anonymous';
-      im.onload=()=>{srcImg=im;$('zoom').value=150;keyOut();$('pstate').textContent='';};
-      im.onerror=()=>{const im2=new Image();im2.onload=()=>{srcImg=null;let el=$('cphoto').querySelector('img');if(!el){el=document.createElement('img');$('cphoto').innerHTML='';$('cphoto').appendChild(el);}el.src=url;$('zoom').value=150;place();$('pstate').textContent='Photo affichée ; si l\'export PNG échoue, importe la photo à la main.';};im2.onerror=()=>{$('pstate').textContent='Photo introuvable : importe-la à la main.';};im2.src=url;};
+      im.onload=()=>{srcImg=im;$('zoom').value=220;$('pos').value=-200;keyOut();$('pstate').textContent='';};
+      im.onerror=()=>{const im2=new Image();im2.onload=()=>{srcImg=null;let el=$('cphoto').querySelector('img');if(!el){el=document.createElement('img');$('cphoto').innerHTML='';$('cphoto').appendChild(el);}el.src=url;$('zoom').value=220;$('pos').value=-200;place();$('pstate').textContent='Photo affichée ; si l\'export PNG échoue, importe la photo à la main.';};im2.onerror=()=>{$('pstate').textContent='Photo introuvable : importe-la à la main.';};im2.src=url;};
       im.src=url;
     }catch(err){
       const parts=pl.name.split(' ');$('first').value=parts[0];$('cfirst').textContent=parts[0];
@@ -287,6 +277,7 @@
   }
   function setStat(i,v,l){$('v'+i).value=v;$('cv'+i).textContent=v;$('l'+i).value=l;$('cl'+i).textContent=l;}
 
+  $('zoomv').textContent=$('zoom').value;
   document.fonts.ready.then(fit);fit();
 </script>
 </body>
