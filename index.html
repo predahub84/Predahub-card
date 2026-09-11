@@ -143,6 +143,7 @@
     <label>Match</label><select id="mgame"><option value="">— choisis une date puis charge —</option></select>
     <div id="mstate" style="font-size:12px;color:#FBBF24"></div>
     <label>Titre</label><input id="mtitle" value="RÉCAP DU MATCH">
+    <label>Bas de card</label><select id="mbottom"><option value="stars">3 étoiles du match</option><option value="goals">Buteurs et passes</option></select>
     <label>Format</label>
     <select id="mfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
     <button id="mdl">Télécharger en PNG</button>
@@ -507,7 +508,7 @@
     }catch(e){$('mstate').textContent='Matchs indisponibles (API NHL).';}
   }
   $('mgame').addEventListener('change',pickGame);
-  ['mtitle','mfmt'].forEach(id=>$(id).addEventListener('input',renderMatch));
+  ['mtitle','mfmt','mbottom'].forEach(id=>$(id).addEventListener('input',renderMatch));
   async function pickGame(){
     const g=match.games.find(x=>String(x.id)===$('mgame').value);if(!g)return;
     match.cur=g;match.land=null;$('mstate').textContent='Chargement du match…';
@@ -527,7 +528,7 @@
     x.fillStyle='#050510';x.fillRect(0,0,W,H);
     const g=match.cur;
     if(!g){x.fillStyle='#3c3c5c';x.font='600 40px "Inter Tight"';x.textAlign='center';x.textBaseline='middle';x.fillText('Choisis une date et charge les matchs',540,H/2);return;}
-    const A=g.awayTeam,B=g.homeTeam,cA=teamCol(A.abbrev),cB=teamCol(B.abbrev);
+    const A=g.awayTeam,B=g.homeTeam,cA=teamCol(A.abbrev);let cB=teamCol(B.abbrev);if(cA.toLowerCase()===cB.toLowerCase()){const t=TEAMS.find(t=>t[0]===B.abbrev);cB=t&&t[3]&&!/^#(000|010101|111)$/i.test(t[3])?t[3]:'#BF5AF2';}
     const L=sq?{logoY:250,scoreY:300,statsY:590,foot:H-30}:{logoY:290,scoreY:350,statsY:620,foot:H-30};
     /* halos */
     x.save();x.beginPath();x.rect(0,0,W,L.statsY-80);x.clip();
@@ -567,12 +568,12 @@
       x.textAlign='right';x.fillStyle=nb>na?'#FBBF24':'#e6e6f2';x.fillText(String(b),W-64,y);
       const tot=na+nb||1,bw=W-128-2*150,bx=64+150,by=y+30;x.fillStyle='rgba(255,255,255,.08)';x.fillRect(bx,by,bw,8);
       const wa=Math.round(bw*na/tot);x.fillStyle=cA;x.fillRect(bx,by,wa,8);x.fillStyle=cB;x.fillRect(bx+wa+4,by,Math.max(0,bw-wa-4),8);
-      y+=sq?70:74;});
+      y+=sq?64:66;});
     /* 3 étoiles */
     const stars=match.stars||[];
-    if(stars.length){
-      y+=sq?10:30;x.textAlign='center';x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('LES 3 ÉTOILES DU MATCH',540,y);y+=30;
-      const R=sq?70:90;const cols=[270,540,810];
+    if(stars.length&&$('mbottom').value==='stars'){
+      y+=sq?6:16;x.textAlign='center';x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('LES 3 ÉTOILES DU MATCH',540,y);y+=26;
+      const R=sq?62:80;const cols=[270,540,810];
       stars.forEach((st,i)=>{const cx=cols[i],cy=y+R+20;const col=teamCol(st.teamAbbrev);
         x.save();x.beginPath();x.arc(cx,cy,R+6,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.6);x.shadowBlur=30;x.fill();x.restore();
         x.save();x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.clip();x.fillStyle='#14142b';x.fillRect(cx-R,cy-R,2*R,2*R);
@@ -584,16 +585,23 @@
         x.font='600 24px "Inter Tight"';x.fillStyle=col;x.fillText(st.teamAbbrev+'  ·  '+line,cx,cy+R+72);});
       y+=2*R+110;
     }
-    /* buteurs (si place) */
-    const goals=(g.goals||[]).slice();
-    if(goals.length&&L.foot-y>120){
-      y+=10;x.textAlign='center';x.font='600 22px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('BUTEURS',540,y);y+=36;
-      const ga=goals.filter(o=>o.teamAbbrev===A.abbrev),gb=goals.filter(o=>o.teamAbbrev===B.abbrev);
-      const line=o=>`${(o.name&&o.name.default)||''}${o.goalsToDate?' ('+o.goalsToDate+')':''} · P${o.period} ${o.timeInPeriod||''}`;
-      const maxN=Math.max(0,Math.floor((L.foot-20-y)/30));
-      x.font='600 22px "Inter Tight"';
-      ga.slice(0,maxN).forEach((o,i)=>{x.textAlign='left';x.fillStyle='#d9d9ec';x.fillText(line(o),64,y+i*30);});
-      gb.slice(0,maxN).forEach((o,i)=>{x.textAlign='right';x.fillStyle='#d9d9ec';x.fillText(line(o),W-64,y+i*30);});
+    /* buteurs + passes */
+    if($('mbottom').value==='goals'){
+      const per=(match.land&&match.land.summary&&match.land.summary.scoring)||[];
+      const all=[];per.forEach(pd=>(pd.goals||[]).forEach(o=>all.push({...o,period:pd.periodDescriptor?pd.periodDescriptor.number:'',ptype:pd.periodDescriptor?pd.periodDescriptor.periodType:''})));
+      const src=all.length?all:(g.goals||[]).map(o=>({...o,firstName:null,lastName:null}));
+      y+=sq?6:16;x.textAlign='center';x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('BUTEURS ET PASSES',540,y);y+=34;
+      const nameOf=o=>o.name&&o.name.default?o.name.default:((o.firstName&&o.firstName.default?o.firstName.default[0]+'. ':'')+(o.lastName&&o.lastName.default?o.lastName.default:''));
+      const per0=o=>o.ptype==='OT'?'PROL.':o.ptype==='SO'?'T.B.':'P'+o.period;
+      const ga=src.filter(o=>o.teamAbbrev===A.abbrev),gb=src.filter(o=>o.teamAbbrev===B.abbrev);
+      const maxN=Math.max(1,Math.floor((L.foot-30-y)/54));
+      const drawSide=(list,left,col)=>{list.slice(0,maxN).forEach((o,i)=>{const yy=y+i*54;x.textAlign=left?'left':'right';const xx=left?64:W-64;
+        x.font='700 26px "Inter Tight"';x.fillStyle='#fff';x.fillText(`${nameOf(o)}${o.goalsToDate?' ('+o.goalsToDate+')':''}`,xx,yy);
+        const as=(o.assists||[]).map(a=>a.name&&a.name.default?a.name.default:(a.lastName&&a.lastName.default)||'').filter(Boolean);
+        x.font='500 21px "Inter Tight"';x.fillStyle=col;x.fillText(`${per0(o)} ${o.timeInPeriod||''}${o.strength&&o.strength!=='ev'?' · '+o.strength.toUpperCase():''}`,xx,yy+24);
+        x.fillStyle='#8a8aa3';const at=as.length?'Passes : '+as.join(', '):'Sans aide';x.fillText(at,left?xx+x.measureText(`${per0(o)} ${o.timeInPeriod||''}`).width+30:xx-x.measureText(`${per0(o)} ${o.timeInPeriod||''}${o.strength&&o.strength!=='ev'?' · '+o.strength.toUpperCase():''}`).width-30,yy+24);});
+        if(list.length>maxN){x.font='500 20px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(`+ ${list.length-maxN} autre(s)`,left?64:W-64,y+maxN*54);}};
+      drawSide(ga,true,cA);drawSide(gb,false,cB);
     }
     x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Source : NHL',64,L.foot);x.textAlign='right';x.fillText('@predahub',W-64,L.foot);
   }
