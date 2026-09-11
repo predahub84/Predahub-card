@@ -19,7 +19,7 @@
   .tabs button{margin:0;flex:1;background:#12122a;color:#8a8aa3;border:1px solid #23234a;padding:10px}
   .tabs button.on{background:linear-gradient(90deg,#FF2D55,#BF5AF2);color:#fff;border-color:transparent}
   .hide{display:none!important}
-  #duelcv{width:100%;height:auto;display:block;border-radius:4px}
+  #duelcv,#matchcv{width:100%;height:auto;display:block;border-radius:4px}
   .results{display:flex;flex-direction:column;gap:4px}
   .results button{margin:0;padding:9px 10px;text-align:left;background:#12122a;border:1px solid #23234a;color:#fff;font-weight:500;font-size:14px;border-radius:8px}
   .results button:hover{border-color:#BF5AF2}
@@ -85,7 +85,7 @@
 <body>
 <div class="app">
   <div class="panel">
-    <div class="tabs"><button type="button" id="tabP" class="on">Card joueur</button><button type="button" id="tabD">Duel</button></div>
+    <div class="tabs"><button type="button" id="tabP" class="on">Card joueur</button><button type="button" id="tabD">Duel</button><button type="button" id="tabM">Match</button></div>
     <div id="secP">
     <h1>Card joueur en forme</h1>
     <label>Rechercher un joueur NHL</label>
@@ -135,10 +135,23 @@
     <input id="dpos" type="range" min="-300" max="300" value="0">
     <button id="ddl">Télécharger en PNG</button>
     </div>
+
+    <div id="secM" class="hide">
+    <h1>Récap de match</h1>
+    <label>Date des matchs</label><input id="mdate" type="date">
+    <button type="button" id="mload" style="margin-top:4px;background:#1c1c33;color:#c9c9de">Charger les matchs</button>
+    <label>Match</label><select id="mgame"><option value="">— choisis une date puis charge —</option></select>
+    <div id="mstate" style="font-size:12px;color:#FBBF24"></div>
+    <label>Titre</label><input id="mtitle" value="RÉCAP DU MATCH">
+    <label>Format</label>
+    <select id="mfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
+    <button id="mdl">Télécharger en PNG</button>
+    </div>
   </div>
 
   <div class="preview">
     <canvas id="duelcv" class="hide" width="1080" height="1350"></canvas>
+    <canvas id="matchcv" class="hide" width="1080" height="1350"></canvas>
     <div class="scaler" id="scaler">
       <div id="card" class="">
         <div class="glow"></div><div class="rays"><svg viewBox="0 0 1080 1350" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="rg" cx="540" cy="540" r="700" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><polygon points="540,540 1940,540 1937,638" fill="url(#rg)"/><polygon points="540,540 1898,879 1871,973" fill="url(#rg)"/><polygon points="540,540 1776,1197 1727,1282" fill="url(#rg)"/><polygon points="540,540 1580,1477 1513,1547" fill="url(#rg)"/><polygon points="540,540 1323,1701 1240,1752" fill="url(#rg)"/><polygon points="540,540 1019,1856 926,1886" fill="url(#rg)"/><polygon points="540,540 686,1932 589,1939" fill="url(#rg)"/><polygon points="540,540 345,1926 249,1909" fill="url(#rg)"/><polygon points="540,540 16,1838 -74,1798" fill="url(#rg)"/><polygon points="540,540 -283,1673 -360,1612" fill="url(#rg)"/><polygon points="540,540 -532,1440 -593,1363" fill="url(#rg)"/><polygon points="540,540 -718,1154 -758,1064" fill="url(#rg)"/><polygon points="540,540 -829,831 -846,735" fill="url(#rg)"/><polygon points="540,540 -859,491 -852,394" fill="url(#rg)"/><polygon points="540,540 -806,154 -776,61" fill="url(#rg)"/><polygon points="540,540 -672,-160 -621,-243" fill="url(#rg)"/><polygon points="540,540 -467,-433 -397,-500" fill="url(#rg)"/><polygon points="540,540 -202,-647 -117,-696" fill="url(#rg)"/><polygon points="540,540 107,-791 201,-818" fill="url(#rg)"/><polygon points="540,540 442,-857 540,-860" fill="url(#rg)"/><polygon points="540,540 783,-839 879,-818" fill="url(#rg)"/><polygon points="540,540 1109,-739 1197,-696" fill="url(#rg)"/><polygon points="540,540 1402,-563 1477,-500" fill="url(#rg)"/><polygon points="540,540 1643,-322 1701,-243" fill="url(#rg)"/><polygon points="540,540 1819,-29 1856,61" fill="url(#rg)"/><polygon points="540,540 1919,297 1932,394" fill="url(#rg)"/></svg></div><div class="tex"></div>
@@ -168,7 +181,7 @@
   const bind=(i,o)=>{const a=$(i),b=$(o);const f=()=>b.textContent=a.value;a.addEventListener('input',f);f();};
   [['first','cfirst'],['last','clast'],['badge','cbadge'],['icon','cicon'],['num','cnum'],['v1','cv1'],['l1','cl1'],['v2','cv2'],['l2','cl2'],['v3','cv3'],['l3','cl3'],['foot','cfoot']].forEach(p=>bind(...p));
   const card=$('card'),scaler=$('scaler'),preview=document.querySelector('.preview');
-  function fit(){if(typeof mode!=='undefined'&&mode==='D')return;const w=Math.min(window.innerWidth-40,540);const s=w/1080;scaler.style.transform=`scale(${s})`;preview.style.width=w+'px';preview.style.height=(card.offsetHeight*s)+'px';}
+  function fit(){if(typeof mode!=='undefined'&&mode!=='P')return;const w=Math.min(window.innerWidth-40,540);const s=w/1080;scaler.style.transform=`scale(${s})`;preview.style.width=w+'px';preview.style.height=(card.offsetHeight*s)+'px';}
   window.addEventListener('resize',fit);
   $('fmt').addEventListener('change',e=>{card.className=e.target.value;fit();});
 
@@ -387,11 +400,11 @@
 
   /* ==================== ONGLETS ==================== */
   let mode='P';
-  function setMode(m){mode=m;$('tabP').classList.toggle('on',m==='P');$('tabD').classList.toggle('on',m==='D');
-    $('secP').classList.toggle('hide',m!=='P');$('secD').classList.toggle('hide',m!=='D');
-    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');
-    if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';renderDuel();}}
-  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));
+  function setMode(m){mode=m;
+    [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
+    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');
+    if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';if(m==='D')renderDuel();else renderMatch();}}
+  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));
 
   /* ==================== DUEL ==================== */
   const duel={A:null,B:null};
@@ -475,6 +488,94 @@
     x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';const st=(A&&A.st)||(B&&B.st);const yr=st?String(st.season):'';x.fillText(yr?`Saison ${yr.slice(0,4)}-${yr.slice(6,8)} · saison régulière`:'',64,L.foot);x.textAlign='right';x.fillText('@predahub',W-64,L.foot);
   }
   $('ddl').addEventListener('click',async()=>{const btn=$('ddl');btn.textContent='Export…';try{await drawDuel();const blob=await new Promise(r=>$('duelcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-duel-${(duel.A?duel.A.last:'a').toLowerCase()}-vs-${(duel.B?duel.B.last:'b').toLowerCase()}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('dstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+
+
+  /* ==================== MATCH ==================== */
+  const match={games:[],cur:null,land:null,logos:{}};
+  $('mdate').value=new Date(Date.now()-6*3600e3).toISOString().slice(0,10);
+  $('mload').addEventListener('click',loadGames);
+  async function loadGames(){
+    $('mstate').textContent='Chargement…';$('mgame').innerHTML='';
+    try{
+      const r=await fetch(`/api/nhl?path=score/${$('mdate').value}`);if(!r.ok)throw 0;const d=await r.json();
+      match.games=d.games||[];
+      if(!match.games.length){$('mstate').textContent='Aucun match ce jour-là.';return;}
+      match.games.forEach(g=>{const o=document.createElement('option');o.value=g.id;
+        const st=g.gameState==='OFF'||g.gameState==='FINAL'?'terminé':g.gameState==='LIVE'||g.gameState==='CRIT'?'en cours':'à venir';
+        o.textContent=`${g.awayTeam.abbrev} ${g.awayTeam.score??''} @ ${g.homeTeam.abbrev} ${g.homeTeam.score??''} — ${st}`;$('mgame').appendChild(o);});
+      $('mstate').textContent='';await pickGame();
+    }catch(e){$('mstate').textContent='Matchs indisponibles (API NHL).';}
+  }
+  $('mgame').addEventListener('change',pickGame);
+  ['mtitle','mfmt'].forEach(id=>$(id).addEventListener('input',renderMatch));
+  async function pickGame(){
+    const g=match.games.find(x=>String(x.id)===$('mgame').value);if(!g)return;
+    match.cur=g;match.land=null;$('mstate').textContent='Chargement du match…';
+    try{const r=await fetch(`/api/nhl?path=gamecenter/${g.id}/landing`);if(r.ok)match.land=await r.json();}catch(e){}
+    for(const ab of [g.awayTeam.abbrev,g.homeTeam.abbrev]){if(!match.logos[ab])match.logos[ab]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${ab}_dark.svg`);}
+    $('mstate').textContent='';renderMatch();
+  }
+  let rm=null;function renderMatch(){clearTimeout(rm);rm=setTimeout(drawMatch,30);}
+  function teamCol(ab){const t=TEAMS.find(t=>t[0]===ab);return t?t[2]:'#BF5AF2';}
+  async function drawMatch(){
+    await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
+    const sq=$('mfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('matchcv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+    x.fillStyle='#050510';x.fillRect(0,0,W,H);
+    const g=match.cur;
+    if(!g){x.fillStyle='#3c3c5c';x.font='600 40px "Inter Tight"';x.textAlign='center';x.textBaseline='middle';x.fillText('Choisis une date et charge les matchs',540,H/2);return;}
+    const A=g.awayTeam,B=g.homeTeam,cA=teamCol(A.abbrev),cB=teamCol(B.abbrev);
+    const L=sq?{logoY:250,scoreY:300,statsY:560,goalsY:800,foot:H-30}:{logoY:290,scoreY:350,statsY:640,goalsY:900,foot:H-30};
+    /* halos */
+    x.save();x.beginPath();x.rect(0,0,W,L.statsY-80);x.clip();
+    let gr=x.createRadialGradient(240,L.scoreY,0,240,L.scoreY,520);gr.addColorStop(0,hexA(cA,.65));gr.addColorStop(.5,hexA(cA,.15));gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,W,H);
+    gr=x.createRadialGradient(840,L.scoreY,0,840,L.scoreY,520);gr.addColorStop(0,hexA(cB,.65));gr.addColorStop(.5,hexA(cB,.15));gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,W,H);
+    x.restore();
+    x.save();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1.5;for(let yy=0;yy<H+90;yy+=90)for(let xx=0;xx<W+90;xx+=90){x.beginPath();x.moveTo(xx+45,yy+6);x.lineTo(xx+84,yy+45);x.lineTo(xx+45,yy+84);x.lineTo(xx+6,yy+45);x.closePath();x.stroke();}x.restore();
+    /* marque + titre + date */
+    x.textBaseline='middle';x.textAlign='left';x.font='42px Anton';x.fillStyle='#fff';x.fillText('PREDA',64,80);x.fillStyle='#FF2D55';x.fillText('HUB',64+x.measureText('PREDA').width,80);
+    x.textAlign='center';x.fillStyle='#fff';x.font='600 44px "Inter Tight"';x.fillText($('mtitle').value,540,160);
+    const dt=new Date(g.startTimeUTC);x.fillStyle='#8a8aa3';x.font='500 26px "Inter Tight"';x.fillText(dt.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'}).replace(/^\w/,c=>c.toUpperCase()),540,205);
+    /* logos */
+    const drawL=(ab,cx)=>{const lb=match.logos[ab];if(!lb)return;const r=Math.min(230/lb.width,230/lb.height);x.save();x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=30;x.shadowOffsetY=10;x.drawImage(lb,cx-lb.width*r/2,L.logoY-lb.height*r/2+30,lb.width*r,lb.height*r);x.restore();};
+    drawL(A.abbrev,240);drawL(B.abbrev,840);
+    const nm=t=>(t.name&&t.name.default)||t.abbrev;
+    x.font='700 30px "Inter Tight"';x.fillStyle='#d9d9ec';x.fillText(nm(A).toUpperCase(),240,L.logoY+180);x.fillText(nm(B).toUpperCase(),840,L.logoY+180);
+    x.font='500 22px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('VISITEUR',240,L.logoY+215);x.fillText('DOMICILE',840,L.logoY+215);
+    /* score */
+    const fin=g.gameState==='OFF'||g.gameState==='FINAL';const lp=g.gameOutcome&&g.gameOutcome.lastPeriodType;
+    const sa=A.score??0,sb=B.score??0;
+    x.font='200px Anton';x.save();x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=40;
+    x.fillStyle=sa>sb?'#FBBF24':'#fff';x.textAlign='right';x.fillText(String(sa),470,L.scoreY+40);
+    x.fillStyle=sb>sa?'#FBBF24':'#fff';x.textAlign='left';x.fillText(String(sb),610,L.scoreY+40);x.restore();
+    x.textAlign='center';x.fillStyle='#8a8aa3';x.font='80px Anton';x.fillText('–',540,L.scoreY+36);
+    const status=fin?('FINAL'+(lp==='OT'?' · PROL.':lp==='SO'?' · T.B.':'')):(g.gameState==='LIVE'||g.gameState==='CRIT')?('EN COURS'+(g.periodDescriptor?` · P${g.periodDescriptor.number}`:'')):('À VENIR');
+    x.font='900 26px "Inter Tight"';const sw=x.measureText(status).width+40;x.fillStyle=fin?'#FF2D55':'#BF5AF2';x.fillRect(540-sw/2,L.scoreY+150,sw,44);x.fillStyle='#fff';x.fillText(status,540,L.scoreY+172);
+    /* stats d'équipe */
+    const tgs=(match.land&&match.land.summary&&match.land.summary.teamGameStats)||[];
+    const pick=(cat)=>tgs.find(t=>t.category===cat);
+    const fmtPct=v=>typeof v==='number'?Math.round(v*100)+' %':v;
+    const rows=[['TIRS',pick('sog')],['AVANTAGE NUM.',pick('powerPlay')],['MISES EN JEU',pick('faceoffWinningPctg')],['MISES EN ÉCHEC',pick('hits')],['TIRS BLOQUÉS',pick('blockedShots')]].filter(r=>r[1]);
+    let y=L.statsY;
+    rows.forEach(r=>{const a=r[0]==='MISES EN JEU'?fmtPct(r[1].awayValue):r[1].awayValue,b=r[0]==='MISES EN JEU'?fmtPct(r[1].homeValue):r[1].homeValue;
+      x.fillStyle='rgba(255,255,255,.08)';x.fillRect(64,y+26,W-128,1);
+      x.textAlign='center';x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(r[0],540,y);
+      const na=parseFloat(String(a)),nb=parseFloat(String(b));
+      x.font='52px Anton';x.textAlign='left';x.fillStyle=na>nb?'#FBBF24':'#c9c9de';x.fillText(String(a),64,y);
+      x.textAlign='right';x.fillStyle=nb>na?'#FBBF24':'#c9c9de';x.fillText(String(b),W-64,y);y+=54;});
+    /* buteurs */
+    const goals=(g.goals||[]).slice();
+    if(goals.length){
+      y=Math.max(y+40,L.goalsY);x.textAlign='center';x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('BUTEURS',540,y);y+=44;
+      const ga=goals.filter(o=>o.teamAbbrev===A.abbrev),gb=goals.filter(o=>o.teamAbbrev===B.abbrev);
+      const line=o=>`${(o.name&&o.name.default)||''}${o.goalsToDate?' ('+o.goalsToDate+')':''}  ·  P${o.period} ${o.timeInPeriod||''}${o.strength&&o.strength!=='ev'?' '+o.strength.toUpperCase():''}`;
+      const maxN=Math.floor((L.foot-30-y)/34);
+      x.font='600 24px "Inter Tight"';
+      ga.slice(0,maxN).forEach((o,i)=>{x.textAlign='left';x.fillStyle='#fff';x.fillText(line(o),64,y+i*34);});
+      gb.slice(0,maxN).forEach((o,i)=>{x.textAlign='right';x.fillStyle='#fff';x.fillText(line(o),W-64,y+i*34);});
+    }
+    x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Source : NHL',64,L.foot);x.textAlign='right';x.fillText('@predahub',W-64,L.foot);
+  }
+  $('mdl').addEventListener('click',async()=>{const btn=$('mdl');btn.textContent='Export…';try{await drawMatch();const blob=await new Promise(r=>$('matchcv').toBlob(r,'image/png'));const a=document.createElement('a');const g=match.cur;a.download=`predahub-match-${g?g.awayTeam.abbrev+'-'+g.homeTeam.abbrev:'x'}.png`.toLowerCase();a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('mstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
   $('zoomv').textContent=$('zoom').value;
   document.fonts.ready.then(fit);fit();
