@@ -152,8 +152,8 @@
     <div id="secT" class="hide">
     <h1>Top 5 de la semaine</h1>
     <div class="row2"><div><label>Du</label><input id="tfrom" type="date"></div><div><label>Au</label><input id="tto" type="date"></div></div>
-    <label>Classement</label>
-    <select id="tcat"><option value="points">Points</option><option value="goals">Buts</option><option value="assists">Passes</option><option value="shots">Tirs</option><option value="plusMinus">+/-</option><option value="ppPoints">Points en avantage num.</option><option value="g:wins">Gardiens : victoires</option><option value="g:savePct">Gardiens : % arrêts (min. 2 matchs)</option><option value="g:shutouts">Gardiens : blanchissages</option></select>
+    <div class="row2"><div><label>Nombre</label><select id="tcount"><option value="5">Top 5</option><option value="10">Top 10</option></select></div><div><label>Classement</label>
+    <select id="tcat"><option value="points">Points</option><option value="goals">Buts</option><option value="assists">Passes</option><option value="shots">Tirs</option><option value="plusMinus">+/-</option><option value="ppPoints">Points en avantage num.</option><option value="g:wins">Gardiens : victoires</option><option value="g:savePct">Gardiens : % arrêts (min. 2 matchs)</option><option value="g:shutouts">Gardiens : blanchissages</option></select></div></div>
     <button type="button" id="tload" style="margin-top:4px;background:#1c1c33;color:#c9c9de">Charger le classement</button>
     <div id="tstate" style="font-size:12px;color:#FBBF24"></div>
     <label>Titre</label><input id="ttitle" value="TOP 5 DE LA SEMAINE">
@@ -193,6 +193,7 @@
 
 <script>
   const $=id=>document.getElementById(id);
+  const seasonId=(d)=>{d=d?new Date(d):new Date();const y=d.getFullYear();return d.getMonth()>=8?`${y}${y+1}`:`${y-1}${y}`;};
   const hexA=(h,a)=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;};
   const bind=(i,o)=>{const a=$(i),b=$(o);const f=()=>b.textContent=a.value;a.addEventListener('input',f);f();};
   [['first','cfirst'],['last','clast'],['badge','cbadge'],['icon','cicon'],['num','cnum'],['v1','cv1'],['l1','cl1'],['v2','cv2'],['l2','cl2'],['v3','cv3'],['l3','cl3'],['foot','cfoot']].forEach(p=>bind(...p));
@@ -400,14 +401,14 @@
         else{setStat(1,st.goals??0,'buts');setStat(2,st.points??0,'points');setStat(3,st.shots??0,'tirs');}
         $('foot').value=`Saison ${lab} · saison régulière`;$('cfoot').textContent=$('foot').value;
       }
-      setPhoto('/api/img?url='+encodeURIComponent(d.headshot||`https://assets.nhle.com/mugs/nhl/latest/${ab}/${pl.playerId}.png`));
+      setPhoto('/api/img?url='+encodeURIComponent(d.headshot||`https://assets.nhle.com/mugs/nhl/${seasonId()}/${ab}/${pl.playerId}.png`));
       $('pstate').textContent='';
     }catch(err){
       $('first').value=parts[0];$('cfirst').textContent=parts[0];
       const ln=parts.slice(1).join(' ');$('last').value=ln;$('clast').textContent=ln;
       if(pl.sweaterNumber){$('num').value=pl.sweaterNumber;$('cnum').textContent=pl.sweaterNumber;}
       if(pl.teamAbbrev&&TEAMS.some(t=>t[0]===pl.teamAbbrev)){sel.value=pl.teamAbbrev;customLogo=null;applyTeam();}
-      setPhoto('/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/latest/${pl.teamAbbrev}/${pl.playerId}.png`));
+      setPhoto('/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${seasonId()}/${pl.teamAbbrev}/${pl.playerId}.png`));
       $('pstate').textContent='Stats indisponibles pour le moment ; nom, équipe, numéro et photo remplis.';
     }
   }
@@ -434,7 +435,7 @@
   async function fetchPlayer(pl){
     const parts=pl.name.split(' ');
     const o={id:pl.playerId,first:parts[0],last:parts.slice(1).join(' '),num:pl.sweaterNumber||'',abbr:pl.teamAbbrev||'',pos:pl.positionCode||'',st:null,
-      photo:'/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/latest/${pl.teamAbbrev}/${pl.playerId}.png`)};
+      photo:'/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${seasonId()}/${pl.teamAbbrev}/${pl.playerId}.png`)};
     try{const r=await fetch(`/api/nhl?path=player/${pl.playerId}/landing`);if(!r.ok)throw 0;const d=await r.json();
       o.first=d.firstName?.default||o.first;o.last=d.lastName?.default||o.last;o.num=d.sweaterNumber||o.num;o.abbr=d.currentTeamAbbrev||o.abbr;o.pos=d.position||o.pos;
       if(d.headshot)o.photo='/api/img?url='+encodeURIComponent(d.headshot);
@@ -531,7 +532,7 @@
     try{const r=await fetch(`/api/nhl?path=gamecenter/${g.id}/landing`);if(r.ok)match.land=await r.json();}catch(e){}
     try{const r=await fetch(`/api/nhl?path=gamecenter/${g.id}/right-rail`);if(r.ok)match.rail=await r.json();}catch(e){}
     const stars=(match.land&&match.land.summary&&match.land.summary.threeStars)||[];
-    for(const st of stars.slice(0,3)){st.bmp=await loadBitmap(st.headshot||`https://assets.nhle.com/mugs/nhl/latest/${st.teamAbbrev}/${st.playerId}.png`);match.stars.push(st);}
+    for(const st of stars.slice(0,3)){st.bmp=await loadBitmap(st.headshot||`https://assets.nhle.com/mugs/nhl/${seasonId()}/${st.teamAbbrev}/${st.playerId}.png`);match.stars.push(st);}
     for(const ab of [g.awayTeam.abbrev,g.homeTeam.abbrev]){if(!match.logos[ab])match.logos[ab]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${ab}_dark.svg`);}
     $('mstate').textContent='';renderMatch();
   }
@@ -639,6 +640,7 @@
   const top5={rows:[],from:'',to:''};
   (()=>{const d=new Date(Date.now()-6*3600e3);const to=d.toISOString().slice(0,10);const f=new Date(d.getTime()-6*86400e3).toISOString().slice(0,10);$('tfrom').value=f;$('tto').value=to;})();
   $('tload').addEventListener('click',loadTop);
+  $('tcount').addEventListener('change',()=>{const t=$('ttitle').value;if(/^TOP (5|10) /i.test(t))$('ttitle').value=t.replace(/^TOP (5|10)/i,'TOP '+$('tcount').value);renderTop();});
   ['ttitle','tsub','tfmt'].forEach(id=>$(id).addEventListener('input',renderTop));
   const CATS={points:['points','PTS','Points'],goals:['goals','B','Buts'],assists:['assists','P','Passes'],shots:['shots','T','Tirs'],plusMinus:['plusMinus','+/-','+/-'],ppPoints:['ppPoints','PTS AN','Points en AN'],
     'g:wins':['wins','V','Victoires'],'g:savePct':['savePct','%','% arrêts'],'g:shutouts':['shutouts','BL','Blanchissages']};
@@ -649,9 +651,9 @@
     try{
       const exp=`gameDate>="${from}" and gameDate<="${to} 23:59:59" and gameTypeId=2`+(cat==='g:savePct'?' and gamesPlayed>=2':'');
       const sort=JSON.stringify([{property:field,direction:'DESC'},{property:goalie?'gamesPlayed':'goals',direction:'DESC'}]);
-      const url=`/api/nhl?path=stats:${goalie?'goalie':'skater'}/summary&isAggregate=true&isGame=true&limit=5&start=0&sort=${encodeURIComponent(sort)}&cayenneExp=${encodeURIComponent(exp)}`;
+      const N=+$('tcount').value;const url=`/api/nhl?path=stats:${goalie?'goalie':'skater'}/summary&isAggregate=true&isGame=true&limit=${N}&start=0&sort=${encodeURIComponent(sort)}&cayenneExp=${encodeURIComponent(exp)}`;
       const r=await fetch(url);if(!r.ok)throw 0;const d=await r.json();
-      const list=(d.data||[]).slice(0,5);
+      const list=(d.data||[]).slice(0,N);
       if(!list.length){$('tstate').textContent='Aucune donnée sur cette période (hors saison ?).';renderTop();return;}
       for(const it of list){
         const ab=(it.teamAbbrevs||'').split(',').pop().trim();
@@ -659,7 +661,8 @@
         let v=it[field];if(field==='savePct')v=(v||0).toFixed(3).replace(/^0/,'');
         const o={id:it.playerId,name,ab,pos:it.positionCode||(goalie?'G':''),gp:it.gamesPlayed,v,short,label,
           sub:goalie?`${it.gamesPlayed} M · ${(it.savePct||0).toFixed(3).replace(/^0/,'')} · ${it.goalsAgainstAverage!=null?it.goalsAgainstAverage.toFixed(2)+' MBA':''}`:`${it.gamesPlayed} M · ${it.goals??0} B · ${it.assists??0} P · ${it.points??0} PTS`};
-        o.bmp=await loadBitmap(`https://assets.nhle.com/mugs/nhl/latest/${ab}/${it.playerId}.png`);
+        let hs=null;try{const rr=await fetch(`/api/nhl?path=player/${it.playerId}/landing`);if(rr.ok){const dd=await rr.json();hs=dd.headshot||null;}}catch(e){}
+        o.bmp=await loadBitmap(hs||`https://assets.nhle.com/mugs/nhl/${seasonId(to)}/${ab}/${it.playerId}.png`);
         o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${ab}_dark.svg`);
         top5.rows.push(o);
       }
@@ -680,24 +683,24 @@
     const sub=$('tsub').value.trim()||(top5.from?`Du ${fmtD(top5.from)} au ${fmtD(top5.to)} · ${rows[0]?rows[0].label:''}`:'');
     x.fillStyle='#BF5AF2';x.font='600 30px "Inter Tight"';x.fillText(sub,540,238);
     if(!rows.length){x.fillStyle='#3c3c5c';x.font='600 36px "Inter Tight"';x.fillText('Charge un classement',540,H/2);return;}
-    const top0=300,bottom=H-60;const rowH=(bottom-top0)/5;const R=sq?52:66;
+    const N=rows.length;const top0=280,bottom=H-56;const rowH=(bottom-top0)/N;const big=N<=5;const R=Math.min(big?(sq?52:66):(sq?30:40),rowH/2-10);
     rows.forEach((o,i)=>{const cy=top0+rowH*i+rowH/2;const col=teamCol(o.ab);const first=i===0;
-      if(first){const gg=x.createLinearGradient(64,0,W-64,0);gg.addColorStop(0,hexA(col,.35));gg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gg;x.fillRect(64,cy-rowH/2+8,W-128,rowH-16);}
-      x.fillStyle='rgba(255,255,255,.08)';x.fillRect(64,cy+rowH/2-8,W-128,1);
+      if(first){const gg=x.createLinearGradient(64,0,W-64,0);gg.addColorStop(0,hexA(col,.35));gg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gg;x.fillRect(64,cy-rowH/2+4,W-128,rowH-8);}
+      x.fillStyle='rgba(255,255,255,.08)';x.fillRect(64,cy+rowH/2-4,W-128,1);
       /* rang */
-      x.textAlign='center';x.font=`${first?110:84}px Anton`;x.fillStyle=first?'#FBBF24':'#8a8aa3';if(first){x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=30;}x.fillText(String(i+1),118,cy+4);x.shadowBlur=0;
+      x.textAlign='center';x.font=`${big?(first?110:84):(first?66:52)}px Anton`;x.fillStyle=first?'#FBBF24':'#8a8aa3';if(first){x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=30;}x.fillText(String(i+1),big?118:100,cy+4);x.shadowBlur=0;
       /* photo */
-      const cx=250;x.save();x.beginPath();x.arc(cx,cy,R+5,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.6);x.shadowBlur=24;x.fill();x.restore();
+      const cx=big?250:180;x.save();x.beginPath();x.arc(cx,cy,R+5,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.6);x.shadowBlur=24;x.fill();x.restore();
       x.save();x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.clip();x.fillStyle='#14142b';x.fillRect(cx-R,cy-R,2*R,2*R);
       if(o.bmp){const sc=Math.max(2*R/o.bmp.width,2*R/o.bmp.height)*1.15;const w=o.bmp.width*sc,h=o.bmp.height*sc;x.drawImage(o.bmp,cx-w/2,cy-R+R*.05,w,h);}x.restore();
-      if(o.logo){const r=Math.min(52/o.logo.width,52/o.logo.height);x.drawImage(o.logo,cx+R-30,cy+R-38,o.logo.width*r,o.logo.height*r);}
+      if(o.logo){const lz=big?52:36;const r=Math.min(lz/o.logo.width,lz/o.logo.height);x.drawImage(o.logo,cx+R-lz*.6,cy+R-lz*.75,o.logo.width*r,o.logo.height*r);}
       /* nom */
-      x.textAlign='left';const nm=o.name.toUpperCase();let f=sq?44:52;x.font=`${f}px Anton`;while(x.measureText(nm).width>500&&f>28){f-=2;x.font=`${f}px Anton`;}
-      x.fillStyle='#fff';x.fillText(nm,350,cy-(sq?16:20));
-      x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(`${o.ab} · ${o.pos}   ${o.sub}`,350,cy+(sq?22:26));
+      x.textAlign='left';const nx=big?350:250;const nm=o.name.toUpperCase();let f=big?(sq?44:52):(sq?30:36);x.font=`${f}px Anton`;while(x.measureText(nm).width>(big?500:560)&&f>22){f-=2;x.font=`${f}px Anton`;}
+      x.fillStyle='#fff';x.fillText(nm,nx,cy-(big?(sq?16:20):(sq?11:14)));
+      x.font=`600 ${big?24:19}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(`${o.ab} · ${o.pos}   ${o.sub}`,nx,cy+(big?(sq?22:26):(sq?15:18)));
       /* valeur */
-      x.textAlign='right';x.font=`${first?100:80}px Anton`;x.fillStyle=first?'#FBBF24':'#e6e6f2';x.fillText(String(o.v),W-64,cy-6);
-      x.font='600 22px "Inter Tight"';x.fillStyle=col;x.fillText(o.short,W-64,cy+(first?58:48));});
+      x.textAlign='right';x.font=`${big?(first?100:80):(first?64:52)}px Anton`;x.fillStyle=first?'#FBBF24':'#e6e6f2';x.fillText(String(o.v),W-64,cy-(big?6:4));
+      x.font=`600 ${big?22:16}px "Inter Tight"`;x.fillStyle=col;x.fillText(o.short,W-64,cy+(big?(first?58:48):(first?38:32)));});
     x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Saison régulière · Source : NHL',64,H-28);x.textAlign='right';x.fillText('@predahub',W-64,H-28);
   }
   $('tdl').addEventListener('click',async()=>{const btn=$('tdl');btn.textContent='Export…';try{await drawTop();const blob=await new Promise(r=>$('topcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-top5-${$('tcat').value.replace(':','-')}-${top5.to||''}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('tstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
