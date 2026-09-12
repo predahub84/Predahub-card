@@ -19,7 +19,7 @@
   .tabs button{margin:0;flex:1;background:#12122a;color:#8a8aa3;border:1px solid #23234a;padding:10px}
   .tabs button.on{background:linear-gradient(90deg,#FF2D55,#BF5AF2);color:#fff;border-color:transparent}
   .hide{display:none!important}
-  #duelcv,#matchcv,#topcv{width:100%;height:auto;display:block;border-radius:4px}
+  #duelcv,#matchcv,#topcv,#leadcv{width:100%;height:auto;display:block;border-radius:4px}
   .results{display:flex;flex-direction:column;gap:4px}
   .results button{margin:0;padding:9px 10px;text-align:left;background:#12122a;border:1px solid #23234a;color:#fff;font-weight:500;font-size:14px;border-radius:8px}
   .results button:hover{border-color:#BF5AF2}
@@ -85,7 +85,7 @@
 <body>
 <div class="app">
   <div class="panel">
-    <div class="tabs"><button type="button" id="tabP" class="on">Card joueur</button><button type="button" id="tabD">Duel</button><button type="button" id="tabM">Match</button><button type="button" id="tabT">Top 5</button></div>
+    <div class="tabs"><button type="button" id="tabP" class="on">Card joueur</button><button type="button" id="tabD">Duel</button><button type="button" id="tabM">Match</button><button type="button" id="tabT">Top 5</button><button type="button" id="tabL">Leaders</button></div>
     <div id="secP">
     <h1>Card joueur en forme</h1>
     <label>Rechercher un joueur NHL</label>
@@ -162,12 +162,36 @@
     <select id="tfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
     <button id="tdl">Télécharger en PNG</button>
     </div>
+
+    <div id="secL" class="hide">
+    <h1>Leaders de la saison</h1>
+    <div class="row2"><div><label>Saison</label><select id="lseason"><option value="20252026">2025-26</option><option value="20262027">2026-27</option><option value="20242025">2024-25</option></select></div>
+    <div><label>Type</label><select id="ltype"><option value="2">Saison régulière</option><option value="3">Séries</option></select></div></div>
+    <label>Catégorie</label>
+    <select id="lcat">
+      <option value="points">Meilleur pointeur</option><option value="goals">Meilleur buteur</option><option value="assists">Meilleur passeur</option>
+      <option value="ppGoals">Buts en avantage numérique</option><option value="ppPoints">Points en avantage numérique</option><option value="shGoals">Buts en infériorité</option>
+      <option value="gameWinningGoals">Buts gagnants</option><option value="otGoals">Buts en prolongation</option><option value="shots">Tirs</option>
+      <option value="shootingPct">% de tirs (min. 100 tirs)</option><option value="plusMinus">+/-</option><option value="pointsPerGame">Points par match (min. 20 M)</option>
+      <option value="faceoffWinPct">% mises en jeu (min. 300)</option><option value="timeOnIcePerGame">Temps de glace / match</option><option value="penaltyMinutes">Minutes de pénalité</option>
+      <option value="g:wins">Gardiens : victoires</option><option value="g:savePct">Gardiens : % arrêts (min. 20 M)</option><option value="g:goalsAgainstAverage">Gardiens : moyenne de buts (min. 20 M)</option><option value="g:shutouts">Gardiens : blanchissages</option>
+    </select>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input id="lrookie" type="checkbox" style="width:auto"> Rookies seulement</label>
+    <label>Filtrer par équipe (optionnel)</label><select id="lteam"><option value="">Toute la ligue</option></select>
+    <button type="button" id="lload" style="margin-top:4px;background:#1c1c33;color:#c9c9de">Charger</button>
+    <div id="lstate" style="font-size:12px;color:#FBBF24"></div>
+    <label>Titre (vide = automatique)</label><input id="ltitle" value="">
+    <label>Format</label>
+    <select id="lfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
+    <button id="ldl">Télécharger en PNG</button>
+    </div>
   </div>
 
   <div class="preview">
     <canvas id="duelcv" class="hide" width="1080" height="1350"></canvas>
     <canvas id="matchcv" class="hide" width="1080" height="1350"></canvas>
     <canvas id="topcv" class="hide" width="1080" height="1350"></canvas>
+    <canvas id="leadcv" class="hide" width="1080" height="1350"></canvas>
     <div class="scaler" id="scaler">
       <div id="card" class="">
         <div class="glow"></div><div class="rays"><svg viewBox="0 0 1080 1350" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="rg" cx="540" cy="540" r="700" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><polygon points="540,540 1940,540 1937,638" fill="url(#rg)"/><polygon points="540,540 1898,879 1871,973" fill="url(#rg)"/><polygon points="540,540 1776,1197 1727,1282" fill="url(#rg)"/><polygon points="540,540 1580,1477 1513,1547" fill="url(#rg)"/><polygon points="540,540 1323,1701 1240,1752" fill="url(#rg)"/><polygon points="540,540 1019,1856 926,1886" fill="url(#rg)"/><polygon points="540,540 686,1932 589,1939" fill="url(#rg)"/><polygon points="540,540 345,1926 249,1909" fill="url(#rg)"/><polygon points="540,540 16,1838 -74,1798" fill="url(#rg)"/><polygon points="540,540 -283,1673 -360,1612" fill="url(#rg)"/><polygon points="540,540 -532,1440 -593,1363" fill="url(#rg)"/><polygon points="540,540 -718,1154 -758,1064" fill="url(#rg)"/><polygon points="540,540 -829,831 -846,735" fill="url(#rg)"/><polygon points="540,540 -859,491 -852,394" fill="url(#rg)"/><polygon points="540,540 -806,154 -776,61" fill="url(#rg)"/><polygon points="540,540 -672,-160 -621,-243" fill="url(#rg)"/><polygon points="540,540 -467,-433 -397,-500" fill="url(#rg)"/><polygon points="540,540 -202,-647 -117,-696" fill="url(#rg)"/><polygon points="540,540 107,-791 201,-818" fill="url(#rg)"/><polygon points="540,540 442,-857 540,-860" fill="url(#rg)"/><polygon points="540,540 783,-839 879,-818" fill="url(#rg)"/><polygon points="540,540 1109,-739 1197,-696" fill="url(#rg)"/><polygon points="540,540 1402,-563 1477,-500" fill="url(#rg)"/><polygon points="540,540 1643,-322 1701,-243" fill="url(#rg)"/><polygon points="540,540 1819,-29 1856,61" fill="url(#rg)"/><polygon points="540,540 1919,297 1932,394" fill="url(#rg)"/></svg></div><div class="tex"></div>
@@ -418,10 +442,10 @@
   /* ==================== ONGLETS ==================== */
   let mode='P';
   function setMode(m){mode=m;
-    [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM'],['T','tabT','secT']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
-    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');$('topcv').classList.toggle('hide',m!=='T');
-    if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';if(m==='D')renderDuel();else if(m==='M')renderMatch();else renderTop();}}
-  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));$('tabT').addEventListener('click',()=>setMode('T'));
+    [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM'],['T','tabT','secT'],['L','tabL','secL']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
+    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');$('topcv').classList.toggle('hide',m!=='T');$('leadcv').classList.toggle('hide',m!=='L');
+    if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';if(m==='D')renderDuel();else if(m==='M')renderMatch();else if(m==='T')renderTop();else renderLead();}}
+  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));$('tabT').addEventListener('click',()=>setMode('T'));$('tabL').addEventListener('click',()=>setMode('L'));
 
   /* ==================== DUEL ==================== */
   const duel={A:null,B:null};
@@ -711,6 +735,95 @@
     x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Saison régulière · Source : NHL',64,H-28);x.textAlign='right';x.fillText('@predahub',W-64,H-28);
   }
   $('tdl').addEventListener('click',async()=>{const btn=$('tdl');btn.textContent='Export…';try{await drawTop();const blob=await new Promise(r=>$('topcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-top5-${$('tcat').value.replace(':','-')}-${top5.to||''}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('tstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+
+
+  /* ==================== LEADERS ==================== */
+  const lead={rows:[],title:'',label:''};
+  TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$('lteam').appendChild(o);});
+  const LCATS={points:['PTS','Points','MEILLEURS POINTEURS'],goals:['B','Buts','MEILLEURS BUTEURS'],assists:['P','Passes','MEILLEURS PASSEURS'],ppGoals:['B AN','Buts en AN','BUTS EN AVANTAGE NUMÉRIQUE'],ppPoints:['PTS AN','Points en AN','POINTS EN AVANTAGE NUMÉRIQUE'],
+    shGoals:['B IN','Buts en IN','BUTS EN INFÉRIORITÉ'],gameWinningGoals:['BG','Buts gagnants','BUTS GAGNANTS'],otGoals:['B PROL.','Buts en prol.','BUTS EN PROLONGATION'],shots:['T','Tirs','TIRS'],shootingPct:['%','% de tirs','MEILLEUR % DE TIRS'],
+    plusMinus:['+/-','+/-','MEILLEUR +/-'],pointsPerGame:['PTS/M','Points par match','POINTS PAR MATCH'],faceoffWinPct:['%','% mises en jeu','MISES EN JEU'],timeOnIcePerGame:['TOI','Temps de glace','TEMPS DE GLACE PAR MATCH'],penaltyMinutes:['PIM','Min. de pénalité','MINUTES DE PÉNALITÉ'],
+    'g:wins':['V','Victoires','GARDIENS : VICTOIRES'],'g:savePct':['%','% arrêts','GARDIENS : % D\'ARRÊTS'],'g:goalsAgainstAverage':['MBA','Moyenne de buts','GARDIENS : MOYENNE DE BUTS'],'g:shutouts':['BL','Blanchissages','GARDIENS : BLANCHISSAGES']};
+  const fmtToi=v=>{const m=Math.floor(v/60),sec=Math.round(v%60);return `${m}:${String(sec).padStart(2,'0')}`;};
+  $('lload').addEventListener('click',loadLead);
+  ['ltitle','lfmt'].forEach(id=>$(id).addEventListener('input',renderLead));
+  async function loadLead(){
+    $('lstate').textContent='Chargement…';lead.rows=[];
+    const cat=$('lcat').value,goalie=cat.startsWith('g:');const field=goalie?cat.slice(2):cat;const [short,label,auto]=LCATS[cat];
+    const season=$('lseason').value,gt=$('ltype').value,rookie=$('lrookie').checked,team=$('lteam').value;
+    lead.label=label;lead.title=(rookie?'ROOKIES · ':'')+auto;lead.season=season;
+    try{
+      let exp=`seasonId=${season} and gameTypeId=${gt}`;
+      if(rookie)exp+=' and isRookie=1';
+      if(team)exp+=` and teamAbbrevs="${team}"`;
+      if(cat==='shootingPct')exp+=' and shots>=100';if(cat==='pointsPerGame')exp+=' and gamesPlayed>=20';if(cat==='faceoffWinPct')exp+=' and totalFaceoffs>=300';
+      if(cat==='g:savePct'||cat==='g:goalsAgainstAverage')exp+=' and gamesPlayed>=20';
+      const dir=cat==='g:goalsAgainstAverage'?'ASC':'DESC';
+      const sort=JSON.stringify([{property:field,direction:dir},{property:goalie?'gamesPlayed':'goals',direction:'DESC'}]);
+      const url=`/api/nhl?path=stats:${goalie?'goalie':'skater'}/summary&isAggregate=false&isGame=false&limit=10&start=0&sort=${encodeURIComponent(sort)}&cayenneExp=${encodeURIComponent(exp)}`;
+      const r=await fetch(url);if(!r.ok)throw 0;const d=await r.json();
+      const list=(d.data||[]).slice(0,10);
+      if(!list.length){$('lstate').textContent='Aucune donnée (saison pas commencée ou filtre trop strict).';renderLead();return;}
+      for(const it of list){
+        const name=goalie?it.goalieFullName:it.skaterFullName;
+        let v=it[field];
+        if(field==='savePct')v=(v||0).toFixed(3).replace(/^0/,'');else if(field==='shootingPct'||field==='faceoffWinPct')v=((v||0)*100).toFixed(1)+' %';else if(field==='goalsAgainstAverage')v=(v||0).toFixed(2);else if(field==='pointsPerGame')v=(v||0).toFixed(2);else if(field==='timeOnIcePerGame')v=fmtToi(v||0);
+        const o={id:it.playerId,name,ab:(it.teamAbbrevs||'').split(',').pop().trim(),pos:it.positionCode||(goalie?'G':''),v,short,
+          sub:goalie?`${it.gamesPlayed} M · ${it.wins??0} V · ${(it.savePct||0).toFixed(3).replace(/^0/,'')} · ${(it.goalsAgainstAverage||0).toFixed(2)} MBA`:`${it.gamesPlayed} M · ${it.goals??0} B · ${it.assists??0} P · ${it.points??0} PTS`};
+        let hs=null;try{const rr=await fetch(`/api/nhl?path=player/${it.playerId}/landing`);if(rr.ok){const dd=await rr.json();hs=dd.headshot||null;if(!o.ab&&dd.currentTeamAbbrev)o.ab=dd.currentTeamAbbrev;}}catch(e){}
+        o.bmp=await loadBitmap(hs||`https://assets.nhle.com/mugs/nhl/${season}/${o.ab}/${it.playerId}.png`);
+        o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.ab}_dark.svg`);
+        lead.rows.push(o);renderLead();
+      }
+      $('lstate').textContent='';renderLead();
+    }catch(e){$('lstate').textContent='Classement indisponible (vérifie api/nhl.js, ou filtre rookies non reconnu).';renderLead();}
+  }
+  let rl=null;function renderLead(){clearTimeout(rl);rl=setTimeout(drawLead,30);}
+  function circlePhoto(x,o,cx,cy,R,col,rank){
+    x.save();x.beginPath();x.arc(cx,cy,R+6,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.65);x.shadowBlur=34;x.fill();x.restore();
+    x.save();x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.clip();x.fillStyle='#14142b';x.fillRect(cx-R,cy-R,2*R,2*R);
+    if(o.bmp){const sc=Math.max(2*R/o.bmp.width,2*R/o.bmp.height)*1.15;const w=o.bmp.width*sc,h=o.bmp.height*sc;x.drawImage(o.bmp,cx-w/2,cy-R+R*.05,w,h);}x.restore();
+    if(o.logo){const lz=Math.round(R*.55);const rr=Math.min(lz/o.logo.width,lz/o.logo.height);x.drawImage(o.logo,cx+R-lz*.7,cy+R-lz*.85,o.logo.width*rr,o.logo.height*rr);}
+    if(rank!=null){const br=Math.round(R*.28);x.beginPath();x.arc(cx-R*.72,cy-R*.72,br,0,Math.PI*2);x.fillStyle=rank===1?'#FBBF24':'#12122a';x.fill();x.strokeStyle=rank===1?'#FBBF24':'#8a8aa3';x.lineWidth=2;x.stroke();x.fillStyle=rank===1?'#050510':'#fff';x.font=`${Math.round(br*1.2)}px Anton`;x.textAlign='center';x.textBaseline='middle';x.fillText(String(rank),cx-R*.72,cy-R*.72+1);}
+  }
+  async function drawLead(){
+    await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
+    const sq=$('lfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('leadcv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+    x.fillStyle='#050510';x.fillRect(0,0,W,H);
+    const rows=lead.rows;const c0=rows[0]?teamCol(rows[0].ab):'#FF2D55';
+    let g=x.createRadialGradient(540,sq?330:400,0,540,sq?330:400,700);g.addColorStop(0,hexA(c0,.5));g.addColorStop(.55,hexA('#BF5AF2',.1));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+    x.save();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1.5;for(let yy=0;yy<H+90;yy+=90)for(let xx=0;xx<W+90;xx+=90){x.beginPath();x.moveTo(xx+45,yy+6);x.lineTo(xx+84,yy+45);x.lineTo(xx+45,yy+84);x.lineTo(xx+6,yy+45);x.closePath();x.stroke();}x.restore();
+    x.textBaseline='middle';x.textAlign='left';x.font='42px Anton';x.fillStyle='#fff';x.fillText('PREDA',64,80);x.fillStyle='#FF2D55';x.fillText('HUB',64+x.measureText('PREDA').width,80);
+    const title=($('ltitle').value.trim()||lead.title||'LEADERS').toUpperCase();let tf=76;x.font=`${tf}px Anton`;while(x.measureText(title).width>W-128&&tf>40){tf-=4;x.font=`${tf}px Anton`;}
+    x.textAlign='center';x.fillStyle='#fff';x.fillText(title,540,168);
+    const se=lead.season||$('lseason').value;x.fillStyle='#BF5AF2';x.font='600 30px "Inter Tight"';x.fillText(`Saison ${se.slice(0,4)}-${se.slice(6,8)} · ${$('ltype').value==='3'?'Séries':'Saison régulière'}${$('lteam').value?' · '+($('lteam').selectedOptions[0].textContent):''}`,540,228);
+    if(!rows.length){x.fillStyle='#3c3c5c';x.font='600 36px "Inter Tight"';x.fillText('Charge un classement',540,H/2);return;}
+    /* podium */
+    const R1=sq?110:135,R2=sq?80:100;const py=sq?300:360;
+    const pod=[[rows[0],540,py+R1,R1,1],[rows[1],200,py+R1+50,R2,2],[rows[2],880,py+R1+50,R2,3]].filter(p=>p[0]);
+    pod.forEach(([o,cx,cy,R,rank])=>{const col=teamCol(o.ab);circlePhoto(x,o,cx,cy,R,col,rank);
+      const nm=o.name.toUpperCase();let f=rank===1?52:36;x.font=`${f}px Anton`;while(x.measureText(nm).width>(rank===1?440:300)&&f>22){f-=2;x.font=`${f}px Anton`;}
+      x.textAlign='center';x.fillStyle='#fff';x.fillText(nm,cx,cy+R+40);
+      x.font=`${rank===1?96:64}px Anton`;x.fillStyle=rank===1?'#FBBF24':'#e6e6f2';if(rank===1){x.shadowColor='rgba(251,191,36,.45)';x.shadowBlur=30;}x.fillText(String(o.v),cx,cy+R+(rank===1?110:88));x.shadowBlur=0;
+      x.font=`600 ${rank===1?24:20}px "Inter Tight"`;x.fillStyle=col;x.fillText(`${o.short} · ${o.ab}`,cx,cy+R+(rank===1?165:130));
+      if(rank===1){x.font='600 22px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(o.sub,cx,cy+R+196);}});
+    /* liste 4-10 */
+    const rest=rows.slice(3);
+    if(rest.length){
+      const top0=py+R1*2+(sq?215:240),bottom=H-52;const per=Math.ceil(rest.length/2);const rowH=Math.min(84,(bottom-top0)/per);const colW=(W-128-40)/2;const R=Math.min(sq?24:28,rowH/2-8);
+      x.fillStyle='rgba(255,255,255,.1)';x.fillRect(539,top0,2,rowH*per);
+      rest.forEach((o,i)=>{const c=Math.floor(i/per),r=i%per;const x0=64+c*(colW+40);const cy=top0+rowH*r+rowH/2;const col=teamCol(o.ab);
+        x.fillStyle='rgba(255,255,255,.07)';x.fillRect(x0,cy+rowH/2-2,colW,1);
+        x.textAlign='center';x.textBaseline='middle';x.font='34px Anton';x.fillStyle='#8a8aa3';x.fillText(String(i+4),x0+20,cy+2);
+        circlePhoto(x,o,x0+50+R,cy,R,col,null);
+        const nx=x0+50+2*R+16;const nm=o.name.toUpperCase();let f=30;x.font=`${f}px Anton`;while(x.measureText(nm).width>colW-(nx-x0)-90&&f>18){f-=2;x.font=`${f}px Anton`;}
+        x.textAlign='left';x.fillStyle='#fff';x.fillText(nm,nx,cy-9);
+        x.font='600 16px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(`${o.ab} · ${o.pos}`,nx,cy+16);
+        x.textAlign='right';x.font='44px Anton';x.fillStyle='#e6e6f2';x.fillText(String(o.v),x0+colW-6,cy+2);});
+    }
+    x.textAlign='left';x.textBaseline='middle';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Source : NHL',64,H-28);x.textAlign='right';x.fillText('@predahub',W-64,H-28);
+  }
+  $('ldl').addEventListener('click',async()=>{const btn=$('ldl');btn.textContent='Export…';try{await drawLead();const blob=await new Promise(r=>$('leadcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-leaders-${$('lcat').value.replace(':','-')}-${$('lseason').value}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('lstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
   $('zoomv').textContent=$('zoom').value;
   document.fonts.ready.then(fit);fit();
