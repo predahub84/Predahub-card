@@ -19,7 +19,7 @@
   .tabs button{margin:0;flex:1;background:#12122a;color:#8a8aa3;border:1px solid #23234a;padding:10px}
   .tabs button.on{background:linear-gradient(90deg,#FF2D55,#BF5AF2);color:#fff;border-color:transparent}
   .hide{display:none!important}
-  #duelcv,#matchcv{width:100%;height:auto;display:block;border-radius:4px}
+  #duelcv,#matchcv,#topcv{width:100%;height:auto;display:block;border-radius:4px}
   .results{display:flex;flex-direction:column;gap:4px}
   .results button{margin:0;padding:9px 10px;text-align:left;background:#12122a;border:1px solid #23234a;color:#fff;font-weight:500;font-size:14px;border-radius:8px}
   .results button:hover{border-color:#BF5AF2}
@@ -85,7 +85,7 @@
 <body>
 <div class="app">
   <div class="panel">
-    <div class="tabs"><button type="button" id="tabP" class="on">Card joueur</button><button type="button" id="tabD">Duel</button><button type="button" id="tabM">Match</button></div>
+    <div class="tabs"><button type="button" id="tabP" class="on">Card joueur</button><button type="button" id="tabD">Duel</button><button type="button" id="tabM">Match</button><button type="button" id="tabT">Top 5</button></div>
     <div id="secP">
     <h1>Card joueur en forme</h1>
     <label>Rechercher un joueur NHL</label>
@@ -148,11 +148,26 @@
     <select id="mfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
     <button id="mdl">Télécharger en PNG</button>
     </div>
+
+    <div id="secT" class="hide">
+    <h1>Top 5 de la semaine</h1>
+    <div class="row2"><div><label>Du</label><input id="tfrom" type="date"></div><div><label>Au</label><input id="tto" type="date"></div></div>
+    <label>Classement</label>
+    <select id="tcat"><option value="points">Points</option><option value="goals">Buts</option><option value="assists">Passes</option><option value="shots">Tirs</option><option value="plusMinus">+/-</option><option value="ppPoints">Points en avantage num.</option><option value="g:wins">Gardiens : victoires</option><option value="g:savePct">Gardiens : % arrêts (min. 2 matchs)</option><option value="g:shutouts">Gardiens : blanchissages</option></select>
+    <button type="button" id="tload" style="margin-top:4px;background:#1c1c33;color:#c9c9de">Charger le classement</button>
+    <div id="tstate" style="font-size:12px;color:#FBBF24"></div>
+    <label>Titre</label><input id="ttitle" value="TOP 5 DE LA SEMAINE">
+    <label>Sous-titre (vide = dates automatiques)</label><input id="tsub" value="">
+    <label>Format</label>
+    <select id="tfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
+    <button id="tdl">Télécharger en PNG</button>
+    </div>
   </div>
 
   <div class="preview">
     <canvas id="duelcv" class="hide" width="1080" height="1350"></canvas>
     <canvas id="matchcv" class="hide" width="1080" height="1350"></canvas>
+    <canvas id="topcv" class="hide" width="1080" height="1350"></canvas>
     <div class="scaler" id="scaler">
       <div id="card" class="">
         <div class="glow"></div><div class="rays"><svg viewBox="0 0 1080 1350" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="rg" cx="540" cy="540" r="700" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><polygon points="540,540 1940,540 1937,638" fill="url(#rg)"/><polygon points="540,540 1898,879 1871,973" fill="url(#rg)"/><polygon points="540,540 1776,1197 1727,1282" fill="url(#rg)"/><polygon points="540,540 1580,1477 1513,1547" fill="url(#rg)"/><polygon points="540,540 1323,1701 1240,1752" fill="url(#rg)"/><polygon points="540,540 1019,1856 926,1886" fill="url(#rg)"/><polygon points="540,540 686,1932 589,1939" fill="url(#rg)"/><polygon points="540,540 345,1926 249,1909" fill="url(#rg)"/><polygon points="540,540 16,1838 -74,1798" fill="url(#rg)"/><polygon points="540,540 -283,1673 -360,1612" fill="url(#rg)"/><polygon points="540,540 -532,1440 -593,1363" fill="url(#rg)"/><polygon points="540,540 -718,1154 -758,1064" fill="url(#rg)"/><polygon points="540,540 -829,831 -846,735" fill="url(#rg)"/><polygon points="540,540 -859,491 -852,394" fill="url(#rg)"/><polygon points="540,540 -806,154 -776,61" fill="url(#rg)"/><polygon points="540,540 -672,-160 -621,-243" fill="url(#rg)"/><polygon points="540,540 -467,-433 -397,-500" fill="url(#rg)"/><polygon points="540,540 -202,-647 -117,-696" fill="url(#rg)"/><polygon points="540,540 107,-791 201,-818" fill="url(#rg)"/><polygon points="540,540 442,-857 540,-860" fill="url(#rg)"/><polygon points="540,540 783,-839 879,-818" fill="url(#rg)"/><polygon points="540,540 1109,-739 1197,-696" fill="url(#rg)"/><polygon points="540,540 1402,-563 1477,-500" fill="url(#rg)"/><polygon points="540,540 1643,-322 1701,-243" fill="url(#rg)"/><polygon points="540,540 1819,-29 1856,61" fill="url(#rg)"/><polygon points="540,540 1919,297 1932,394" fill="url(#rg)"/></svg></div><div class="tex"></div>
@@ -402,10 +417,10 @@
   /* ==================== ONGLETS ==================== */
   let mode='P';
   function setMode(m){mode=m;
-    [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
-    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');
-    if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';if(m==='D')renderDuel();else renderMatch();}}
-  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));
+    [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM'],['T','tabT','secT']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
+    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');$('topcv').classList.toggle('hide',m!=='T');
+    if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';if(m==='D')renderDuel();else if(m==='M')renderMatch();else renderTop();}}
+  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));$('tabT').addEventListener('click',()=>setMode('T'));
 
   /* ==================== DUEL ==================== */
   const duel={A:null,B:null};
@@ -618,6 +633,74 @@
     x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Source : NHL',64,L.foot);x.textAlign='right';x.fillText('@predahub',W-64,L.foot);
   }
   $('mdl').addEventListener('click',async()=>{const btn=$('mdl');btn.textContent='Export…';try{await drawMatch();const blob=await new Promise(r=>$('matchcv').toBlob(r,'image/png'));const a=document.createElement('a');const g=match.cur;a.download=`predahub-match-${g?g.awayTeam.abbrev+'-'+g.homeTeam.abbrev:'x'}.png`.toLowerCase();a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('mstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+
+
+  /* ==================== TOP 5 ==================== */
+  const top5={rows:[],from:'',to:''};
+  (()=>{const d=new Date(Date.now()-6*3600e3);const to=d.toISOString().slice(0,10);const f=new Date(d.getTime()-6*86400e3).toISOString().slice(0,10);$('tfrom').value=f;$('tto').value=to;})();
+  $('tload').addEventListener('click',loadTop);
+  ['ttitle','tsub','tfmt'].forEach(id=>$(id).addEventListener('input',renderTop));
+  const CATS={points:['points','PTS','Points'],goals:['goals','B','Buts'],assists:['assists','P','Passes'],shots:['shots','T','Tirs'],plusMinus:['plusMinus','+/-','+/-'],ppPoints:['ppPoints','PTS AN','Points en AN'],
+    'g:wins':['wins','V','Victoires'],'g:savePct':['savePct','%','% arrêts'],'g:shutouts':['shutouts','BL','Blanchissages']};
+  async function loadTop(){
+    $('tstate').textContent='Chargement…';top5.rows=[];
+    const cat=$('tcat').value,goalie=cat.startsWith('g:');const [field,short,label]=CATS[cat];
+    const from=$('tfrom').value,to=$('tto').value;top5.from=from;top5.to=to;
+    try{
+      const exp=`gameDate>="${from}" and gameDate<="${to} 23:59:59" and gameTypeId=2`+(cat==='g:savePct'?' and gamesPlayed>=2':'');
+      const sort=JSON.stringify([{property:field,direction:'DESC'},{property:goalie?'gamesPlayed':'goals',direction:'DESC'}]);
+      const url=`/api/nhl?path=stats:${goalie?'goalie':'skater'}/summary&isAggregate=true&isGame=true&limit=5&start=0&sort=${encodeURIComponent(sort)}&cayenneExp=${encodeURIComponent(exp)}`;
+      const r=await fetch(url);if(!r.ok)throw 0;const d=await r.json();
+      const list=(d.data||[]).slice(0,5);
+      if(!list.length){$('tstate').textContent='Aucune donnée sur cette période (hors saison ?).';renderTop();return;}
+      for(const it of list){
+        const ab=(it.teamAbbrevs||'').split(',').pop().trim();
+        const name=goalie?it.goalieFullName:it.skaterFullName;
+        let v=it[field];if(field==='savePct')v=(v||0).toFixed(3).replace(/^0/,'');
+        const o={id:it.playerId,name,ab,pos:it.positionCode||(goalie?'G':''),gp:it.gamesPlayed,v,short,label,
+          sub:goalie?`${it.gamesPlayed} M · ${(it.savePct||0).toFixed(3).replace(/^0/,'')} · ${it.goalsAgainstAverage!=null?it.goalsAgainstAverage.toFixed(2)+' MBA':''}`:`${it.gamesPlayed} M · ${it.goals??0} B · ${it.assists??0} P · ${it.points??0} PTS`};
+        o.bmp=await loadBitmap(`https://assets.nhle.com/mugs/nhl/latest/${ab}/${it.playerId}.png`);
+        o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${ab}_dark.svg`);
+        top5.rows.push(o);
+      }
+      $('tstate').textContent='';renderTop();
+    }catch(e){$('tstate').textContent='Classement indisponible (vérifie que api/nhl.js est à jour).';renderTop();}
+  }
+  let rt=null;function renderTop(){clearTimeout(rt);rt=setTimeout(drawTop,30);}
+  async function drawTop(){
+    await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
+    const sq=$('tfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('topcv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+    x.fillStyle='#050510';x.fillRect(0,0,W,H);
+    const rows=top5.rows;const c0=rows[0]?teamCol(rows[0].ab):'#FF2D55';
+    let g=x.createRadialGradient(540,120,0,540,120,900);g.addColorStop(0,hexA(c0,.45));g.addColorStop(.5,hexA('#BF5AF2',.12));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+    x.save();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1.5;for(let yy=0;yy<H+90;yy+=90)for(let xx=0;xx<W+90;xx+=90){x.beginPath();x.moveTo(xx+45,yy+6);x.lineTo(xx+84,yy+45);x.lineTo(xx+45,yy+84);x.lineTo(xx+6,yy+45);x.closePath();x.stroke();}x.restore();
+    x.textBaseline='middle';x.textAlign='left';x.font='42px Anton';x.fillStyle='#fff';x.fillText('PREDA',64,80);x.fillStyle='#FF2D55';x.fillText('HUB',64+x.measureText('PREDA').width,80);
+    x.textAlign='center';x.fillStyle='#fff';x.font='84px Anton';x.fillText($('ttitle').value.toUpperCase(),540,175);
+    const fmtD=d=>{const [y,m,dd]=d.split('-');return `${+dd} ${['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+m-1]}`;};
+    const sub=$('tsub').value.trim()||(top5.from?`Du ${fmtD(top5.from)} au ${fmtD(top5.to)} · ${rows[0]?rows[0].label:''}`:'');
+    x.fillStyle='#BF5AF2';x.font='600 30px "Inter Tight"';x.fillText(sub,540,238);
+    if(!rows.length){x.fillStyle='#3c3c5c';x.font='600 36px "Inter Tight"';x.fillText('Charge un classement',540,H/2);return;}
+    const top0=300,bottom=H-60;const rowH=(bottom-top0)/5;const R=sq?52:66;
+    rows.forEach((o,i)=>{const cy=top0+rowH*i+rowH/2;const col=teamCol(o.ab);const first=i===0;
+      if(first){const gg=x.createLinearGradient(64,0,W-64,0);gg.addColorStop(0,hexA(col,.35));gg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gg;x.fillRect(64,cy-rowH/2+8,W-128,rowH-16);}
+      x.fillStyle='rgba(255,255,255,.08)';x.fillRect(64,cy+rowH/2-8,W-128,1);
+      /* rang */
+      x.textAlign='center';x.font=`${first?110:84}px Anton`;x.fillStyle=first?'#FBBF24':'#8a8aa3';if(first){x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=30;}x.fillText(String(i+1),118,cy+4);x.shadowBlur=0;
+      /* photo */
+      const cx=250;x.save();x.beginPath();x.arc(cx,cy,R+5,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.6);x.shadowBlur=24;x.fill();x.restore();
+      x.save();x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.clip();x.fillStyle='#14142b';x.fillRect(cx-R,cy-R,2*R,2*R);
+      if(o.bmp){const sc=Math.max(2*R/o.bmp.width,2*R/o.bmp.height)*1.15;const w=o.bmp.width*sc,h=o.bmp.height*sc;x.drawImage(o.bmp,cx-w/2,cy-R+R*.05,w,h);}x.restore();
+      if(o.logo){const r=Math.min(52/o.logo.width,52/o.logo.height);x.drawImage(o.logo,cx+R-30,cy+R-38,o.logo.width*r,o.logo.height*r);}
+      /* nom */
+      x.textAlign='left';const nm=o.name.toUpperCase();let f=sq?44:52;x.font=`${f}px Anton`;while(x.measureText(nm).width>500&&f>28){f-=2;x.font=`${f}px Anton`;}
+      x.fillStyle='#fff';x.fillText(nm,350,cy-(sq?16:20));
+      x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(`${o.ab} · ${o.pos}   ${o.sub}`,350,cy+(sq?22:26));
+      /* valeur */
+      x.textAlign='right';x.font=`${first?100:80}px Anton`;x.fillStyle=first?'#FBBF24':'#e6e6f2';x.fillText(String(o.v),W-64,cy-6);
+      x.font='600 22px "Inter Tight"';x.fillStyle=col;x.fillText(o.short,W-64,cy+(first?58:48));});
+    x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Saison régulière · Source : NHL',64,H-28);x.textAlign='right';x.fillText('@predahub',W-64,H-28);
+  }
+  $('tdl').addEventListener('click',async()=>{const btn=$('tdl');btn.textContent='Export…';try{await drawTop();const blob=await new Promise(r=>$('topcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-top5-${$('tcat').value.replace(':','-')}-${top5.to||''}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('tstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
   $('zoomv').textContent=$('zoom').value;
   document.fonts.ready.then(fit);fit();
