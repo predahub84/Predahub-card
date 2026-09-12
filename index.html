@@ -198,6 +198,7 @@
     <div><label>Catégorie</label><select id="xcat"><option value="">Toutes</option></select></div></div>
     <div class="row2"><div><label>Équipe</label><select id="xteam"><option value="">Toute la ligue</option></select></div><div><label>Nombre</label><select id="xcount"><option value="5">5</option><option value="6">6</option><option value="8">8</option></select></div></div>
     <div class="row2"><div><label>Afficher</label><select id="xmode"><option value="soon">À venir (les plus proches)</option><option value="done">Atteints</option></select></div><div><label>Max. restant</label><select id="xmax"><option value="5">≤ 5</option><option value="10">≤ 10</option><option value="25">≤ 25</option><option value="999">Tous</option></select></div></div>
+    <label>Cap minimum</label><select id="xmin"><option value="0">Tous les caps</option><option value="300">≥ 300</option><option value="500">≥ 500</option><option value="1000">≥ 1000</option></select>
     <button type="button" id="xload" style="margin-top:4px;background:#1c1c33;color:#c9c9de">Charger</button>
     <div id="xstate" style="font-size:12px;color:#FBBF24;word-break:break-all;user-select:all"></div>
     <label>Titre</label><input id="xtitle" value="MILESTONES EN VUE">
@@ -912,7 +913,7 @@
   const XCAT={goals:'Buts',assists:'Passes',points:'Points',gamesPlayed:'Matchs joués',wins:'Victoires',shutouts:'Blanchissages',saves:'Arrêts',games:'Matchs joués'};
   const xlabel=k=>XCAT[k]||k;
   $('xload').addEventListener('click',loadMile);
-  ['xcat','xteam','xcount','xmode','xmax'].forEach(id=>$(id).addEventListener('change',()=>{buildMile();}));
+  ['xcat','xteam','xcount','xmode','xmax','xmin'].forEach(id=>$(id).addEventListener('change',()=>{buildMile();}));
   ['xtitle','xfmt'].forEach(id=>$(id).addEventListener('input',renderMile));
   /* normalisation défensive : l'API renvoie des objets dont les clés peuvent varier */
   function normMile(it){
@@ -943,8 +944,8 @@
   }
   async function buildMile(){
     const cat=$('xcat').value,team=$('xteam').value,N=+$('xcount').value;
-    const mode=$('xmode').value,mx=+$('xmax').value;
-    let list=mile.raw.filter(o=>(!cat||o.cat===cat)&&(!team||o.ab===team)&&(mode==='done'?o.rem<=0:(o.rem>0&&o.rem<=mx))).sort((a,b)=>mode==='done'?(b.amt-a.amt):((a.rem-b.rem)||(b.amt-a.amt))).slice(0,N);
+    const mode=$('xmode').value,mx=+$('xmax').value,mn=+$('xmin').value;
+    let list=mile.raw.filter(o=>(!cat||o.cat===cat)&&(!team||o.ab===team)&&o.amt>=mn&&(mode==='done'?o.rem<=0:(o.rem>0&&o.rem<=mx))).sort((a,b)=>mode==='done'?(b.amt-a.amt):((a.rem-b.rem)||(b.amt-a.amt))).slice(0,N);
     $('xstate').textContent=list.length?'Photos…':'Aucun joueur pour ce filtre.';
     for(const o of list){if(!o.bmp){let hs=null;try{const rr=await fetch(`/api/nhl?path=player/${o.id}/landing`);if(rr.ok){const dd=await rr.json();hs=dd.headshot||null;if(!o.ab&&dd.currentTeamAbbrev)o.ab=dd.currentTeamAbbrev;if(!o.num)o.num=dd.sweaterNumber||'';if(o.cur==null&&dd.careerTotals&&dd.careerTotals.regularSeason){const ct=dd.careerTotals.regularSeason;o.cur=ct[o.cat]??o.cur;}}}catch(e){}
       o.bmp=await loadBitmap(hs||`https://assets.nhle.com/mugs/nhl/${seasonId()}/${o.ab}/${o.id}.png`);o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.ab}_dark.svg`);}}
