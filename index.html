@@ -771,6 +771,10 @@
         const o={id:it.playerId,name,ab:(it.teamAbbrevs||'').split(',').pop().trim(),pos:it.positionCode||(goalie?'G':''),v,short,
           sub:`${it.gamesPlayed} M · ${fmtToi(goalie?((it.timeOnIce||0)/Math.max(1,it.gamesPlayed||1)):(it.timeOnIcePerGame||0))} TOI`};
         let hs=null;try{const rr=await fetch(`/api/nhl?path=player/${it.playerId}/landing`);if(rr.ok){const dd=await rr.json();hs=dd.headshot||null;if(!o.ab&&dd.currentTeamAbbrev)o.ab=dd.currentTeamAbbrev;}}catch(e){}
+        /* temps en AN / IN pour les catégories spéciales */
+        const special=cat==='ppGoals'||cat==='ppPoints'?['ppTimeOnIcePerGame','TOI AN']:cat==='shGoals'?['shTimeOnIcePerGame','TOI IN']:null;
+        if(special){try{const tq=`/api/nhl?path=stats:skater/timeonice&isAggregate=false&isGame=false&limit=1&start=0&cayenneExp=${encodeURIComponent(`seasonId=${season} and gameTypeId=${gt} and playerId=${it.playerId}`)}`;
+          const tr=await fetch(tq);if(tr.ok){const td=await tr.json();const row=(td.data||[])[0];if(row&&row[special[0]]!=null)o.sub=`${it.gamesPlayed} M · ${fmtToi(row[special[0]])} ${special[1]}`;}}catch(e){}}
         o.bmp=await loadBitmap(hs||`https://assets.nhle.com/mugs/nhl/${season}/${o.ab}/${it.playerId}.png`);
         o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.ab}_dark.svg`);
         lead.rows.push(o);renderLead();
