@@ -197,6 +197,7 @@
     <div class="row2"><div><label>Type</label><select id="xtype"><option value="skaters">Patineurs</option><option value="goalies">Gardiens</option></select></div>
     <div><label>Catégorie</label><select id="xcat"><option value="">Toutes</option></select></div></div>
     <div class="row2"><div><label>Équipe</label><select id="xteam"><option value="">Toute la ligue</option></select></div><div><label>Nombre</label><select id="xcount"><option value="5">5</option><option value="6">6</option><option value="8">8</option></select></div></div>
+    <div class="row2"><div><label>Afficher</label><select id="xmode"><option value="soon">À venir (les plus proches)</option><option value="done">Atteints</option></select></div><div><label>Max. restant</label><select id="xmax"><option value="5">≤ 5</option><option value="10">≤ 10</option><option value="25">≤ 25</option><option value="999">Tous</option></select></div></div>
     <button type="button" id="xload" style="margin-top:4px;background:#1c1c33;color:#c9c9de">Charger</button>
     <div id="xstate" style="font-size:12px;color:#FBBF24;word-break:break-all;user-select:all"></div>
     <label>Titre</label><input id="xtitle" value="MILESTONES EN VUE">
@@ -911,7 +912,7 @@
   const XCAT={goals:'Buts',assists:'Passes',points:'Points',gamesPlayed:'Matchs joués',wins:'Victoires',shutouts:'Blanchissages',saves:'Arrêts',games:'Matchs joués'};
   const xlabel=k=>XCAT[k]||k;
   $('xload').addEventListener('click',loadMile);
-  ['xcat','xteam','xcount'].forEach(id=>$(id).addEventListener('change',()=>{buildMile();}));
+  ['xcat','xteam','xcount','xmode','xmax'].forEach(id=>$(id).addEventListener('change',()=>{buildMile();}));
   ['xtitle','xfmt'].forEach(id=>$(id).addEventListener('input',renderMile));
   /* normalisation défensive : l'API renvoie des objets dont les clés peuvent varier */
   function normMile(it){
@@ -942,7 +943,8 @@
   }
   async function buildMile(){
     const cat=$('xcat').value,team=$('xteam').value,N=+$('xcount').value;
-    let list=mile.raw.filter(o=>(!cat||o.cat===cat)&&(!team||o.ab===team)).sort((a,b)=>(a.rem??99)-(b.rem??99)||(b.amt??0)-(a.amt??0)).slice(0,N);
+    const mode=$('xmode').value,mx=+$('xmax').value;
+    let list=mile.raw.filter(o=>(!cat||o.cat===cat)&&(!team||o.ab===team)&&(mode==='done'?o.rem<=0:(o.rem>0&&o.rem<=mx))).sort((a,b)=>mode==='done'?(b.amt-a.amt):((a.rem-b.rem)||(b.amt-a.amt))).slice(0,N);
     $('xstate').textContent=list.length?'Photos…':'Aucun joueur pour ce filtre.';
     for(const o of list){if(!o.bmp){let hs=null;try{const rr=await fetch(`/api/nhl?path=player/${o.id}/landing`);if(rr.ok){const dd=await rr.json();hs=dd.headshot||null;if(!o.ab&&dd.currentTeamAbbrev)o.ab=dd.currentTeamAbbrev;if(!o.num)o.num=dd.sweaterNumber||'';if(o.cur==null&&dd.careerTotals&&dd.careerTotals.regularSeason){const ct=dd.careerTotals.regularSeason;o.cur=ct[o.cat]??o.cur;}}}catch(e){}
       o.bmp=await loadBitmap(hs||`https://assets.nhle.com/mugs/nhl/${seasonId()}/${o.ab}/${o.id}.png`);o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.ab}_dark.svg`);}}
@@ -958,7 +960,7 @@
     x.textBaseline='middle';x.textAlign='left';x.font='42px Anton';x.fillStyle='#fff';x.fillText('PREDA',64,80);x.fillStyle='#FF2D55';x.fillText('HUB',64+x.measureText('PREDA').width,80);
     const title=$('xtitle').value.toUpperCase();let tf=80;x.font=`${tf}px Anton`;while(x.measureText(title).width>W-128&&tf>40){tf-=4;x.font=`${tf}px Anton`;}
     x.textAlign='center';x.fillStyle='#fff';x.fillText(title,540,170);
-    const cat=$('xcat').value;x.fillStyle='#FBBF24';x.font='600 30px "Inter Tight"';x.fillText((cat?xlabel(cat)+' · ':'')+'Carrière en saison régulière',540,230);
+    const cat=$('xcat').value;x.fillStyle='#FBBF24';x.font='600 30px "Inter Tight"';x.fillText((cat?xlabel(cat)+' · ':'')+($('xmode').value==='done'?'Caps atteints · carrière en saison régulière':'Carrière en saison régulière'),540,230);
     const rows=mile.rows;
     if(!rows.length){x.fillStyle='#3c3c5c';x.font='600 36px "Inter Tight"';x.fillText('Charge les milestones',540,H/2);return;}
     const top0=290,bottom=H-60;const rowH=(bottom-top0)/rows.length;const R=Math.min(sq?52:72,rowH/2-16);
@@ -977,7 +979,7 @@
       /* cap + reste */
       x.textAlign='right';x.font=`${Math.min(84,rowH*.5)}px Anton`;x.fillStyle='#FBBF24';x.shadowColor='rgba(251,191,36,.4)';x.shadowBlur=26;x.fillText(String(amt),W-64,cy-rowH*.16);x.shadowBlur=0;
       x.font=`600 ${Math.min(22,rowH*.14)}px "Inter Tight"`;x.fillStyle='#c9c9de';x.fillText(xlabel(o.cat).toUpperCase(),W-64,cy+rowH*.12);
-      const rem=o.rem??(amt-cur);x.font=`700 ${Math.min(26,rowH*.17)}px "Inter Tight"`;x.fillStyle='#FF2D55';x.fillText(rem===1?'PLUS QU\'UN':`ENCORE ${rem}`,W-64,cy+rowH*.32);});
+      const rem=o.rem??(amt-cur);x.font=`700 ${Math.min(26,rowH*.17)}px "Inter Tight"`;x.fillStyle=rem<=0?'#22C55E':'#FF2D55';x.fillText(rem<=0?'ATTEINT':(rem===1?'PLUS QU\'UN':`ENCORE ${rem}`),W-64,cy+rowH*.32);});
     x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Source : NHL',64,H-28);x.textAlign='right';x.fillText('@predahub',W-64,H-28);
   }
   $('xdl').addEventListener('click',async()=>{const btn=$('xdl');btn.textContent='Export…';try{await drawMile();const blob=await new Promise(r=>$('milecv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-milestones-${$('xtype').value}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('xstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
