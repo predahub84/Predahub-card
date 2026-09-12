@@ -806,9 +806,11 @@
       x.textAlign='center';x.fillStyle='#fff';x.fillText(nm,cx,cy+R+38);
       const vy=cy+R+(rank===1?104:84);x.font=`${rank===1?92:60}px Anton`;x.fillStyle=rank===1?'#FBBF24':'#e6e6f2';if(rank===1){x.shadowColor='rgba(251,191,36,.45)';x.shadowBlur=30;}x.fillText(String(o.v),cx,vy);x.shadowBlur=0;
       /* logo + équipe */
-      const ly=vy+(rank===1?68:54);const lz=rank===1?54:40;x.font=`600 ${rank===1?26:20}px "Inter Tight"`;const lab=`${o.short} · ${o.ab}`;const tw=x.measureText(lab).width;const tot=lz+12+tw;
-      if(o.logo){const rr=Math.min(lz/o.logo.width,lz/o.logo.height);x.drawImage(o.logo,cx-tot/2,ly-lz/2,o.logo.width*rr,o.logo.height*rr);}
-      x.textAlign='left';x.fillStyle=col;x.fillText(lab,cx-tot/2+lz+12,ly);x.textAlign='center';
+      const ly=vy+(rank===1?68:54);const lz=rank===1?56:42;x.font=`600 ${rank===1?28:22}px "Inter Tight"`;const lab=o.ab;const tw=x.measureText(lab).width;
+      let lw=0,lh=0;if(o.logo){const rr=Math.min(lz/o.logo.width,lz/o.logo.height);lw=o.logo.width*rr;lh=o.logo.height*rr;}
+      const tot=lw+(lw?12:0)+tw;
+      if(o.logo)x.drawImage(o.logo,cx-tot/2,ly-lh/2,lw,lh);
+      x.textAlign='left';x.textBaseline='middle';x.fillStyle=col;x.fillText(lab,cx-tot/2+lw+(lw?12:0),ly);x.textAlign='center';
       x.font=`600 ${rank===1?22:18}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(o.sub,cx,ly+(rank===1?36:30));});
     /* liste 4-10 */
     const rest=rows.slice(3);
@@ -821,9 +823,10 @@
         x.textAlign='center';x.textBaseline='middle';x.font='44px Anton';x.fillStyle='#c9c9de';x.fillText(String(i+4),x0+28,cy+2);
         circlePhoto(x,o,x0+58+R,cy,R,col,null,false);
         const nx=x0+58+2*R+16;const vw=110;const nm=o.name.toUpperCase();let f=36;x.font=`${f}px Anton`;while(x.measureText(nm).width>colW-(nx-x0)-vw&&f>20){f-=2;x.font=`${f}px Anton`;}
-        x.textAlign='left';x.fillStyle='#fff';x.fillText(nm,nx,cy-12);
-        if(o.logo){const lz=28;const rr=Math.min(lz/o.logo.width,lz/o.logo.height);x.drawImage(o.logo,nx,cy+18-lz/2,o.logo.width*rr,o.logo.height*rr);}
-        x.font='600 20px "Inter Tight"';x.fillStyle=col;x.fillText(`${o.ab} · ${o.pos}`,nx+(o.logo?34:0),cy+18);
+        x.textAlign='left';x.fillStyle='#fff';x.fillText(nm,nx,cy-14);
+        let lw=0,lh=0;if(o.logo){const lz=40;const rr=Math.min(lz/o.logo.width,lz/o.logo.height);lw=o.logo.width*rr;lh=o.logo.height*rr;x.drawImage(o.logo,nx,cy+20-lh/2,lw,lh);}
+        x.font='600 20px "Inter Tight"';x.fillStyle=col;x.fillText(`${o.ab} · ${o.pos}`,nx+(lw?lw+10:0),cy+20);
+        const aw=x.measureText(`${o.ab} · ${o.pos}`).width;x.fillStyle='#8a8aa3';x.fillText(`  ·  ${o.sub}`,nx+(lw?lw+10:0)+aw,cy+20);
         x.textAlign='right';x.font='56px Anton';x.fillStyle='#e6e6f2';x.fillText(String(o.v),x0+colW-10,cy+2);});
     }
     x.textAlign='left';x.textBaseline='middle';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Source : NHL',64,H-28);x.textAlign='right';x.fillText('@predahub',W-64,H-28);
