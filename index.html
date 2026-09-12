@@ -769,7 +769,7 @@
         let v=it[field];
         if(field==='savePct')v=(v||0).toFixed(3).replace(/^0/,'');else if(field==='shootingPct'||field==='faceoffWinPct')v=((v||0)*100).toFixed(1)+' %';else if(field==='goalsAgainstAverage')v=(v||0).toFixed(2);else if(field==='pointsPerGame')v=(v||0).toFixed(2);else if(field==='timeOnIcePerGame')v=fmtToi(v||0);
         const o={id:it.playerId,name,ab:(it.teamAbbrevs||'').split(',').pop().trim(),pos:it.positionCode||(goalie?'G':''),v,short,
-          sub:goalie?`${it.gamesPlayed} M · ${it.wins??0} V · ${(it.savePct||0).toFixed(3).replace(/^0/,'')} · ${(it.goalsAgainstAverage||0).toFixed(2)} MBA`:`${it.gamesPlayed} M · ${it.goals??0} B · ${it.assists??0} P · ${it.points??0} PTS`};
+          sub:`${it.gamesPlayed} M · ${fmtToi(goalie?((it.timeOnIce||0)/Math.max(1,it.gamesPlayed||1)):(it.timeOnIcePerGame||0))} TOI`};
         let hs=null;try{const rr=await fetch(`/api/nhl?path=player/${it.playerId}/landing`);if(rr.ok){const dd=await rr.json();hs=dd.headshot||null;if(!o.ab&&dd.currentTeamAbbrev)o.ab=dd.currentTeamAbbrev;}}catch(e){}
         o.bmp=await loadBitmap(hs||`https://assets.nhle.com/mugs/nhl/${season}/${o.ab}/${it.playerId}.png`);
         o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.ab}_dark.svg`);
@@ -779,11 +779,11 @@
     }catch(e){$('lstate').textContent='Classement indisponible (vérifie api/nhl.js, ou filtre rookies non reconnu).';renderLead();}
   }
   let rl=null;function renderLead(){clearTimeout(rl);rl=setTimeout(drawLead,30);}
-  function circlePhoto(x,o,cx,cy,R,col,rank){
+  function circlePhoto(x,o,cx,cy,R,col,rank,showLogo=true){
     x.save();x.beginPath();x.arc(cx,cy,R+6,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.65);x.shadowBlur=34;x.fill();x.restore();
     x.save();x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.clip();x.fillStyle='#14142b';x.fillRect(cx-R,cy-R,2*R,2*R);
     if(o.bmp){const sc=Math.max(2*R/o.bmp.width,2*R/o.bmp.height)*1.15;const w=o.bmp.width*sc,h=o.bmp.height*sc;x.drawImage(o.bmp,cx-w/2,cy-R+R*.05,w,h);}x.restore();
-    if(o.logo){const lz=Math.round(R*.78);const bx=cx+R*.78,by=cy+R*.78;x.save();x.beginPath();x.arc(bx,by,lz*.62,0,Math.PI*2);x.fillStyle='#0b0b1a';x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=14;x.fill();x.restore();x.beginPath();x.arc(bx,by,lz*.62,0,Math.PI*2);x.strokeStyle=col;x.lineWidth=3;x.stroke();const rr=Math.min(lz/o.logo.width,lz/o.logo.height)*.9;x.drawImage(o.logo,bx-o.logo.width*rr/2,by-o.logo.height*rr/2,o.logo.width*rr,o.logo.height*rr);}
+    if(o.logo&&showLogo){const lz=Math.round(R*.78);const bx=cx+R*.78,by=cy+R*.78;x.save();x.beginPath();x.arc(bx,by,lz*.62,0,Math.PI*2);x.fillStyle='#0b0b1a';x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=14;x.fill();x.restore();x.beginPath();x.arc(bx,by,lz*.62,0,Math.PI*2);x.strokeStyle=col;x.lineWidth=3;x.stroke();const rr=Math.min(lz/o.logo.width,lz/o.logo.height)*.9;x.drawImage(o.logo,bx-o.logo.width*rr/2,by-o.logo.height*rr/2,o.logo.width*rr,o.logo.height*rr);}
     if(rank!=null){const br=Math.round(R*.28);x.beginPath();x.arc(cx-R*.72,cy-R*.72,br,0,Math.PI*2);x.fillStyle=rank===1?'#FBBF24':'#12122a';x.fill();x.strokeStyle=rank===1?'#FBBF24':'#8a8aa3';x.lineWidth=2;x.stroke();x.fillStyle=rank===1?'#050510':'#fff';x.font=`${Math.round(br*1.2)}px Anton`;x.textAlign='center';x.textBaseline='middle';x.fillText(String(rank),cx-R*.72,cy-R*.72+1);}
   }
   async function drawLead(){
@@ -799,27 +799,31 @@
     const se=lead.season||$('lseason').value;x.fillStyle='#BF5AF2';x.font='600 30px "Inter Tight"';x.fillText(`Saison ${se.slice(0,4)}-${se.slice(6,8)} · ${$('ltype').value==='3'?'Séries':'Saison régulière'}${$('lteam').value?' · '+($('lteam').selectedOptions[0].textContent):''}`,540,228);
     if(!rows.length){x.fillStyle='#3c3c5c';x.font='600 36px "Inter Tight"';x.fillText('Charge un classement',540,H/2);return;}
     /* podium */
-    const R1=sq?110:135,R2=sq?80:100;const py=sq?300:360;
+    const R1=sq?105:130,R2=sq?78:96;const py=sq?270:290;
     const pod=[[rows[0],540,py+R1,R1,1],[rows[1],200,py+R1+50,R2,2],[rows[2],880,py+R1+50,R2,3]].filter(p=>p[0]);
-    pod.forEach(([o,cx,cy,R,rank])=>{const col=teamCol(o.ab);circlePhoto(x,o,cx,cy,R,col,rank);
-      const nm=o.name.toUpperCase();let f=rank===1?52:36;x.font=`${f}px Anton`;while(x.measureText(nm).width>(rank===1?440:300)&&f>22){f-=2;x.font=`${f}px Anton`;}
-      x.textAlign='center';x.fillStyle='#fff';x.fillText(nm,cx,cy+R+40);
-      x.font=`${rank===1?96:64}px Anton`;x.fillStyle=rank===1?'#FBBF24':'#e6e6f2';if(rank===1){x.shadowColor='rgba(251,191,36,.45)';x.shadowBlur=30;}x.fillText(String(o.v),cx,cy+R+(rank===1?112:88));x.shadowBlur=0;
-      x.font=`600 ${rank===1?26:20}px "Inter Tight"`;x.fillStyle=col;x.fillText(`${o.short} · ${o.ab}`,cx,cy+R+(rank===1?172:130));
-      if(rank===1){x.font='600 22px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(o.sub,cx,cy+R+208);}});
+    pod.forEach(([o,cx,cy,R,rank])=>{const col=teamCol(o.ab);circlePhoto(x,o,cx,cy,R,col,rank,false);
+      const nm=o.name.toUpperCase();let f=rank===1?50:34;x.font=`${f}px Anton`;while(x.measureText(nm).width>(rank===1?440:300)&&f>22){f-=2;x.font=`${f}px Anton`;}
+      x.textAlign='center';x.fillStyle='#fff';x.fillText(nm,cx,cy+R+38);
+      const vy=cy+R+(rank===1?104:84);x.font=`${rank===1?92:60}px Anton`;x.fillStyle=rank===1?'#FBBF24':'#e6e6f2';if(rank===1){x.shadowColor='rgba(251,191,36,.45)';x.shadowBlur=30;}x.fillText(String(o.v),cx,vy);x.shadowBlur=0;
+      /* logo + équipe */
+      const ly=vy+(rank===1?68:54);const lz=rank===1?54:40;x.font=`600 ${rank===1?26:20}px "Inter Tight"`;const lab=`${o.short} · ${o.ab}`;const tw=x.measureText(lab).width;const tot=lz+12+tw;
+      if(o.logo){const rr=Math.min(lz/o.logo.width,lz/o.logo.height);x.drawImage(o.logo,cx-tot/2,ly-lz/2,o.logo.width*rr,o.logo.height*rr);}
+      x.textAlign='left';x.fillStyle=col;x.fillText(lab,cx-tot/2+lz+12,ly);x.textAlign='center';
+      x.font=`600 ${rank===1?22:18}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(o.sub,cx,ly+(rank===1?36:30));});
     /* liste 4-10 */
     const rest=rows.slice(3);
     if(rest.length){
-      const top0=py+R1*2+(sq?200:250),bottom=H-56;const per=Math.ceil(rest.length/2);const rowH=Math.min(118,(bottom-top0)/per);const colW=(W-128-32)/2;const R=Math.min(sq?30:40,rowH/2-10);
+      const top0=py+R1*2+(sq?180:236),bottom=H-56;const per=Math.ceil(rest.length/2);const rowH=Math.min(132,(bottom-top0)/per);const colW=(W-128-32)/2;const R=Math.min(sq?34:50,rowH/2-8);
       const listTop=top0+((bottom-top0)-rowH*per)/2;
       x.fillStyle='rgba(255,255,255,.12)';x.fillRect(539,listTop+6,2,rowH*per-12);
       rest.forEach((o,i)=>{const c=Math.floor(i/per),r=i%per;const x0=64+c*(colW+32);const cy=listTop+rowH*r+rowH/2;const col=teamCol(o.ab);
         x.fillStyle=r%2===0?'rgba(255,255,255,.04)':'rgba(255,255,255,0)';x.fillRect(x0,cy-rowH/2+3,colW,rowH-6);
         x.textAlign='center';x.textBaseline='middle';x.font='44px Anton';x.fillStyle='#c9c9de';x.fillText(String(i+4),x0+28,cy+2);
-        circlePhoto(x,o,x0+62+R,cy,R,col,null);
-        const nx=x0+62+2*R+18;const vw=110;const nm=o.name.toUpperCase();let f=36;x.font=`${f}px Anton`;while(x.measureText(nm).width>colW-(nx-x0)-vw&&f>20){f-=2;x.font=`${f}px Anton`;}
+        circlePhoto(x,o,x0+58+R,cy,R,col,null,false);
+        const nx=x0+58+2*R+16;const vw=110;const nm=o.name.toUpperCase();let f=36;x.font=`${f}px Anton`;while(x.measureText(nm).width>colW-(nx-x0)-vw&&f>20){f-=2;x.font=`${f}px Anton`;}
         x.textAlign='left';x.fillStyle='#fff';x.fillText(nm,nx,cy-12);
-        x.font='600 20px "Inter Tight"';x.fillStyle=col;x.fillText(`${o.ab} · ${o.pos}`,nx,cy+18);
+        if(o.logo){const lz=28;const rr=Math.min(lz/o.logo.width,lz/o.logo.height);x.drawImage(o.logo,nx,cy+18-lz/2,o.logo.width*rr,o.logo.height*rr);}
+        x.font='600 20px "Inter Tight"';x.fillStyle=col;x.fillText(`${o.ab} · ${o.pos}`,nx+(o.logo?34:0),cy+18);
         x.textAlign='right';x.font='56px Anton';x.fillStyle='#e6e6f2';x.fillText(String(o.v),x0+colW-10,cy+2);});
     }
     x.textAlign='left';x.textBaseline='middle';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Source : NHL',64,H-28);x.textAlign='right';x.fillText('@predahub',W-64,H-28);
