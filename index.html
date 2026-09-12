@@ -198,7 +198,7 @@
     <div><label>Catégorie</label><select id="xcat"><option value="">Toutes</option></select></div></div>
     <div class="row2"><div><label>Équipe</label><select id="xteam"><option value="">Toute la ligue</option></select></div><div><label>Nombre</label><select id="xcount"><option value="5">5</option><option value="6">6</option><option value="8">8</option></select></div></div>
     <button type="button" id="xload" style="margin-top:4px;background:#1c1c33;color:#c9c9de">Charger</button>
-    <div id="xstate" style="font-size:12px;color:#FBBF24"></div>
+    <div id="xstate" style="font-size:12px;color:#FBBF24;word-break:break-all;user-select:all"></div>
     <label>Titre</label><input id="xtitle" value="MILESTONES EN VUE">
     <label>Format</label>
     <select id="xfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
@@ -938,6 +938,9 @@
       mile.raw=arr.map(normMile).filter(o=>o.amt!=null||o.rem!=null);
       if(!mile.raw.length){$('xstate').textContent='Format inattendu. Clés reçues : '+(arr[0]?Object.keys(arr[0]).join(', '):JSON.stringify(d).slice(0,120));renderMile();return;}
       const cats=[...new Set(mile.raw.map(o=>o.cat).filter(Boolean))];const cs=$('xcat');const keep=cs.value;cs.innerHTML='<option value="">Toutes</option>';cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=xlabel(c);cs.appendChild(o);});cs.value=cats.includes(keep)?keep:'';
+      mile.sample=arr[0]?JSON.stringify(arr[0]).slice(0,600):'';
+      const bad=mile.raw.some(o=>isNaN(o.amt)||isNaN(o.rem)||o.amt==null);
+      if(bad){$('xstate').textContent='Structure reçue (envoie-moi ceci) : '+mile.sample;renderMile();return;}
       $('xstate').textContent='';await buildMile();
     }catch(e){$('xstate').textContent='Milestones indisponibles : '+e.message;renderMile();}
   }
