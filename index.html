@@ -908,7 +908,7 @@
   /* ==================== MILESTONES ==================== */
   const mile={raw:[],rows:[]};
   TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$('xteam').appendChild(o);});
-  const XCAT={goals:'Buts',assists:'Passes',points:'Points',gamesPlayed:'Matchs joués',wins:'Victoires',shutouts:'Blanchissages',games:'Matchs joués'};
+  const XCAT={goals:'Buts',assists:'Passes',points:'Points',gamesPlayed:'Matchs joués',wins:'Victoires',shutouts:'Blanchissages',saves:'Arrêts',games:'Matchs joués'};
   const xlabel=k=>XCAT[k]||k;
   $('xload').addEventListener('click',loadMile);
   ['xcat','xteam','xcount'].forEach(id=>$(id).addEventListener('change',()=>{buildMile();}));
@@ -916,17 +916,13 @@
   /* normalisation défensive : l'API renvoie des objets dont les clés peuvent varier */
   function normMile(it){
     const str=v=>v&&typeof v==='object'?(v.default||''):(v??'');
-    const keys=Object.keys(it);
-    const catKey=keys.find(k=>/^(milestoneCategory|category|statCategory|milestoneType)$/i.test(k));
-    const amtKey=keys.find(k=>/^(milestoneAmount|milestone|target|nextMilestone)$/i.test(k));
-    const remKey=keys.find(k=>/remaining/i.test(k));
-    const curKey=keys.find(k=>/^(current|currentValue|careerTotal|total|currentTotal)$/i.test(k));
-    let cat=catKey?String(it[catKey]).toLowerCase():'';
-    if(!cat){for(const c of ['goals','assists','points','gamesplayed','wins','shutouts']){if(keys.some(k=>k.toLowerCase().startsWith(c)&&/remaining/i.test(k))){cat=c==='gamesplayed'?'gamesPlayed':c;break;}}}
-    const rem=remKey?+it[remKey]:(cat&&it[cat+'Remaining']!=null?+it[cat+'Remaining']:null);
-    const amt=amtKey?+it[amtKey]:null;
-    const cur=curKey?+it[curKey]:(amt!=null&&rem!=null?amt-rem:(it[cat]!=null?+it[cat]:null));
-    return {id:it.playerId||it.id,first:str(it.firstName),last:str(it.lastName)||str(it.name),name:str(it.name)||str(it.playerFullName)||str(it.skaterFullName)||str(it.goalieFullName)||(str(it.firstName)+' '+str(it.lastName)).trim(),ab:str(it.teamAbbrev||it.currentTeamAbbrev||it.teamAbbrevs||it.playerTeamsPlayedFor||'').split(',').pop().trim(),pos:str(it.positionCode||it.position),cat,amt,rem,cur,num:it.sweaterNumber||''};
+    const raw=String(it.milestone||it.milestoneCategory||it.category||'').toLowerCase().replace(/\s+/g,'');
+    const map={assists:'assists',goals:'goals',points:'points',gamesplayed:'gamesPlayed',games:'gamesPlayed',wins:'wins',shutouts:'shutouts',saves:'saves'};
+    const cat=map[raw]||raw;
+    const amt=it.milestoneAmount!=null?+it.milestoneAmount:null;
+    const cur=it[cat]!=null?+it[cat]:(it.currentValue!=null?+it.currentValue:null);
+    const rem=amt!=null&&cur!=null?amt-cur:null;
+    return {id:it.playerId||it.id,name:str(it.playerFullName)||(str(it.firstName)+' '+str(it.lastName)).trim(),ab:str(it.teamAbbrev||it.currentTeamAbbrev||''),pos:str(it.positionCode||''),cat,amt,rem,cur,num:it.sweaterNumber||''};
   }
   async function loadMile(){
     $('xstate').textContent='Chargement…';mile.raw=[];mile.rows=[];
@@ -935,11 +931,11 @@
       if(!r.ok)r=await fetch(`/api/nhl?path=milestones/${$('xtype').value}`);
       if(!r.ok)throw new Error('http '+r.status);const d=await r.json();
       const arr=Array.isArray(d)?d:(d.milestones||d.data||d.skaters||d.goalies||[]);
-      mile.raw=arr.map(normMile).filter(o=>o.amt!=null||o.rem!=null);
+      mile.raw=arr.map(normMile).filter(o=>o.amt!=null&&o.cur!=null);
       if(!mile.raw.length){$('xstate').textContent='Format inattendu. Clés reçues : '+(arr[0]?Object.keys(arr[0]).join(', '):JSON.stringify(d).slice(0,120));renderMile();return;}
       const cats=[...new Set(mile.raw.map(o=>o.cat).filter(Boolean))];const cs=$('xcat');const keep=cs.value;cs.innerHTML='<option value="">Toutes</option>';cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=xlabel(c);cs.appendChild(o);});cs.value=cats.includes(keep)?keep:'';
       mile.sample=arr[0]?JSON.stringify(arr[0]).slice(0,600):'';
-      const bad=mile.raw.some(o=>isNaN(o.amt)||isNaN(o.rem)||o.amt==null);
+      const bad=!mile.raw.length||mile.raw.some(o=>isNaN(o.amt)||isNaN(o.rem));
       if(bad){$('xstate').textContent='Structure reçue (envoie-moi ceci) : '+mile.sample;renderMile();return;}
       $('xstate').textContent='';await buildMile();
     }catch(e){$('xstate').textContent='Milestones indisponibles : '+e.message;renderMile();}
