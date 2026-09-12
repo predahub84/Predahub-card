@@ -822,11 +822,11 @@
         x.fillStyle=r%2===0?'rgba(255,255,255,.04)':'rgba(255,255,255,0)';x.fillRect(x0,cy-rowH/2+3,colW,rowH-6);
         x.textAlign='center';x.textBaseline='middle';x.font='44px Anton';x.fillStyle='#c9c9de';x.fillText(String(i+4),x0+28,cy+2);
         circlePhoto(x,o,x0+58+R,cy,R,col,null,false);
-        const nx=x0+58+2*R+16;const vw=110;const nm=o.name.toUpperCase();let f=36;x.font=`${f}px Anton`;while(x.measureText(nm).width>colW-(nx-x0)-vw&&f>20){f-=2;x.font=`${f}px Anton`;}
-        x.textAlign='left';x.fillStyle='#fff';x.fillText(nm,nx,cy-14);
-        let lw=0,lh=0;if(o.logo){const lz=40;const rr=Math.min(lz/o.logo.width,lz/o.logo.height);lw=o.logo.width*rr;lh=o.logo.height*rr;x.drawImage(o.logo,nx,cy+20-lh/2,lw,lh);}
-        x.font='600 20px "Inter Tight"';x.fillStyle=col;x.fillText(`${o.ab} · ${o.pos}`,nx+(lw?lw+10:0),cy+20);
-        const aw=x.measureText(`${o.ab} · ${o.pos}`).width;x.fillStyle='#8a8aa3';x.fillText(`  ·  ${o.sub}`,nx+(lw?lw+10:0)+aw,cy+20);
+        const nx=x0+58+2*R+16;const vw=118;const nm=o.name.toUpperCase();let f=34;x.font=`${f}px Anton`;while(x.measureText(nm).width>colW-(nx-x0)-vw&&f>18){f-=2;x.font=`${f}px Anton`;}
+        x.textAlign='left';x.fillStyle='#fff';x.fillText(nm,nx,cy-30);
+        let lw=0,lh=0;if(o.logo){const lz=46;const rr=Math.min(lz/o.logo.width,lz/o.logo.height);lw=o.logo.width*rr;lh=o.logo.height*rr;x.drawImage(o.logo,nx,cy+4-lh/2,lw,lh);}
+        x.font='600 20px "Inter Tight"';x.fillStyle=col;x.fillText(`${o.ab} · ${o.pos}`,nx+(lw?lw+10:0),cy+4);
+        x.font='500 19px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(o.sub,nx,cy+34);
         x.textAlign='right';x.font='56px Anton';x.fillStyle='#e6e6f2';x.fillText(String(o.v),x0+colW-10,cy+2);});
     }
     x.textAlign='left';x.textBaseline='middle';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Source : NHL',64,H-28);x.textAlign='right';x.fillText('@predahub',W-64,H-28);
