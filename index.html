@@ -233,7 +233,7 @@
         
         <div class="photo" id="cphoto"><div class="hint">Ajoute la photo du joueur</div></div>
         <div class="fade"></div>
-        <div class="top"><div class="pill">STATS NHL</div><div class="tr"><img class="logo" id="clogo" alt=""><div class="team" id="cteam" style="display:none">MTL</div></div></div>
+        <div class="top"><div></div><div class="tr"><img class="logo" id="clogo" alt=""><div class="team" id="cteam" style="display:none">MTL</div></div></div>
         <div class="badge own" id="cbadgebox"><i id="cicon">🔥</i><span id="cbadge">EN FEU</span></div>
         <div class="name"><div class="first"><span id="cfirst">Cole</span></div><div class="last" id="clast">Caufield</div>
           <div class="club"><span id="cteamname">Montréal Canadiens</span><em>N° <span id="cnum">13</span></em><em id="cgp"></em></div></div>
@@ -484,7 +484,7 @@
     let g=x.createLinearGradient(0,0,W,0);g.addColorStop(0,c1);g.addColorStop(1,c2);x.fillStyle=g;x.fillRect(0,0,W,8);
     x.save();x.globalAlpha=.16;x.translate(W,0);x.rotate(-Math.PI/5);x.fillStyle=c1;x.fillRect(-60,-40,46,900);x.fillStyle=c2;x.fillRect(-130,-40,26,900);x.restore();
     x.save();x.globalAlpha=.12;x.translate(0,H);x.rotate(-Math.PI/5);x.fillStyle=c2;x.fillRect(-40,-40,36,700);x.restore();}
-  function brand(x,W){x.save();x.textBaseline='middle';x.textAlign='left';x.font='600 18px "Inter Tight"';const t='STATS NHL';const w=x.measureText(t).width+28;x.fillStyle='rgba(255,255,255,.06)';x.fillRect(64,66,w,30);x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=1;x.strokeRect(64.5,66.5,w-1,29);x.fillStyle='#c9c9de';x.fillText(t,64+14,81);x.restore();}
+  function brand(x,W){}
   function wordmark(x,X,Y,size,align){x.save();x.textBaseline='middle';x.font=`${size}px Anton`;const w1=x.measureText('PREDA').width,w2=x.measureText('HUB').width;const sx=align==='right'?X-w1-w2:X;x.textAlign='left';x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=10;x.fillStyle='#fff';x.fillText('PREDA',sx,Y);x.fillStyle='#FF2D55';x.fillText('HUB',sx+w1,Y);x.restore();}
   function titleBlock(x,W,title,sub,y,accent){x.save();x.textAlign='center';x.textBaseline='middle';let tf=80;x.font=`${tf}px Anton`;while(x.measureText(title).width>W-128&&tf>40){tf-=4;x.font=`${tf}px Anton`;}
     x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=24;x.fillStyle='#fff';x.fillText(title,W/2,y);x.shadowBlur=0;
@@ -594,7 +594,7 @@
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
     const sq=$('dfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('duelcv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
     const A=duel.A,B=duel.B;const cA=glowOr(A?A.team[2]:'#FF2D55'),cB=glowOr(B?B.team[2]:'#BF5AF2');
-    const L=sq?{top:150,pb:590,ph:400,name:632,rows:[850,920,990],foot:H-30}:{top:200,pb:830,ph:560,name:878,rows:[1100,1180,1260],foot:H-30};
+    const L=sq?{top:120,pb:590,ph:430,name:632,rows:[850,920,990],foot:H-30}:{top:150,pb:830,ph:600,name:878,rows:[1100,1180,1260],foot:H-30};
     x.fillStyle=theme.bg;x.fillRect(0,0,W,H);
     /* halos */
     x.save();x.beginPath();x.rect(0,0,W,L.pb);x.clip();
@@ -614,7 +614,7 @@
     x.save();x.textAlign='center';x.textBaseline='middle';x.font='150px Anton';x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=40;x.fillStyle='#fff';x.fillText('VS',540,L.pb-L.ph/2+40);x.restore();
     /* marque + question */
     brand(x,W);x.textBaseline='middle';x.textAlign='left';
-    x.textAlign='center';x.fillStyle='#fff';let q=$('dq').value;let fs=46;x.font=`600 ${fs}px "Inter Tight"`;while(x.measureText(q).width>W-128&&fs>26){fs-=2;x.font=`600 ${fs}px "Inter Tight"`;}if(q.trim())x.fillText(q,540,L.top-40);
+    x.textAlign='center';x.fillStyle='#fff';let q=$('dq').value;let fs=46;x.font=`600 ${fs}px "Inter Tight"`;while(x.measureText(q).width>W-128&&fs>26){fs-=2;x.font=`600 ${fs}px "Inter Tight"`;}if(q.trim())x.fillText(q,540,L.top-50);
     /* logos */
     const drawL=(o,cx)=>{if(!o||!o.logo)return;const lb=o.logo;const r=Math.min(110/lb.width,110/lb.height);x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=20;x.drawImage(lb,cx-lb.width*r/2,L.top+10,lb.width*r,lb.height*r);x.restore();};
     drawL(A,270);drawL(B,810);
@@ -676,7 +676,7 @@
     if(!g){x.fillStyle='#3c3c5c';x.font='600 40px "Inter Tight"';x.textAlign='center';x.textBaseline='middle';x.fillText('Choisis une date et charge les matchs',540,H/2);return;}
     const A=g.awayTeam,B=g.homeTeam;let cA=teamCol(A.abbrev),cB=teamCol(B.abbrev);if(cA.toLowerCase()===cB.toLowerCase()){const t=TEAMS.find(t=>t[0]===B.abbrev);cB=t&&t[3]&&!/^#(000|010101|111)$/i.test(t[3])?t[3]:'#BF5AF2';}
     const hA=glowOr(cA),hB=glowOr(cB);
-    const L=sq?{logoY:250,scoreY:300,statsY:560,foot:H-28}:{logoY:300,scoreY:340,statsY:640,foot:H-28};
+    const L=sq?{logoY:230,scoreY:270,statsY:540,foot:H-28}:{logoY:270,scoreY:300,statsY:610,foot:H-28};
     /* halos */
     x.save();x.beginPath();x.rect(0,0,W,L.statsY-20);x.clip();
     let gr=x.createRadialGradient(240,L.scoreY,0,240,L.scoreY,520);gr.addColorStop(0,hA==='rgba(0,0,0,0)'?hA:hexA(hA,.65));gr.addColorStop(.5,hA==='rgba(0,0,0,0)'?hA:hexA(hA,.15));gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,W,H);
@@ -687,8 +687,8 @@
     /* marque + titre + date */
     brand(x,W);x.textBaseline='middle';x.textAlign='left';
     const dt=new Date(g.startTimeUTC);const dstr=dt.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'}).replace(/^\w/,c=>c.toUpperCase());
-    x.save();x.textAlign='center';x.font='56px Anton';x.fillStyle='#fff';x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=20;x.fillText($('mtitle').value.toUpperCase(),540,150);x.restore();
-    x.textAlign='center';x.font='600 22px "Inter Tight"';const dw=x.measureText(dstr.toUpperCase()).width+30;x.fillStyle='rgba(255,255,255,.07)';roundRect(x,540-dw/2,186,dw,34,8);x.fill();x.fillStyle='#c9c9de';x.fillText(dstr.toUpperCase(),540,203);
+    x.save();x.textAlign='center';x.font='56px Anton';x.fillStyle='#fff';x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=20;x.fillText($('mtitle').value.toUpperCase(),540,100);x.restore();
+    x.textAlign='center';x.font='600 22px "Inter Tight"';const dw=x.measureText(dstr.toUpperCase()).width+30;x.fillStyle='rgba(255,255,255,.07)';roundRect(x,540-dw/2,138,dw,34,8);x.fill();x.fillStyle='#c9c9de';x.fillText(dstr.toUpperCase(),540,155);
     /* logos */
     const logoCy=L.scoreY+30;const drawL=(ab,cx)=>{const lb=match.logos[ab];if(!lb)return 0;const r=Math.min(270/lb.width,270/lb.height);x.save();x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=30;x.shadowOffsetY=10;x.drawImage(lb,cx-lb.width*r/2,logoCy-lb.height*r/2,lb.width*r,lb.height*r);x.restore();return lb.height*r;};
     const hA_=drawL(A.abbrev,240),hB_=drawL(B.abbrev,840);
@@ -819,9 +819,9 @@
     brand(x,W);x.textBaseline='middle';x.textAlign='left';
     const fmtD=d=>{const [y,m,dd]=d.split('-');return `${+dd} ${['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+m-1]}`;};
     const sub=$('tsub').value.trim()||(top5.from?`Du ${fmtD(top5.from)} au ${fmtD(top5.to)} · ${rows[0]?rows[0].label:''}`:'');
-    titleBlock(x,W,$('ttitle').value.toUpperCase(),sub,175,rows[0]?teamCol(rows[0].ab):'#FF2D55');
+    titleBlock(x,W,$('ttitle').value.toUpperCase(),sub,118,rows[0]?teamCol(rows[0].ab):'#FF2D55');
     if(!rows.length){x.fillStyle='#3c3c5c';x.font='600 36px "Inter Tight"';x.fillText('Charge un classement',540,H/2);return;}
-    const N=rows.length;const top0=300,bottom=H-64;
+    const N=rows.length;const top0=240,bottom=H-64;
     const two=N>5;const cols=two?2:1;const per=Math.ceil(N/cols);const rowH=(bottom-top0)/per;
     const colW=two?(W-128-40)/2:W-128;const R=Math.min(two?(sq?40:56):(sq?52:66),rowH/2-12);
     rows.forEach((o,i)=>{const c=two?Math.floor(i/per):0;const r=two?i%per:i;const x0=64+c*(colW+40);const cy=top0+rowH*r+rowH/2;const col=teamCol(o.ab);const first=i===0;
@@ -914,10 +914,10 @@
     texture(x,W,H);frame(x,W,H,rows[0]?teamCol(rows[0].ab):'#FF2D55','#BF5AF2');
     brand(x,W);x.textBaseline='middle';x.textAlign='left';
     const title=($('ltitle').value.trim()||lead.title||'LEADERS').toUpperCase();let tf=76;x.font=`${tf}px Anton`;while(x.measureText(title).width>W-128&&tf>40){tf-=4;x.font=`${tf}px Anton`;}
-    const se=lead.season||$('lseason').value;titleBlock(x,W,title,`Saison ${se.slice(0,4)}-${se.slice(6,8)} · ${$('ltype').value==='3'?'Séries':'Saison régulière'}${$('lteam').value?' · '+($('lteam').selectedOptions[0].textContent):''}`,168,rows[0]?teamCol(rows[0].ab):'#FF2D55');
+    const se=lead.season||$('lseason').value;titleBlock(x,W,title,`Saison ${se.slice(0,4)}-${se.slice(6,8)} · ${$('ltype').value==='3'?'Séries':'Saison régulière'}${$('lteam').value?' · '+($('lteam').selectedOptions[0].textContent):''}`,118,rows[0]?teamCol(rows[0].ab):'#FF2D55');
     if(!rows.length){x.fillStyle='#3c3c5c';x.font='600 36px "Inter Tight"';x.fillText('Charge un classement',540,H/2);return;}
     /* podium */
-    const R1=sq?105:130,R2=sq?78:96;const py=sq?280:300;
+    const R1=sq?110:140,R2=sq?82:104;const py=sq?230:245;
     const pod=[[rows[0],540,py+R1,R1,1],[rows[1],200,py+R1+50,R2,2],[rows[2],880,py+R1+50,R2,3]].filter(p=>p[0]);
     pod.forEach(([o,cx,cy,R,rank])=>{const col=teamCol(o.ab);circlePhoto(x,o,cx,cy,R,col,rank,false);
       const nm=o.name.toUpperCase();let f=rank===1?50:34;x.font=`${f}px Anton`;while(x.measureText(nm).width>(rank===1?440:300)&&f>22){f-=2;x.font=`${f}px Anton`;}
@@ -933,7 +933,7 @@
     /* liste 4-10 */
     const rest=rows.slice(3);
     if(rest.length){
-      const top0=py+R1*2+(sq?180:236),bottom=H-56;const per=Math.ceil(rest.length/2);const rowH=Math.min(132,(bottom-top0)/per);const colW=(W-128-32)/2;const R=Math.min(sq?34:50,rowH/2-8);
+      const top0=py+R1*2+(sq?180:236),bottom=H-64;const per=Math.ceil(rest.length/2);const rowH=Math.min(132,(bottom-top0)/per);const colW=(W-128-32)/2;const R=Math.min(sq?34:50,rowH/2-8);
       const listTop=top0+((bottom-top0)-rowH*per)/2;
       x.fillStyle='rgba(255,255,255,.12)';x.fillRect(539,listTop+6,2,rowH*per-12);
       rest.forEach((o,i)=>{const c=Math.floor(i/per),r=i%per;const x0=64+c*(colW+32);const cy=listTop+rowH*r+rowH/2;const col=teamCol(o.ab);
@@ -1015,10 +1015,10 @@
     texture(x,W,H);frame(x,W,H,'#FBBF24','#FF2D55');
     brand(x,W);x.textBaseline='middle';x.textAlign='left';
     const title=$('xtitle').value.toUpperCase();let tf=80;x.font=`${tf}px Anton`;while(x.measureText(title).width>W-128&&tf>40){tf-=4;x.font=`${tf}px Anton`;}
-    const cat=$('xcat').value;const comp=$('xgt').value==='3'?'en séries éliminatoires':'en saison régulière';titleBlock(x,W,title,(cat?xlabel(cat)+' · ':'')+($('xmode').value==='done'?'Caps atteints · carrière '+comp:'Carrière '+comp),170,'#FBBF24');
+    const cat=$('xcat').value;const comp=$('xgt').value==='3'?'en séries éliminatoires':'en saison régulière';titleBlock(x,W,title,(cat?xlabel(cat)+' · ':'')+($('xmode').value==='done'?'Caps atteints · carrière '+comp:'Carrière '+comp),118,'#FBBF24');
     const rows=mile.rows;
     if(!rows.length){x.fillStyle='#3c3c5c';x.font='600 36px "Inter Tight"';x.fillText('Charge les milestones',540,H/2);return;}
-    const top0=300,bottom=H-64;const rowH=(bottom-top0)/rows.length;const R=Math.min(sq?52:72,rowH/2-16);
+    const top0=240,bottom=H-64;const rowH=(bottom-top0)/rows.length;const R=Math.min(sq?52:72,rowH/2-16);
     rows.forEach((o,i)=>{const cy=top0+rowH*i+rowH/2;const col=teamCol(o.ab);
       x.fillStyle='rgba(255,255,255,.04)';x.fillRect(64,cy-rowH/2+6,W-128,rowH-12);
       circlePhoto(x,o,64+20+R,cy,R,col,null,false);
