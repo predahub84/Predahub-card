@@ -143,7 +143,7 @@
     <label>Match</label><select id="mgame"><option value="">— choisis une date puis charge —</option></select>
     <div id="mstate" style="font-size:12px;color:#FBBF24"></div>
     <label>Titre</label><input id="mtitle" value="RÉCAP DU MATCH">
-    <input id="mbottom" type="hidden" value="all">
+    <label>Bas de card</label><select id="mbottom"><option value="stars">3 étoiles du match</option><option value="goals">Buteurs et passes</option></select>
     <label>Format</label>
     <select id="mfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
     <button id="mdl">Télécharger en PNG</button>
@@ -563,47 +563,47 @@
     let y=L.statsY;
     const num=v=>{if(typeof v==='number')return v;const m=String(v).match(/^(\d+)\/(\d+)/);if(m)return +m[1];return parseFloat(String(v))||0;};
     rows.forEach(r=>{const av=r[1].awayValue,hv=r[1].homeValue;const a=r[2](av),b=r[2](hv);const na=num(av),nb=num(hv);
-      x.textAlign='center';x.textBaseline='middle';x.font='600 21px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(r[0],540,y-2);
-      x.font='50px Anton';x.textAlign='left';x.fillStyle=na>nb?'#FBBF24':'#e6e6f2';x.fillText(String(a),64,y);
+      x.textAlign='center';x.textBaseline='middle';x.font='600 22px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(r[0],540,y-2);
+      x.font='56px Anton';x.textAlign='left';x.fillStyle=na>nb?'#FBBF24':'#e6e6f2';x.fillText(String(a),64,y);
       x.textAlign='right';x.fillStyle=nb>na?'#FBBF24':'#e6e6f2';x.fillText(String(b),W-64,y);
-      const tot=na+nb||1,bw=W-128-2*150,bx=64+150,by=y+26;x.fillStyle='rgba(255,255,255,.08)';x.fillRect(bx,by,bw,7);
-      const wa=Math.round(bw*na/tot);x.fillStyle=cA;x.fillRect(bx,by,wa,7);x.fillStyle=cB;x.fillRect(bx+wa+4,by,Math.max(0,bw-wa-4),7);
-      y+=58;});
-    /* 3 étoiles, en ligne compacte */
+      const tot=na+nb||1,bw=W-128-2*150,bx=64+150,by=y+30;x.fillStyle='rgba(255,255,255,.08)';x.fillRect(bx,by,bw,8);
+      const wa=Math.round(bw*na/tot);x.fillStyle=cA;x.fillRect(bx,by,wa,8);x.fillStyle=cB;x.fillRect(bx+wa+4,by,Math.max(0,bw-wa-4),8);
+      y+=sq?64:66;});
+    /* 3 étoiles, grand format */
     const stars=match.stars||[];
-    if(stars.length){
-      y+=14;x.textAlign='center';x.font='600 21px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('LES 3 ÉTOILES',540,y);y+=22;
-      const R=48;const bx0=64,bwid=(W-128)/3;
-      stars.forEach((st,i)=>{const bx=bx0+bwid*i;const cx=bx+R+8,cy=y+R+6;const col=teamCol(st.teamAbbrev);
-        x.save();x.beginPath();x.arc(cx,cy,R+4,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.6);x.shadowBlur=20;x.fill();x.restore();
+    if(stars.length&&$('mbottom').value==='stars'){
+      y+=sq?6:16;x.textAlign='center';x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('LES 3 ÉTOILES DU MATCH',540,y);y+=26;
+      const R=sq?62:80;const cols=[270,540,810];
+      stars.forEach((st,i)=>{const cx=cols[i],cy=y+R+20;const col=teamCol(st.teamAbbrev);
+        x.save();x.beginPath();x.arc(cx,cy,R+6,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.6);x.shadowBlur=30;x.fill();x.restore();
         x.save();x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.clip();x.fillStyle='#14142b';x.fillRect(cx-R,cy-R,2*R,2*R);
         if(st.bmp){const sc=Math.max(2*R/st.bmp.width,2*R/st.bmp.height)*1.15;const w=st.bmp.width*sc,h=st.bmp.height*sc;x.drawImage(st.bmp,cx-w/2,cy-R+R*.05,w,h);}x.restore();
-        x.beginPath();x.arc(cx-R+10,cy-R+10,16,0,Math.PI*2);x.fillStyle='#FBBF24';x.fill();x.fillStyle='#050510';x.font='20px Anton';x.textAlign='center';x.fillText(String(st.star||i+1),cx-R+10,cy-R+11);
-        const tx=cx+R+16,tw=bwid-(2*R+40);const nm=((st.name&&st.name.default)||'').toUpperCase();let f=30;x.font=`${f}px Anton`;while(x.measureText(nm).width>tw&&f>18){f-=2;x.font=`${f}px Anton`;}
-        x.textAlign='left';x.fillStyle='#fff';x.fillText(nm,tx,cy-14);
+        x.beginPath();x.arc(cx-R+14,cy-R+14,22,0,Math.PI*2);x.fillStyle='#FBBF24';x.fill();x.fillStyle='#050510';x.font='26px Anton';x.textAlign='center';x.fillText(String(st.star||i+1),cx-R+14,cy-R+15);
+        const nm=((st.name&&st.name.default)||'').toUpperCase();let f=34;x.font=`${f}px Anton`;while(x.measureText(nm).width>250&&f>22){f-=2;x.font=`${f}px Anton`;}
+        x.fillStyle='#fff';x.fillText(nm,cx,cy+R+38);
         const line=st.position==='G'?`${st.savePctg!=null?(st.savePctg.toFixed(3).replace(/^0/,''))+' · ':''}${st.goalsAgainst!=null?st.goalsAgainst+' BC':''}`:`${st.goals??0} B · ${st.assists??0} P · ${st.points??0} PTS`;
-        x.font='600 19px "Inter Tight"';x.fillStyle=col;x.fillText(st.teamAbbrev+' · '+line,tx,cy+16);});
-      y+=2*R+24;
+        x.font='600 24px "Inter Tight"';x.fillStyle=col;x.fillText(st.teamAbbrev+'  ·  '+line,cx,cy+R+72);});
+      y+=2*R+110;
     }
     /* buteurs + passes */
     const per=(match.land&&match.land.summary&&match.land.summary.scoring)||[];
     const ab=v=>v&&typeof v==='object'?(v.default||''):(v||'');
     const all=[];per.forEach(pd=>(pd.goals||[]).forEach(o=>all.push({...o,period:pd.periodDescriptor?pd.periodDescriptor.number:'',ptype:pd.periodDescriptor?pd.periodDescriptor.periodType:''})));
     const src=(all.length?all:(g.goals||[])).map(o=>({...o,teamAbbrev:ab(o.teamAbbrev)}));
-    if(src.length&&L.foot-y>90){
-      y+=14;x.textAlign='center';x.font='600 21px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('BUTEURS ET PASSES',540,y);y+=30;
+    if(src.length&&$('mbottom').value==='goals'){
+      y+=16;x.textAlign='center';x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('BUTEURS ET PASSES',540,y);y+=36;
       const nameOf=o=>ab(o.name)||((ab(o.firstName)?ab(o.firstName)[0]+'. ':'')+ab(o.lastName));
       const per0=o=>o.ptype==='OT'?'PROL.':o.ptype==='SO'?'T.B.':'P'+o.period;
       const ga=src.filter(o=>o.teamAbbrev===A.abbrev),gb=src.filter(o=>o.teamAbbrev===B.abbrev);
-      const rowH=46;const maxN=Math.max(1,Math.floor((L.foot-26-y)/rowH));
+      const rowH=54;const maxN=Math.max(1,Math.floor((L.foot-26-y)/rowH));
       const drawSide=(list,left,col)=>{const shown=list.length>maxN?maxN-1:list.length;
         list.slice(0,shown).forEach((o,i)=>{const yy=y+i*rowH;x.textAlign=left?'left':'right';const xx=left?64:W-64;
-          x.font='700 24px "Inter Tight"';x.fillStyle='#fff';x.fillText(`${nameOf(o)}${o.goalsToDate?' ('+o.goalsToDate+')':''}`,xx,yy);
+          x.font='700 27px "Inter Tight"';x.fillStyle='#fff';x.fillText(`${nameOf(o)}${o.goalsToDate?' ('+o.goalsToDate+')':''}`,xx,yy);
           const as=(o.assists||[]).map(a=>ab(a.name)||ab(a.lastName)).filter(Boolean);
           const meta=`${per0(o)} ${o.timeInPeriod||''}${o.strength&&o.strength!=='ev'?' · '+o.strength.toUpperCase():''}`;const at=as.length?'  ·  '+as.join(', '):'  ·  sans aide';
-          x.font='500 19px "Inter Tight"';const mw=x.measureText(meta).width;
-          if(left){x.fillStyle=col;x.fillText(meta,xx,yy+22);x.fillStyle='#8a8aa3';x.fillText(at,xx+mw,yy+22);}
-          else{x.fillStyle='#8a8aa3';x.fillText(at,xx,yy+22);x.fillStyle=col;x.fillText(meta,xx-x.measureText(at).width,yy+22);}});
+          x.font='500 21px "Inter Tight"';const mw=x.measureText(meta).width;
+          if(left){x.fillStyle=col;x.fillText(meta,xx,yy+26);x.fillStyle='#8a8aa3';x.fillText(at,xx+mw,yy+26);}
+          else{x.fillStyle='#8a8aa3';x.fillText(at,xx,yy+26);x.fillStyle=col;x.fillText(meta,xx-x.measureText(at).width,yy+26);}});
         if(list.length>shown){x.font='500 19px "Inter Tight"';x.fillStyle='#8a8aa3';x.textAlign=left?'left':'right';x.fillText(`+ ${list.length-shown} autre(s) but(s)`,left?64:W-64,y+shown*rowH);}};
       drawSide(ga,true,cA);drawSide(gb,false,cB);
     }
