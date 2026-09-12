@@ -562,28 +562,33 @@
     const rows=$('mbottom').value==='stats'?allRows.slice(0,sq?4:6):[];
     let y=L.statsY;
     const num=v=>{if(typeof v==='number')return v;const m=String(v).match(/^(\d+)\/(\d+)/);if(m)return +m[1];return parseFloat(String(v))||0;};
-    rows.forEach(r=>{const av=r[1].awayValue,hv=r[1].homeValue;const a=r[2](av),b=r[2](hv);const na=num(av),nb=num(hv);
-      x.textAlign='center';x.textBaseline='middle';x.font='600 22px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(r[0],540,y-2);
-      x.font='64px Anton';x.textAlign='left';x.fillStyle=na>nb?'#FBBF24':'#e6e6f2';x.fillText(String(a),64,y);
-      x.textAlign='right';x.fillStyle=nb>na?'#FBBF24':'#e6e6f2';x.fillText(String(b),W-64,y);
-      const tot=na+nb||1,bw=W-128-2*150,bx=64+150,by=y+36;x.fillStyle='rgba(255,255,255,.08)';x.fillRect(bx,by,bw,8);
-      const wa=Math.round(bw*na/tot);x.fillStyle=cA;x.fillRect(bx,by,wa,8);x.fillStyle=cB;x.fillRect(bx+wa+4,by,Math.max(0,bw-wa-4),8);
-      y+=sq?84:96;});
+    if(rows.length){
+      const avail=L.foot-40-L.statsY;const step=avail/rows.length;y=L.statsY+step/2-10;
+      rows.forEach(r=>{const av=r[1].awayValue,hv=r[1].homeValue;const a=r[2](av),b=r[2](hv);const na=num(av),nb=num(hv);
+        x.textAlign='center';x.textBaseline='middle';x.font='600 24px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(r[0],540,y-4);
+        x.font='76px Anton';x.textAlign='left';x.fillStyle=na>nb?'#FBBF24':'#e6e6f2';x.fillText(String(a),64,y);
+        x.textAlign='right';x.fillStyle=nb>na?'#FBBF24':'#e6e6f2';x.fillText(String(b),W-64,y);
+        const tot=na+nb||1,bw=W-128-2*190,bx=64+190,by=y+40;x.fillStyle='rgba(255,255,255,.08)';x.fillRect(bx,by,bw,10);
+        const wa=Math.round(bw*na/tot);x.fillStyle=cA;x.fillRect(bx,by,wa,10);x.fillStyle=cB;x.fillRect(bx+wa+4,by,Math.max(0,bw-wa-4),10);
+        y+=step;});
+    }
     /* 3 étoiles, grand format */
     const stars=match.stars||[];
     if(stars.length&&$('mbottom').value==='stars'){
-      y+=10;x.textAlign='center';x.font='600 26px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('LES 3 ÉTOILES DU MATCH',540,y);y+=40;
-      const R=sq?90:120;const cols=[270,540,810];
-      stars.forEach((st,i)=>{const cx=cols[i],cy=y+R+20;const col=teamCol(st.teamAbbrev);
-        x.save();x.beginPath();x.arc(cx,cy,R+6,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.6);x.shadowBlur=30;x.fill();x.restore();
+      const R=sq?100:140;const avail=L.foot-30-L.statsY;const blockH=40+2*R+150;let yy=L.statsY+Math.max(0,(avail-blockH)/2);
+      x.textAlign='center';x.textBaseline='middle';x.font='600 28px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('LES 3 ÉTOILES DU MATCH',540,yy);yy+=40;
+      const cols=[200,540,880];
+      stars.forEach((st,i)=>{const cx=cols[i],cy=yy+R+20;const col=teamCol(st.teamAbbrev);
+        x.save();x.beginPath();x.arc(cx,cy,R+7,0,Math.PI*2);x.fillStyle=col;x.shadowColor=hexA(col,.6);x.shadowBlur=36;x.fill();x.restore();
         x.save();x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.clip();x.fillStyle='#14142b';x.fillRect(cx-R,cy-R,2*R,2*R);
         if(st.bmp){const sc=Math.max(2*R/st.bmp.width,2*R/st.bmp.height)*1.15;const w=st.bmp.width*sc,h=st.bmp.height*sc;x.drawImage(st.bmp,cx-w/2,cy-R+R*.05,w,h);}x.restore();
-        x.beginPath();x.arc(cx-R+14,cy-R+14,22,0,Math.PI*2);x.fillStyle='#FBBF24';x.fill();x.fillStyle='#050510';x.font='26px Anton';x.textAlign='center';x.fillText(String(st.star||i+1),cx-R+14,cy-R+15);
-        const nm=((st.name&&st.name.default)||'').toUpperCase();let f=40;x.font=`${f}px Anton`;while(x.measureText(nm).width>290&&f>22){f-=2;x.font=`${f}px Anton`;}
-        x.fillStyle='#fff';x.fillText(nm,cx,cy+R+50);
-        const line=st.position==='G'?`${st.savePctg!=null?(st.savePctg.toFixed(3).replace(/^0/,''))+' · ':''}${st.goalsAgainst!=null?st.goalsAgainst+' BC':''}`:`${st.goals??0} B · ${st.assists??0} P · ${st.points??0} PTS`;
-        x.font='600 26px "Inter Tight"';x.fillStyle=col;x.fillText(st.teamAbbrev+'  ·  '+line,cx,cy+R+90);});
-      y+=2*R+130;
+        x.beginPath();x.arc(cx-R+18,cy-R+18,26,0,Math.PI*2);x.fillStyle='#FBBF24';x.fill();x.fillStyle='#050510';x.font='30px Anton';x.textAlign='center';x.fillText(String(st.star||i+1),cx-R+18,cy-R+19);
+        const nm=((st.name&&st.name.default)||'').toUpperCase();let f=46;x.font=`${f}px Anton`;while(x.measureText(nm).width>320&&f>24){f-=2;x.font=`${f}px Anton`;}
+        x.fillStyle='#fff';x.fillText(nm,cx,cy+R+52);
+        const line=st.position==='G'?`${st.savePctg!=null?(st.savePctg.toFixed(3).replace(/^0/,'')):''}${st.goalsAgainst!=null?' · '+st.goalsAgainst+' BC':''}`:`${st.goals??0} B · ${st.assists??0} P · ${st.points??0} PTS`;
+        let f2=28;x.font=`600 ${f2}px "Inter Tight"`;while(x.measureText(line).width>320&&f2>18){f2-=2;x.font=`600 ${f2}px "Inter Tight"`;}
+        x.fillStyle=col;x.fillText(line,cx,cy+R+96);
+        x.font='600 22px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(st.teamAbbrev,cx,cy+R+130);});
     }
     /* buteurs + passes */
     const per=(match.land&&match.land.summary&&match.land.summary.scoring)||[];
@@ -591,20 +596,23 @@
     const all=[];per.forEach(pd=>(pd.goals||[]).forEach(o=>all.push({...o,period:pd.periodDescriptor?pd.periodDescriptor.number:'',ptype:pd.periodDescriptor?pd.periodDescriptor.periodType:''})));
     const src=(all.length?all:(g.goals||[])).map(o=>({...o,teamAbbrev:ab(o.teamAbbrev)}));
     if(src.length&&$('mbottom').value==='goals'){
-      y+=16;x.textAlign='center';x.font='600 26px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('BUTEURS ET PASSES',540,y);y+=44;
       const nameOf=o=>ab(o.name)||((ab(o.firstName)?ab(o.firstName)[0]+'. ':'')+ab(o.lastName));
       const per0=o=>o.ptype==='OT'?'PROL.':o.ptype==='SO'?'T.B.':'P'+o.period;
       const ga=src.filter(o=>o.teamAbbrev===A.abbrev),gb=src.filter(o=>o.teamAbbrev===B.abbrev);
-      const rowH=64;const maxN=Math.max(1,Math.floor((L.foot-26-y)/rowH));
+      const n=Math.max(ga.length,gb.length);const avail=L.foot-40-L.statsY-70;
+      const rowH=Math.max(56,Math.min(104,avail/n));const maxN=Math.floor(avail/rowH);
+      const shownN=Math.min(n,maxN);const blockH=70+shownN*rowH;let y0=L.statsY+Math.max(0,(avail+70-blockH)/2);
+      x.textAlign='center';x.textBaseline='middle';x.font='600 28px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText('BUTEURS ET PASSES',540,y0);y0+=70;
+      const big=rowH>=90;const f1=big?36:big?32:30,f2=big?26:22;
       const drawSide=(list,left,col)=>{const shown=list.length>maxN?maxN-1:list.length;
-        list.slice(0,shown).forEach((o,i)=>{const yy=y+i*rowH;x.textAlign=left?'left':'right';const xx=left?64:W-64;
-          x.font='700 30px "Inter Tight"';x.fillStyle='#fff';x.fillText(`${nameOf(o)}${o.goalsToDate?' ('+o.goalsToDate+')':''}`,xx,yy);
+        list.slice(0,shown).forEach((o,i)=>{const yy=y0+i*rowH;x.textAlign=left?'left':'right';const xx=left?64:W-64;
+          x.font=`700 ${f1}px "Inter Tight"`;x.fillStyle='#fff';x.fillText(`${nameOf(o)}${o.goalsToDate?' ('+o.goalsToDate+')':''}`,xx,yy);
           const as=(o.assists||[]).map(a=>ab(a.name)||ab(a.lastName)).filter(Boolean);
           const meta=`${per0(o)} ${o.timeInPeriod||''}${o.strength&&o.strength!=='ev'?' · '+o.strength.toUpperCase():''}`;const at=as.length?'  ·  '+as.join(', '):'  ·  sans aide';
-          x.font='500 23px "Inter Tight"';const mw=x.measureText(meta).width;
-          if(left){x.fillStyle=col;x.fillText(meta,xx,yy+30);x.fillStyle='#8a8aa3';x.fillText(at,xx+mw,yy+30);}
-          else{x.fillStyle='#8a8aa3';x.fillText(at,xx,yy+30);x.fillStyle=col;x.fillText(meta,xx-x.measureText(at).width,yy+30);}});
-        if(list.length>shown){x.font='500 19px "Inter Tight"';x.fillStyle='#8a8aa3';x.textAlign=left?'left':'right';x.fillText(`+ ${list.length-shown} autre(s) but(s)`,left?64:W-64,y+shown*rowH);}};
+          x.font=`500 ${f2}px "Inter Tight"`;const mw=x.measureText(meta).width;const dy=f1*.55+f2*.6;
+          if(left){x.fillStyle=col;x.fillText(meta,xx,yy+dy);x.fillStyle='#8a8aa3';x.fillText(at,xx+mw,yy+dy);}
+          else{x.fillStyle='#8a8aa3';x.fillText(at,xx,yy+dy);x.fillStyle=col;x.fillText(meta,xx-x.measureText(at).width,yy+dy);}});
+        if(list.length>shown){x.font=`500 ${f2}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.textAlign=left?'left':'right';x.fillText(`+ ${list.length-shown} autre(s) but(s)`,left?64:W-64,y0+shown*rowH);}};
       drawSide(ga,true,cA);drawSide(gb,false,cB);
     }
     x.textAlign='left';x.font='500 22px "Inter Tight"';x.fillStyle='#6a6a8a';x.fillText('Source : NHL',64,L.foot);x.textAlign='right';x.fillText('@predahub',W-64,L.foot);
