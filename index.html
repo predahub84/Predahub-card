@@ -998,8 +998,8 @@
       const nx=64+40+2*R+16;
       const nm=o.name.toUpperCase();let f=Math.min(48,rowH*.3);x.font=`${f}px Anton`;while(x.measureText(nm).width>420&&f>22){f-=2;x.font=`${f}px Anton`;}
       x.textAlign='left';x.fillStyle='#fff';x.fillText(nm,nx,cy-rowH*.18);
-      let lw=0,lh=0;if(o.logo){const lz=Math.min(40,rowH*.25);const rr=Math.min(lz/o.logo.width,lz/o.logo.height);lw=o.logo.width*rr;lh=o.logo.height*rr;x.drawImage(o.logo,nx,cy+rowH*.08-lh/2,lw,lh);}
-      x.font=`600 ${Math.min(22,rowH*.14)}px "Inter Tight"`;x.fillStyle=col;x.fillText(`${o.ab}${o.pos?' · '+o.pos:''}${o.num?' · N° '+o.num:''}`,nx+(lw?lw+10:0),cy+rowH*.08);
+      let lw=0,lh=0;if(o.logo){const lz=Math.min(56,rowH*.32);const rr=Math.min(lz/o.logo.width,lz/o.logo.height);lw=o.logo.width*rr;lh=o.logo.height*rr;x.drawImage(o.logo,nx,cy+rowH*.08-lh/2,lw,lh);}
+      x.font=`700 ${Math.min(30,rowH*.19)}px "Inter Tight"`;x.fillStyle=col;x.fillText(`${o.ab}${o.pos?' · '+o.pos:''}${o.num?' · N° '+o.num:''}`,nx+(lw?lw+14:0),cy+rowH*.08);
       /* barre de progression */
       const bx=nx,bw=420,by=cy+rowH*.3;const cur=o.cur??((o.amt??0)-(o.rem??0));const amt=o.amt??cur+(o.rem??0);const pct=amt?Math.max(0,Math.min(1,cur/amt)):0;
       x.fillStyle='rgba(255,255,255,.1)';x.fillRect(bx,by-4,bw,8);x.fillStyle=col;x.fillRect(bx,by-4,Math.round(bw*pct),8);
