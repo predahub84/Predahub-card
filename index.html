@@ -36,6 +36,12 @@
   .secbtn{background:#1c1c33!important;color:#c9c9de!important}
   .jump{position:fixed;right:14px;bottom:14px;z-index:20;width:auto;padding:10px 14px;border-radius:999px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
   .app{padding:12px}
+  @media (min-width:900px){
+    .app{height:100vh;box-sizing:border-box;align-items:flex-start;flex-wrap:nowrap;justify-content:center;gap:28px}
+    .panel{max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;flex:0 0 440px}
+    .preview{position:sticky;top:12px;flex:0 0 auto}
+    .jump{display:none}
+  }
   .preview{position:relative}
   .scaler{transform-origin:top left}
 
