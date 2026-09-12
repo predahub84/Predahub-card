@@ -20,6 +20,10 @@
   .tabs button.on{background:linear-gradient(90deg,#FF2D55,#BF5AF2);color:#fff;border-color:transparent}
   .hide{display:none!important}
   #duelcv,#matchcv,#topcv,#leadcv,#milecv{width:100%;height:auto;display:block;border-radius:4px}
+  .checklist{max-height:260px;overflow:auto;border:1px solid #23234a;border-radius:8px;background:#0e0e22}
+  .checklist label{display:flex;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid #1c1c33;margin:0;font-size:14px;color:#fff;cursor:pointer}
+  .checklist label input{width:auto;accent-color:#BF5AF2}
+  .checklist label small{color:#8a8aa3;margin-left:auto;white-space:nowrap}
   .results{display:flex;flex-direction:column;gap:4px}
   .results button{margin:0;padding:9px 10px;text-align:left;background:#12122a;border:1px solid #23234a;color:#fff;font-weight:500;font-size:14px;border-radius:8px}
   .results button:hover{border-color:#BF5AF2}
@@ -201,6 +205,8 @@
     <label>Cap minimum</label><select id="xmin"><option value="0">Tous les caps</option><option value="300">≥ 300</option><option value="500">≥ 500</option><option value="1000">≥ 1000</option></select>
     <button type="button" id="xload" style="margin-top:4px;background:#1c1c33;color:#c9c9de">Charger</button>
     <div id="xstate" style="font-size:12px;color:#FBBF24;word-break:break-all;user-select:all"></div>
+    <label>Joueurs à afficher (coche jusqu'à 8) <span id="xsel" style="color:#BF5AF2"></span></label>
+    <div id="xlist" class="checklist"></div>
     <label>Titre</label><input id="xtitle" value="MILESTONES EN VUE">
     <label>Format</label>
     <select id="xfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
@@ -942,14 +948,24 @@
       $('xstate').textContent='';await buildMile();
     }catch(e){$('xstate').textContent='Milestones indisponibles : '+e.message;renderMile();}
   }
+  mile.sel=new Set();
   async function buildMile(){
     const cat=$('xcat').value,team=$('xteam').value,N=+$('xcount').value;
     const mode=$('xmode').value,mx=+$('xmax').value,mn=+$('xmin').value;
-    let list=mile.raw.filter(o=>(!cat||o.cat===cat)&&(!team||o.ab===team)&&o.amt>=mn&&(mode==='done'?o.rem<=0:(o.rem>0&&o.rem<=mx))).sort((a,b)=>mode==='done'?(b.amt-a.amt):((a.rem-b.rem)||(b.amt-a.amt))).slice(0,N);
-    $('xstate').textContent=list.length?'Photos…':'Aucun joueur pour ce filtre.';
-    for(const o of list){if(!o.bmp){let hs=null;try{const rr=await fetch(`/api/nhl?path=player/${o.id}/landing`);if(rr.ok){const dd=await rr.json();hs=dd.headshot||null;if(!o.ab&&dd.currentTeamAbbrev)o.ab=dd.currentTeamAbbrev;if(!o.num)o.num=dd.sweaterNumber||'';if(o.cur==null&&dd.careerTotals&&dd.careerTotals.regularSeason){const ct=dd.careerTotals.regularSeason;o.cur=ct[o.cat]??o.cur;}}}catch(e){}
+    const cands=mile.raw.filter(o=>(!cat||o.cat===cat)&&(!team||o.ab===team)&&o.amt>=mn&&(mode==='done'?o.rem<=0:(o.rem>0&&o.rem<=mx))).sort((a,b)=>mode==='done'?(b.amt-a.amt):((a.rem-b.rem)||(b.amt-a.amt))).slice(0,80);
+    mile.cands=cands;mile.sel=new Set(cands.slice(0,N).map(o=>o.id+'|'+o.cat));
+    const box=$('xlist');box.innerHTML='';
+    if(!cands.length){$('xstate').textContent='Aucun joueur pour ce filtre.';mile.rows=[];renderMile();return;}
+    cands.forEach(o=>{const k=o.id+'|'+o.cat;const lab=document.createElement('label');const cb=document.createElement('input');cb.type='checkbox';cb.checked=mile.sel.has(k);
+      cb.addEventListener('change',()=>{if(cb.checked){if(mile.sel.size>=8){cb.checked=false;$('xstate').textContent='8 joueurs maximum.';return;}mile.sel.add(k);}else mile.sel.delete(k);$('xstate').textContent='';applyMileSel();});
+      lab.appendChild(cb);lab.appendChild(document.createTextNode(`${o.name} · ${o.ab}`));const sm=document.createElement('small');sm.textContent=`${o.cur}/${o.amt} ${xlabel(o.cat).toLowerCase()}${o.rem>0?' · -'+o.rem:''}`;lab.appendChild(sm);box.appendChild(lab);});
+    $('xstate').textContent='';await applyMileSel();
+  }
+  async function applyMileSel(){
+    const list=mile.cands.filter(o=>mile.sel.has(o.id+'|'+o.cat));$('xsel').textContent=`(${list.length})`;
+    for(const o of list){if(!o.bmp){let hs=null;try{const rr=await fetch(`/api/nhl?path=player/${o.id}/landing`);if(rr.ok){const dd=await rr.json();hs=dd.headshot||null;if(!o.ab&&dd.currentTeamAbbrev)o.ab=dd.currentTeamAbbrev;if(!o.num)o.num=dd.sweaterNumber||'';}}catch(e){}
       o.bmp=await loadBitmap(hs||`https://assets.nhle.com/mugs/nhl/${seasonId()}/${o.ab}/${o.id}.png`);o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.ab}_dark.svg`);}}
-    mile.rows=list;if(list.length)$('xstate').textContent='';renderMile();
+    mile.rows=list;renderMile();
   }
   let rx=null;function renderMile(){clearTimeout(rx);rx=setTimeout(drawMile,30);}
   async function drawMile(){
