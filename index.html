@@ -926,12 +926,14 @@
     const rem=remKey?+it[remKey]:(cat&&it[cat+'Remaining']!=null?+it[cat+'Remaining']:null);
     const amt=amtKey?+it[amtKey]:null;
     const cur=curKey?+it[curKey]:(amt!=null&&rem!=null?amt-rem:(it[cat]!=null?+it[cat]:null));
-    return {id:it.playerId||it.id,first:str(it.firstName),last:str(it.lastName)||str(it.name),name:str(it.name)||(str(it.firstName)+' '+str(it.lastName)).trim(),ab:str(it.teamAbbrev||it.currentTeamAbbrev||it.teamAbbrevs),pos:str(it.positionCode||it.position),cat,amt,rem,cur,num:it.sweaterNumber||''};
+    return {id:it.playerId||it.id,first:str(it.firstName),last:str(it.lastName)||str(it.name),name:str(it.name)||str(it.playerFullName)||str(it.skaterFullName)||str(it.goalieFullName)||(str(it.firstName)+' '+str(it.lastName)).trim(),ab:str(it.teamAbbrev||it.currentTeamAbbrev||it.teamAbbrevs||it.playerTeamsPlayedFor||'').split(',').pop().trim(),pos:str(it.positionCode||it.position),cat,amt,rem,cur,num:it.sweaterNumber||''};
   }
   async function loadMile(){
     $('xstate').textContent='Chargement…';mile.raw=[];mile.rows=[];
     try{
-      const r=await fetch(`/api/nhl?path=milestones/${$('xtype').value}`);if(!r.ok)throw new Error('http '+r.status);const d=await r.json();
+      let r=await fetch(`/api/nhl?path=stats:milestones/${$('xtype').value}`);
+      if(!r.ok)r=await fetch(`/api/nhl?path=milestones/${$('xtype').value}`);
+      if(!r.ok)throw new Error('http '+r.status);const d=await r.json();
       const arr=Array.isArray(d)?d:(d.milestones||d.data||d.skaters||d.goalies||[]);
       mile.raw=arr.map(normMile).filter(o=>o.amt!=null||o.rem!=null);
       if(!mile.raw.length){$('xstate').textContent='Format inattendu. Clés reçues : '+(arr[0]?Object.keys(arr[0]).join(', '):JSON.stringify(d).slice(0,120));renderMile();return;}
