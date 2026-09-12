@@ -88,7 +88,8 @@
   #card.square .stat .v{font-size:100px}
   .foot{position:absolute;left:64px;bottom:22px;font-size:21px;color:#8a8aa3;font-weight:500}
   .foot::before{content:'';position:absolute;left:0;right:-952px;top:-22px;height:1px;background:rgba(255,255,255,.1)}
-  .foot2{position:absolute;right:64px;bottom:22px;font-size:21px;color:#c9c9de;font-weight:600}
+  .foot2{position:absolute;right:64px;bottom:12px;font-size:34px;color:#fff}
+  .pill{font:600 18px 'Inter Tight',sans-serif;color:#c9c9de;padding:6px 14px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06)}
 </style>
 </head>
 <body>
@@ -232,7 +233,7 @@
         
         <div class="photo" id="cphoto"><div class="hint">Ajoute la photo du joueur</div></div>
         <div class="fade"></div>
-        <div class="top"><div class="brand">PREDA<span>HUB</span></div><div class="tr"><img class="logo" id="clogo" alt=""><div class="team" id="cteam" style="display:none">MTL</div></div></div>
+        <div class="top"><div class="pill">STATS NHL</div><div class="tr"><img class="logo" id="clogo" alt=""><div class="team" id="cteam" style="display:none">MTL</div></div></div>
         <div class="badge own" id="cbadgebox"><i id="cicon">🔥</i><span id="cbadge">EN FEU</span></div>
         <div class="name"><div class="first"><span id="cfirst">Cole</span></div><div class="last" id="clast">Caufield</div>
           <div class="club"><span id="cteamname">Montréal Canadiens</span><em>N° <span id="cnum">13</span></em><em id="cgp"></em></div></div>
@@ -243,7 +244,7 @@
           <div class="stat"><div class="v" id="cv3">22</div><div class="l" id="cl3">tirs</div></div>
         </div>
         <div class="foot" id="cfoot">Saison 2025-26 · saison régulière</div>
-        <div class="foot2">@predahub</div>
+        <div class="foot2 brand">PREDA<span>HUB</span></div>
       </div>
     </div>
   </div>
@@ -390,7 +391,7 @@
       /* fondu bas */
       g=x.createLinearGradient(0,H*.48,0,H);g.addColorStop(0,'rgba(5,5,16,0)');g.addColorStop(.4,'rgba(5,5,16,.78)');g.addColorStop(.78,'#050510');x.fillStyle=g;x.fillRect(0,H*.48,W,H*.52);
       /* marque + logo */
-      x.font='42px Anton';x.textBaseline='middle';x.fillStyle='#fff';x.fillText('PREDA',64,44+75);x.fillStyle='#FF2D55';x.fillText('HUB',64+x.measureText('PREDA').width,44+75);
+
       const lg=$('clogo');if(lg&&lg.src&&lg.style.display!=='none'){const lb=await loadBitmap(lg.src);if(lb){x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=20;x.shadowOffsetY=6;const r=Math.min(150/lb.width,150/lb.height);const w=lb.width*r,h=lb.height*r;x.drawImage(lb,W-64-75-w/2,44+75-h/2,w,h);x.restore();}}
       /* badge */
       const bTxt=$('cbadge').textContent,bIco=$('cicon').textContent;
@@ -483,8 +484,8 @@
     let g=x.createLinearGradient(0,0,W,0);g.addColorStop(0,c1);g.addColorStop(1,c2);x.fillStyle=g;x.fillRect(0,0,W,8);
     x.save();x.globalAlpha=.16;x.translate(W,0);x.rotate(-Math.PI/5);x.fillStyle=c1;x.fillRect(-60,-40,46,900);x.fillStyle=c2;x.fillRect(-130,-40,26,900);x.restore();
     x.save();x.globalAlpha=.12;x.translate(0,H);x.rotate(-Math.PI/5);x.fillStyle=c2;x.fillRect(-40,-40,36,700);x.restore();}
-  function brand(x,W){x.save();x.textBaseline='middle';x.textAlign='left';x.font='44px Anton';x.fillStyle='#fff';x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=12;x.fillText('PREDA',64,80);x.fillStyle='#FF2D55';x.fillText('HUB',64+x.measureText('PREDA').width,80);x.restore();
-    x.save();x.textBaseline='middle';x.textAlign='right';x.font='600 18px "Inter Tight"';const t='STATS NHL';const w=x.measureText(t).width+28;x.fillStyle='rgba(255,255,255,.06)';x.fillRect(W-64-w,66,w,30);x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=1;x.strokeRect(W-64-w+.5,66.5,w-1,29);x.fillStyle='#c9c9de';x.fillText(t,W-64-14,81);x.restore();}
+  function brand(x,W){x.save();x.textBaseline='middle';x.textAlign='left';x.font='600 18px "Inter Tight"';const t='STATS NHL';const w=x.measureText(t).width+28;x.fillStyle='rgba(255,255,255,.06)';x.fillRect(64,66,w,30);x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=1;x.strokeRect(64.5,66.5,w-1,29);x.fillStyle='#c9c9de';x.fillText(t,64+14,81);x.restore();}
+  function wordmark(x,X,Y,size,align){x.save();x.textBaseline='middle';x.font=`${size}px Anton`;const w1=x.measureText('PREDA').width,w2=x.measureText('HUB').width;const sx=align==='right'?X-w1-w2:X;x.textAlign='left';x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=10;x.fillStyle='#fff';x.fillText('PREDA',sx,Y);x.fillStyle='#FF2D55';x.fillText('HUB',sx+w1,Y);x.restore();}
   function titleBlock(x,W,title,sub,y,accent){x.save();x.textAlign='center';x.textBaseline='middle';let tf=80;x.font=`${tf}px Anton`;while(x.measureText(title).width>W-128&&tf>40){tf-=4;x.font=`${tf}px Anton`;}
     x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=24;x.fillStyle='#fff';x.fillText(title,W/2,y);x.shadowBlur=0;
     let yy=y+tf*.5+8;
@@ -492,7 +493,7 @@
     let g=x.createLinearGradient(W/2-70,0,W/2+70,0);g.addColorStop(0,accent||'#FF2D55');g.addColorStop(1,'#BF5AF2');x.fillStyle=g;x.fillRect(W/2-70,yy+6,140,5);x.restore();return yy+11;}
   function sectionTitle(x,W,y,text,accent){x.save();x.textAlign='center';x.textBaseline='middle';x.font='700 24px "Inter Tight"';const tw=x.measureText(text).width;const g1=x.createLinearGradient(64,0,540-tw/2-24,0);g1.addColorStop(0,'rgba(255,255,255,0)');g1.addColorStop(1,accent||'#FBBF24');x.fillStyle=g1;x.fillRect(64,y-1,540-tw/2-24-64,2);const g2=x.createLinearGradient(540+tw/2+24,0,W-64,0);g2.addColorStop(0,accent||'#FBBF24');g2.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g2;x.fillRect(540+tw/2+24,y-1,W-64-(540+tw/2+24),2);x.fillStyle='#fff';x.fillText(text,540,y);x.restore();}
   function roundRect(x,X,Y,Wd,Ht,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+Wd,Y,X+Wd,Y+Ht,r);x.arcTo(X+Wd,Y+Ht,X,Y+Ht,r);x.arcTo(X,Y+Ht,X,Y,r);x.arcTo(X,Y,X+Wd,Y,r);x.closePath();}
-  function footer(x,W,H,left){x.save();x.fillStyle='rgba(255,255,255,.1)';x.fillRect(64,H-58,W-128,1);x.textBaseline='middle';x.textAlign='left';x.font='500 21px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(left||'Source : NHL',64,H-30);x.textAlign='right';x.font='600 21px "Inter Tight"';x.fillStyle='#c9c9de';x.fillText('@predahub',W-64,H-30);x.restore();}
+  function footer(x,W,H,left){x.save();x.fillStyle='rgba(255,255,255,.1)';x.fillRect(64,H-58,W-128,1);x.textBaseline='middle';x.textAlign='left';x.font='500 21px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(left||'Source : NHL',64,H-30);x.restore();wordmark(x,W-64,H-30,34,'right');}
   function gold(x,y,h){const g=x.createLinearGradient(0,y-h/2,0,y+h/2);g.addColorStop(0,'#FDE68A');g.addColorStop(.55,'#FBBF24');g.addColorStop(1,'#F59E0B');return g;}
 
   /* ---------- Recherche joueur via l'API NHL ---------- */
