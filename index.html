@@ -253,9 +253,10 @@
 
     <div id="secG" class="hide">
     <h1>Lignes d'attaque</h1>
+    <label>Équipe du thème</label><select id="gteam"><option value="">Choisir une équipe…</option></select>
+    <button type="button" id="gauto" class="secbtn">⚡ Remplir auto (effectif, triées par temps de glace)</button>
     <div id="gLines"></div>
     <div id="gstate" style="font-size:12px;color:#FBBF24"></div>
-    <label>Équipe du thème (optionnel — sinon celle du 1er joueur rempli)</label><select id="gteam"><option value="">Auto</option></select>
     <label>Titre (vide = nom d'équipe automatique)</label><input id="gtitle" value="">
     <label>Sous-titre</label><input id="gsub" value="">
     <label>Format</label>
@@ -743,8 +744,8 @@
     let bestI=-1,bestV=-1;ps.forEach((o,i)=>{if(!o||o.pos==='G')return;const m=buildStats(o.land,'season');const v=m.points??-1;if(v>bestV){bestV=v;bestI=i;}});
     cxs.forEach((cx,i)=>{
       const o=ps[i];if(!o)return;
-      const oAbbr=ovr[i].abbr||o.abbr;const oNum=ovr[i].num||o.num;
-      const oLogo=ovr[i].abbr?rteamLogoCache[ovr[i].abbr]:o.logo;
+      const oAbbr=ovr[i].abbr||forcedAbbr||o.abbr;const oNum=ovr[i].num||o.num;
+      const oLogo=(ovr[i].abbr||forcedAbbr)?rteamLogoCache[ovr[i].abbr||forcedAbbr]:o.logo;
       const tcol=teamCol(oAbbr);const isBest=i===bestI;
       /* pastille de poste */
       const lbl=POSLBL[o.pos]||o.pos||'';
@@ -787,8 +788,10 @@
     for(let L=1;L<=4;L++){
       html+=`<div style="margin-top:${L>1?14:0}px;padding-top:${L>1?10:0}px;${L>1?'border-top:1px solid #1c1c33':''}">`;
       html+=`<div style="font-family:Anton,sans-serif;font-size:14px;letter-spacing:1px;color:${LINE_META[L-1].accent};margin-bottom:6px">${LINE_META[L-1].label}</div>`;
-      for(let P=1;P<=3;P++){const id=`g${L}${P}`;
-        html+=`<input id="${id}q" placeholder="Nom du joueur" autocomplete="off"><div id="${id}r" class="results"></div>`;
+      for(let P=1;P<=3;P++){const id=`g${L}${P}`;const slot=(L-1)*3+(P-1);
+        html+=`<div style="display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:center">`;
+        html+=`<button type="button" class="secbtn slotHandle" data-slot="${slot}" style="padding:9px 2px;font-size:11px;margin:0;touch-action:none">L${L}</button>`;
+        html+=`<input id="${id}q" placeholder="Nom du joueur" autocomplete="off"></div><div id="${id}r" class="results"></div>`;
         html+=`<div class="row2"><select id="${id}team"><option value="">Équipe : auto</option></select><input id="${id}num" placeholder="N° (auto)"></div>`;}
       html+='</div>';
     }
@@ -796,7 +799,7 @@
   })();
   for(let L=1;L<=4;L++)for(let P=1;P<=3;P++){const id=`g${L}${P}`,li=L-1,pi=P-1;
     TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$(id+'team').appendChild(o);});
-    hookSearch(id+'q',id+'r',async pl=>{$('gstate').textContent='Chargement…';lines.p[li][pi]=await fetchPlayer(pl);$('gstate').textContent='';renderLines();});
+    hookSearch(id+'q',id+'r',async pl=>{$('gstate').textContent='Chargement…';lines.p[li][pi]=await fetchPlayer(pl);$('gstate').textContent='';updateHandles();renderLines();});
     $(id+'team').addEventListener('change',()=>renderLines());
     $(id+'num').addEventListener('input',()=>renderLines());
   }
@@ -804,6 +807,65 @@
   $('gteam').addEventListener('change',()=>renderLines());
   ['gtitle','gsub','gfmt','gzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('gzoomv').textContent=$('gzoom').value;renderLines();}));
   let gr=null;function renderLines(){clearTimeout(gr);gr=setTimeout(drawLines,30);}
+
+  /* ---- swap rapide par appui long ---- */
+  let pendingSwap=null;
+  function slotOf(idx){return[Math.floor(idx/3),idx%3];}
+  function updateHandles(){
+    document.querySelectorAll('.slotHandle').forEach(btn=>{
+      const idx=+btn.dataset.slot;const[li,pi]=slotOf(idx);const o=lines.p[li][pi];
+      btn.textContent=o?o.last.slice(0,3).toUpperCase():`L${li+1}`;
+      if(pendingSwap===idx){btn.style.background='#FBBF24';btn.style.color='#050510';}
+      else{btn.style.background='';btn.style.color='';}
+    });
+  }
+  function swapSlots(a,b){
+    const[la,pa]=slotOf(a),[lb,pb]=slotOf(b);
+    const idA=`g${la+1}${pa+1}`,idB=`g${lb+1}${pb+1}`;
+    const tmp=lines.p[la][pa];lines.p[la][pa]=lines.p[lb][pb];lines.p[lb][pb]=tmp;
+    ['q','team','num'].forEach(suf=>{const ea=$(idA+suf),eb=$(idB+suf);const tv=ea.value;ea.value=eb.value;eb.value=tv;});
+    updateHandles();renderLines();
+  }
+  document.querySelectorAll('.slotHandle').forEach(btn=>{
+    let timer=null,fired=false;
+    btn.addEventListener('pointerdown',()=>{fired=false;timer=setTimeout(()=>{fired=true;const idx=+btn.dataset.slot;
+      if(pendingSwap===idx){pendingSwap=null;$('gstate').textContent='';}
+      else if(pendingSwap==null){pendingSwap=idx;$('gstate').textContent='Touche un autre joueur pour échanger, ou re-maintiens celui-ci pour annuler.';}
+      else{swapSlots(pendingSwap,idx);pendingSwap=null;$('gstate').textContent='';}
+      updateHandles();},450);});
+    btn.addEventListener('pointerup',()=>clearTimeout(timer));
+    btn.addEventListener('pointerleave',()=>clearTimeout(timer));
+    btn.addEventListener('pointercancel',()=>clearTimeout(timer));
+    btn.addEventListener('click',e=>{if(fired){e.preventDefault();return;}
+      const idx=+btn.dataset.slot;
+      if(pendingSwap!=null&&pendingSwap!==idx){swapSlots(pendingSwap,idx);pendingSwap=null;$('gstate').textContent='';updateHandles();}});
+  });
+  updateHandles();
+
+  /* ---- remplissage auto depuis l'effectif (triés par temps de glace) ---- */
+  $('gauto').addEventListener('click',async()=>{
+    const abbr=$('gteam').value;
+    if(!abbr){$('gstate').textContent='Choisis une équipe du thème d\'abord.';return;}
+    $('gstate').textContent='Chargement de l\'effectif…';
+    try{
+      const season=seasonId();
+      const exp=`seasonId=${season} and gameTypeId=2 and teamAbbrevs="${abbr}" and (positionCode="C" or positionCode="L" or positionCode="R")`;
+      const sort=JSON.stringify([{property:'timeOnIcePerGame',direction:'DESC'}]);
+      const url=`/api/nhl?path=stats:skater/summary&isAggregate=false&isGame=false&limit=12&start=0&sort=${encodeURIComponent(sort)}&cayenneExp=${encodeURIComponent(exp)}`;
+      const r=await fetch(url);if(!r.ok)throw 0;const d=await r.json();
+      const list=(d.data||[]).slice(0,12);
+      if(!list.length){$('gstate').textContent='Aucun attaquant trouvé pour cette équipe.';return;}
+      for(let i=0;i<list.length;i++){
+        const it=list[i];const li=Math.floor(i/3),pi=i%3;const id=`g${li+1}${pi+1}`;
+        $('gstate').textContent=`Chargement ${i+1}/${list.length}…`;
+        const pl={playerId:it.playerId,name:it.skaterFullName,teamAbbrev:abbr,sweaterNumber:'',positionCode:it.positionCode||''};
+        const o=await fetchPlayer(pl);
+        lines.p[li][pi]=o;$(id+'q').value=`${o.first} ${o.last}`;$(id+'team').value='';$(id+'num').value='';
+        updateHandles();renderLines();
+      }
+      $('gstate').textContent='';
+    }catch(e){$('gstate').textContent='Chargement de l\'effectif impossible.';}
+  });
   async function drawLines(){
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
     const sq=$('gfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('linescv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
@@ -825,12 +887,13 @@
     const title=($('gtitle').value.trim()||(themeTeam?themeTeam[1]:(lead?(lead.team[1]||lead.abbr):"LIGNES D'ATTAQUE"))).toUpperCase();
     const sub=$('gsub').value.trim()||(lead?`Saison ${seasonLabel(lead.land)} · saison régulière`:'');
     titleBlock(x,W,title,sub,sq?108:128,col);
-    const top0=sq?178:222;const bottom=H-64;const rowH=(bottom-top0)/4;
+    const top0=sq?178:210;const bottom=H-64;const rowH=(bottom-top0)/4;
     const zoom=$('gzoom').value/100;
-    const R=Math.max(30,Math.min(Math.round(64*zoom),Math.floor((rowH-126)/2)));
+    const R=Math.max(24,Math.min(Math.round(64*zoom),Math.floor((rowH-156)/2)));
     const colXs=[W*0.215,W*0.5,W*0.785];
     lines.p.forEach((trio3,li)=>{
       const rowTop=top0+rowH*li,rowBottom=rowTop+rowH;const cy=rowTop+50+R;const meta=LINE_META[li];
+      let bestI=-1,bestV=-1;trio3.forEach((o,pi)=>{if(!o||o.pos==='G')return;const m=buildStats(o.land,'season');const v=m.points??-1;if(v>bestV){bestV=v;bestI=pi;}});
       if(li>0){x.save();x.strokeStyle='rgba(255,255,255,.08)';x.beginPath();x.moveTo(64,rowTop);x.lineTo(W-64,rowTop);x.stroke();x.restore();}
       x.save();x.beginPath();x.rect(0,rowTop,W,rowH);x.clip();
       x.font=`${Math.round(rowH*1.3)}px Anton`;x.textAlign='right';x.textBaseline='middle';
@@ -840,10 +903,12 @@
       x.textAlign='center';x.textBaseline='middle';x.fillStyle='#050510';x.fillText(meta.label,px0+pw/2,py0+ph/2+1);x.restore();
       colXs.forEach((cx,pi)=>{
         const o=trio3[pi];if(!o)return;
-        const id=`g${li+1}${pi+1}`;const oAbbr=$(id+'team').value||o.abbr;const oNum=$(id+'num').value.trim()||o.num;
-        const oLogo=$(id+'team').value?rteamLogoCache[$(id+'team').value]:o.logo;const tcol=teamCol(oAbbr);
+        const id=`g${li+1}${pi+1}`;const isBest=pi===bestI;
+        const oAbbr=$(id+'team').value||forcedAbbr||o.abbr;const oNum=$(id+'num').value.trim()||o.num;
+        const oLogo=($(id+'team').value||forcedAbbr)?rteamLogoCache[$(id+'team').value||forcedAbbr]:o.logo;const tcol=teamCol(oAbbr);
         circlePhoto(x,o,cx,cy,R,tcol,null,false);
         if(!o.bmp&&oNum){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(oNum),cx,cy+R*.05);x.restore();}
+        if(isBest){x.save();x.beginPath();x.arc(cx,cy,R+14,0,Math.PI*2);x.strokeStyle='rgba(251,191,36,.6)';x.lineWidth=3;x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=16;x.stroke();x.restore();}
         const nm=o.last.toUpperCase();let f=Math.min(28,R*.42);x.font=`${f}px Anton`;while(x.measureText(nm).width>R*3.05&&f>15){f-=1;x.font=`${f}px Anton`;}
         const nameY=cy+R+24;x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=10;x.fillStyle='#fff';x.fillText(nm,cx,nameY);x.restore();
         const abbrY=nameY+22;x.font=`600 ${Math.min(18,R*.22)}px "Inter Tight"`;x.fillStyle=tcol;
@@ -852,8 +917,12 @@
           x.drawImage(oLogo,cx-tot/2,abbrY-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillText(lab,cx-tot/2+lw2+6,abbrY);x.textAlign='center';
         } else {x.fillText(`${oAbbr}${oNum?' · N°'+oNum:''}`,cx,abbrY);}
         const st=statLineFor(o);
-        if(st){const statY=abbrY+20;const compact=st.filter(s=>s[0]!=='MJ').map(s=>`${s[1]} ${s[0]}`).join('  ·  ');
-          x.font=`700 ${Math.min(17,R*.2)}px "Inter Tight"`;x.fillStyle='#c9c9de';x.fillText(compact,cx,statY);}
+        if(st){const sn=st.filter(s=>s[0]!=='MJ');const n=sn.length;const chipW=Math.min(70,Math.round(R*.92)),chipH=40,gap=6;const totW=chipW*n+gap*(n-1);const sx0=cx-totW/2;const chipY=abbrY+10;
+          sn.forEach((s,j)=>{const sx=sx0+j*(chipW+gap);
+            x.save();roundRect(x,sx,chipY,chipW,chipH,10);x.fillStyle=isBest?'rgba(251,191,36,.14)':'rgba(255,255,255,.05)';x.fill();x.strokeStyle=isBest?'rgba(251,191,36,.5)':'rgba(255,255,255,.1)';x.lineWidth=1;x.stroke();x.restore();
+            x.textAlign='center';x.font='22px Anton';x.fillStyle=isBest?gold(x,chipY+18,22):'#e6e6f2';x.fillText(String(s[1]),sx+chipW/2,chipY+25);
+            x.font='600 10px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(s[0],sx+chipW/2,chipY+36);});
+        }
       });
     });
     footer(x,W,H,'Source : NHL');
