@@ -107,7 +107,7 @@
   <div class="panel">
     <div class="row2" style="margin-bottom:6px"><div><label>Fond des cards</label><select id="bgsel"><option value="#050510">Nuit (défaut)</option><option value="#000000">Noir pur</option><option value="#0a0a1f">Bleu nuit</option><option value="#12081f">Violet profond</option><option value="#1a0510">Bordeaux</option><option value="#061a12">Vert forêt</option><option value="#101010">Anthracite</option><option value="custom">Personnalisée…</option></select></div><div><label>Couleur du halo</label><select id="glowsel"><option value="">Selon l'équipe / la card</option><option value="#FF2D55">Rouge PredaHUB</option><option value="#BF5AF2">Violet</option><option value="#FBBF24">Or</option><option value="#38BDF8">Bleu glace</option><option value="#22C55E">Vert</option><option value="none">Aucun halo</option></select></div></div>
     <div id="bgcustomwrap" class="hide"><label>Couleur personnalisée</label><input id="bgcustom" type="color" value="#050510" style="height:40px;padding:2px"></div>
-    <div class="tabs"><button type="button" id="tabP" class="on">Joueur</button><button type="button" id="tabD">Duel</button><button type="button" id="tabM">Match</button><button type="button" id="tabT">Top 5</button><button type="button" id="tabL">Leaders</button><button type="button" id="tabX">Milestones</button><button type="button" id="tabR">Trio</button><button type="button" id="tabB">Profil</button></div>
+    <div class="tabs"><button type="button" id="tabP" class="on">Joueur</button><button type="button" id="tabD">Duel</button><button type="button" id="tabM">Match</button><button type="button" id="tabT">Top 5</button><button type="button" id="tabL">Leaders</button><button type="button" id="tabX">Milestones</button><button type="button" id="tabR">Trio</button><button type="button" id="tabG">Lignes</button><button type="button" id="tabB">Profil</button></div>
     <div id="secP">
     <h1>Card joueur en forme</h1>
     <label>Rechercher un joueur NHL</label>
@@ -251,6 +251,20 @@
     <button id="rdl">Télécharger en PNG</button>
     </div>
 
+    <div id="secG" class="hide">
+    <h1>Lignes d'attaque</h1>
+    <div id="gLines"></div>
+    <div id="gstate" style="font-size:12px;color:#FBBF24"></div>
+    <label>Équipe du thème (optionnel — sinon celle du 1er joueur rempli)</label><select id="gteam"><option value="">Auto</option></select>
+    <label>Titre (vide = nom d'équipe automatique)</label><input id="gtitle" value="">
+    <label>Sous-titre</label><input id="gsub" value="">
+    <label>Format</label>
+    <select id="gfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
+    <label>Taille des photos : <span id="gzoomv">100</span> %</label>
+    <input id="gzoom" type="range" min="60" max="160" value="100">
+    <button id="gdl">Télécharger en PNG</button>
+    </div>
+
     <div id="secB" class="hide">
     <h1>Photo de profil et bannière</h1>
     <label>Élément</label>
@@ -271,6 +285,7 @@
     <canvas id="leadcv" class="hide" width="1080" height="1350"></canvas>
     <canvas id="milecv" class="hide" width="1080" height="1350"></canvas>
     <canvas id="triocv" class="hide" width="1080" height="1350"></canvas>
+    <canvas id="linescv" class="hide" width="1080" height="1350"></canvas>
     <canvas id="brandcv" class="hide" width="1080" height="1080"></canvas>
     <div class="scaler" id="scaler">
       <div id="card" class="">
@@ -594,10 +609,10 @@
   /* ==================== ONGLETS ==================== */
   let mode='P';
   function setMode(m){mode=m;
-    [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM'],['T','tabT','secT'],['L','tabL','secL'],['R','tabR','secR'],['X','tabX','secX'],['B','tabB','secB']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
-    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');$('topcv').classList.toggle('hide',m!=='T');$('leadcv').classList.toggle('hide',m!=='L');$('milecv').classList.toggle('hide',m!=='X');$('triocv').classList.toggle('hide',m!=='R');$('brandcv').classList.toggle('hide',m!=='B');
+    [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM'],['T','tabT','secT'],['L','tabL','secL'],['R','tabR','secR'],['X','tabX','secX'],['G','tabG','secG'],['B','tabB','secB']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
+    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');$('topcv').classList.toggle('hide',m!=='T');$('leadcv').classList.toggle('hide',m!=='L');$('milecv').classList.toggle('hide',m!=='X');$('triocv').classList.toggle('hide',m!=='R');$('linescv').classList.toggle('hide',m!=='G');$('brandcv').classList.toggle('hide',m!=='B');
     if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';if(m==='D')renderDuel();else if(m==='M')renderMatch();else if(m==='T')renderTop();else if(m==='L')renderLead();else if(m==='X')renderMile();else drawBrand();}}
-  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));$('tabT').addEventListener('click',()=>setMode('T'));$('tabL').addEventListener('click',()=>setMode('L'));$('tabX').addEventListener('click',()=>setMode('X'));$('tabR').addEventListener('click',()=>setMode('R'));$('tabB').addEventListener('click',()=>setMode('B'));
+  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));$('tabT').addEventListener('click',()=>setMode('T'));$('tabL').addEventListener('click',()=>setMode('L'));$('tabX').addEventListener('click',()=>setMode('X'));$('tabR').addEventListener('click',()=>setMode('R'));$('tabG').addEventListener('click',()=>setMode('G'));$('tabB').addEventListener('click',()=>setMode('B'));
 
   /* ==================== DUEL ==================== */
   const duel={A:null,B:null};
@@ -758,6 +773,93 @@
     footer(x,W,H,'Source : NHL');
   }
   $('rdl').addEventListener('click',async()=>{const btn=$('rdl');btn.textContent='Export…';try{await drawTrio();const blob=await new Promise(r=>$('triocv').toBlob(r,'image/png'));const a=document.createElement('a');const names=trio.p.filter(o=>o).map(o=>o.last.toLowerCase()).join('-')||'trio';a.download=`predahub-trio-${names}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('rstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+
+  /* ==================== LIGNES D'ATTAQUE ==================== */
+  const LINE_META=[
+    {label:'1RE LIGNE',accent:'#FBBF24'},
+    {label:'2E LIGNE',accent:'#FF2D55'},
+    {label:'3E LIGNE',accent:'#BF5AF2'},
+    {label:'4E LIGNE',accent:'#38BDF8'}
+  ];
+  const lines={p:[[null,null,null],[null,null,null],[null,null,null],[null,null,null]]};
+  (function buildLinesUI(){
+    const root=$('gLines');let html='';
+    for(let L=1;L<=4;L++){
+      html+=`<div style="margin-top:${L>1?14:0}px;padding-top:${L>1?10:0}px;${L>1?'border-top:1px solid #1c1c33':''}">`;
+      html+=`<div style="font-family:Anton,sans-serif;font-size:14px;letter-spacing:1px;color:${LINE_META[L-1].accent};margin-bottom:6px">${LINE_META[L-1].label}</div>`;
+      for(let P=1;P<=3;P++){const id=`g${L}${P}`;
+        html+=`<input id="${id}q" placeholder="Nom du joueur" autocomplete="off"><div id="${id}r" class="results"></div>`;
+        html+=`<div class="row2"><select id="${id}team"><option value="">Équipe : auto</option></select><input id="${id}num" placeholder="N° (auto)"></div>`;}
+      html+='</div>';
+    }
+    root.innerHTML=html;
+  })();
+  for(let L=1;L<=4;L++)for(let P=1;P<=3;P++){const id=`g${L}${P}`,li=L-1,pi=P-1;
+    TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$(id+'team').appendChild(o);});
+    hookSearch(id+'q',id+'r',async pl=>{$('gstate').textContent='Chargement…';lines.p[li][pi]=await fetchPlayer(pl);$('gstate').textContent='';renderLines();});
+    $(id+'team').addEventListener('change',()=>renderLines());
+    $(id+'num').addEventListener('input',()=>renderLines());
+  }
+  TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$('gteam').appendChild(o);});
+  $('gteam').addEventListener('change',()=>renderLines());
+  ['gtitle','gsub','gfmt','gzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('gzoomv').textContent=$('gzoom').value;renderLines();}));
+  let gr=null;function renderLines(){clearTimeout(gr);gr=setTimeout(drawLines,30);}
+  async function drawLines(){
+    await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
+    const sq=$('gfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('linescv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+    const flat=lines.p.flat();const lead=flat.find(o=>o);
+    const forcedAbbr=$('gteam').value;
+    const themeAbbr=forcedAbbr||(lead?lead.abbr:'');
+    const themeTeam=TEAMS.find(t=>t[0]===themeAbbr);
+    const col=glowOr(themeAbbr?teamCol(themeAbbr):'#FF2D55');
+    let themeLogo=null;
+    if(forcedAbbr){if(!rteamLogoCache[forcedAbbr])rteamLogoCache[forcedAbbr]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${forcedAbbr}_dark.svg`);themeLogo=rteamLogoCache[forcedAbbr];}
+    else if(lead){themeLogo=lead.logo;}
+    const ovr=[];for(let L=1;L<=4;L++)for(let P=1;P<=3;P++){const id=`g${L}${P}`;const abbr=$(id+'team').value;if(abbr&&!rteamLogoCache[abbr])rteamLogoCache[abbr]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`);}
+    x.fillStyle=theme.bg;x.fillRect(0,0,W,H);
+    let g=x.createRadialGradient(540,sq?260:300,0,540,sq?260:300,860);g.addColorStop(0,hexA(col,.42));g.addColorStop(.55,hexA('#BF5AF2',.1));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+    texture(x,W,H);
+    if(themeLogo){const lb=themeLogo;const maxW=W*0.48,maxH=H*0.24;const rr=Math.min(maxW/lb.width,maxH/lb.height);const lw=lb.width*rr,lh=lb.height*rr;
+      x.save();x.globalAlpha=.05;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,W-lw*0.6,H-lh*0.62,lw,lh);x.restore();}
+    frame(x,W,H,col,'#BF5AF2');brand(x,W);
+    const title=($('gtitle').value.trim()||(themeTeam?themeTeam[1]:(lead?(lead.team[1]||lead.abbr):"LIGNES D'ATTAQUE"))).toUpperCase();
+    const sub=$('gsub').value.trim()||(lead?`Saison ${seasonLabel(lead.land)} · saison régulière`:'');
+    titleBlock(x,W,title,sub,sq?108:128,col);
+    const top0=sq?178:222;const bottom=H-64;const rowH=(bottom-top0)/4;
+    const zoom=$('gzoom').value/100;
+    const R=Math.max(30,Math.min(Math.round(64*zoom),Math.floor((rowH-126)/2)));
+    const colXs=[W*0.215,W*0.5,W*0.785];
+    lines.p.forEach((trio3,li)=>{
+      const rowTop=top0+rowH*li,rowBottom=rowTop+rowH;const cy=rowTop+50+R;const meta=LINE_META[li];
+      if(li>0){x.save();x.strokeStyle='rgba(255,255,255,.08)';x.beginPath();x.moveTo(64,rowTop);x.lineTo(W-64,rowTop);x.stroke();x.restore();}
+      x.save();x.beginPath();x.rect(0,rowTop,W,rowH);x.clip();
+      x.font=`${Math.round(rowH*1.3)}px Anton`;x.textAlign='right';x.textBaseline='middle';
+      x.strokeStyle='rgba(255,255,255,.05)';x.lineWidth=2;x.strokeText(String(li+1),W-40,cy+6);x.restore();
+      const lblY=rowTop+26;x.save();x.font='800 22px "Inter Tight"';const tw=x.measureText(meta.label).width;const pw=tw+30,ph=34;const px0=64,py0=lblY-ph/2;
+      roundRect(x,px0,py0,pw,ph,ph/2);x.fillStyle=meta.accent;x.fill();
+      x.textAlign='center';x.textBaseline='middle';x.fillStyle='#050510';x.fillText(meta.label,px0+pw/2,py0+ph/2+1);x.restore();
+      colXs.forEach((cx,pi)=>{
+        const o=trio3[pi];if(!o)return;
+        const id=`g${li+1}${pi+1}`;const oAbbr=$(id+'team').value||o.abbr;const oNum=$(id+'num').value.trim()||o.num;
+        const oLogo=$(id+'team').value?rteamLogoCache[$(id+'team').value]:o.logo;const tcol=teamCol(oAbbr);
+        circlePhoto(x,o,cx,cy,R,tcol,null,false);
+        if(!o.bmp&&oNum){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(oNum),cx,cy+R*.05);x.restore();}
+        const nm=o.last.toUpperCase();let f=Math.min(28,R*.42);x.font=`${f}px Anton`;while(x.measureText(nm).width>R*3.05&&f>15){f-=1;x.font=`${f}px Anton`;}
+        const nameY=cy+R+24;x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=10;x.fillStyle='#fff';x.fillText(nm,cx,nameY);x.restore();
+        const abbrY=nameY+22;x.font=`600 ${Math.min(18,R*.22)}px "Inter Tight"`;x.fillStyle=tcol;
+        if(oLogo){const lz=20;const rr2=Math.min(lz/oLogo.width,lz/oLogo.height);const lw2=oLogo.width*rr2,lh2=oLogo.height*rr2;
+          const lab=`${oAbbr}${oNum?' · N°'+oNum:''}`;const tw2=x.measureText(lab).width;const tot=lw2+6+tw2;
+          x.drawImage(oLogo,cx-tot/2,abbrY-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillText(lab,cx-tot/2+lw2+6,abbrY);x.textAlign='center';
+        } else {x.fillText(`${oAbbr}${oNum?' · N°'+oNum:''}`,cx,abbrY);}
+        const st=statLineFor(o);
+        if(st){const statY=abbrY+20;const compact=st.filter(s=>s[0]!=='MJ').map(s=>`${s[1]} ${s[0]}`).join('  ·  ');
+          x.font=`700 ${Math.min(17,R*.2)}px "Inter Tight"`;x.fillStyle='#c9c9de';x.fillText(compact,cx,statY);}
+      });
+    });
+    footer(x,W,H,'Source : NHL');
+  }
+  $('gdl').addEventListener('click',async()=>{const btn=$('gdl');btn.textContent='Export…';try{await drawLines();const blob=await new Promise(r=>$('linescv').toBlob(r,'image/png'));const a=document.createElement('a');a.download='predahub-lignes.png';a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('gstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+
 
 
   /* ==================== MATCH ==================== */
