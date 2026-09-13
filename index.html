@@ -260,7 +260,7 @@
     <label>Titre (vide = nom d'équipe automatique)</label><input id="gtitle" value="">
     <label>Sous-titre</label><input id="gsub" value="">
     <label>Format</label>
-    <select id="gfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
+    <select id="gfmt"><option value="">Story 9:16 (grand, recommandé)</option><option value="square">Compact 4:5</option></select>
     <label>Taille des photos : <span id="gzoomv">100</span> %</label>
     <input id="gzoom" type="range" min="60" max="160" value="100">
     <button id="gdl">Télécharger en PNG</button>
@@ -869,7 +869,7 @@
   });
   async function drawLines(){
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
-    const sq=$('gfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('linescv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+    const compact=$('gfmt').value==='square';const W=1080,H=compact?1350:1920;const cv=$('linescv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
     const flat=lines.p.flat();const lead=flat.find(o=>o);
     const forcedAbbr=$('gteam').value;
     const themeAbbr=forcedAbbr||(lead?lead.abbr:'');
@@ -878,47 +878,52 @@
     let themeLogo=null;
     if(forcedAbbr){if(!rteamLogoCache[forcedAbbr])rteamLogoCache[forcedAbbr]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${forcedAbbr}_dark.svg`);themeLogo=rteamLogoCache[forcedAbbr];}
     else if(lead){themeLogo=lead.logo;}
-    const ovr=[];for(let L=1;L<=4;L++)for(let P=1;P<=3;P++){const id=`g${L}${P}`;const abbr=$(id+'team').value;if(abbr&&!rteamLogoCache[abbr])rteamLogoCache[abbr]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`);}
+    for(let L=1;L<=4;L++)for(let P=1;P<=3;P++){const id=`g${L}${P}`;const abbr=$(id+'team').value;if(abbr&&!rteamLogoCache[abbr])rteamLogoCache[abbr]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`);}
     x.fillStyle=theme.bg;x.fillRect(0,0,W,H);
-    let g=x.createRadialGradient(540,sq?260:300,0,540,sq?260:300,860);g.addColorStop(0,hexA(col,.42));g.addColorStop(.55,hexA('#BF5AF2',.1));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+    let g=x.createRadialGradient(540,compact?260:340,0,540,compact?260:340,H*0.62);g.addColorStop(0,hexA(col,.42));g.addColorStop(.55,hexA('#BF5AF2',.1));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
     texture(x,W,H);
-    if(themeLogo){const lb=themeLogo;const maxW=W*0.48,maxH=H*0.24;const rr=Math.min(maxW/lb.width,maxH/lb.height);const lw=lb.width*rr,lh=lb.height*rr;
-      x.save();x.globalAlpha=.05;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,W-lw*0.6,H-lh*0.62,lw,lh);x.restore();}
+    if(themeLogo){const lb=themeLogo;const maxW=W*0.48,maxH=H*0.2;const rr=Math.min(maxW/lb.width,maxH/lb.height);const lw=lb.width*rr,lh=lb.height*rr;
+      x.save();x.globalAlpha=.05;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,W-lw*0.6,H-lh*0.6,lw,lh);x.restore();}
     frame(x,W,H,col,'#BF5AF2');brand(x,W);
     const title=($('gtitle').value.trim()||(themeTeam?themeTeam[1]:(lead?(lead.team[1]||lead.abbr):"LIGNES D'ATTAQUE"))).toUpperCase();
     const sub=$('gsub').value.trim()||(lead?`Saison ${seasonLabel(lead.land)} · saison régulière`:'');
-    titleBlock(x,W,title,sub,sq?108:128,col);
-    const top0=sq?178:210;const bottom=H-64;const rowH=(bottom-top0)/4;
+    titleBlock(x,W,title,sub,compact?110:158,col);
+    const top0=compact?178:250;const bottom=H-64;const rowH=(bottom-top0)/4;
     const zoom=$('gzoom').value/100;
-    const R=Math.max(24,Math.min(Math.round(60*zoom),Math.floor((rowH-156)/2)));
     const colXs=[W*0.215,W*0.5,W*0.785];
     lines.p.forEach((trio3,li)=>{
       const rowTop=top0+rowH*li,rowBottom=rowTop+rowH;const meta=LINE_META[li];
       const panelTop=rowTop+8,panelBottom=rowBottom-8,panelH=panelBottom-panelTop;
-      x.save();roundRect(x,48,panelTop,W-96,panelH,18);x.fillStyle='rgba(255,255,255,.025)';x.fill();x.strokeStyle='rgba(255,255,255,.06)';x.lineWidth=1;x.stroke();x.restore();
-      x.save();roundRect(x,48,panelTop,6,panelH,3);x.fillStyle=meta.accent;x.fill();x.restore();
-      x.save();roundRect(x,48,panelTop,W-96,panelH,18);x.clip();
-      x.font=`${Math.round(panelH*1.15)}px Anton`;x.textAlign='right';x.textBaseline='middle';
-      x.strokeStyle='rgba(255,255,255,.04)';x.lineWidth=2;x.strokeText(String(li+1),W-56,panelTop+panelH*0.52);x.restore();
-      x.save();x.font='800 19px "Inter Tight"';x.textAlign='left';x.textBaseline='alphabetic';x.fillStyle=meta.accent;
-      x.fillText(meta.label,76,panelTop+30);x.restore();
-      const cy=panelTop+54+R;
+      let bestI=-1,bestV=-1;trio3.forEach((o,pi)=>{if(!o||o.pos==='G')return;const m=buildStats(o.land,'season');const v=m.points??-1;if(v>bestV){bestV=v;bestI=pi;}});
+      x.save();roundRect(x,48,panelTop,W-96,panelH,20);x.fillStyle='rgba(255,255,255,.03)';x.fill();x.strokeStyle='rgba(255,255,255,.07)';x.lineWidth=1;x.stroke();x.restore();
+      x.save();roundRect(x,48,panelTop,7,panelH,3.5);x.fillStyle=meta.accent;x.fill();x.restore();
+      x.save();roundRect(x,48,panelTop,W-96,panelH,20);x.clip();
+      x.font=`${Math.round(panelH*1.05)}px Anton`;x.textAlign='right';x.textBaseline='middle';
+      x.strokeStyle='rgba(255,255,255,.045)';x.lineWidth=2;x.strokeText(String(li+1),W-60,panelTop+panelH*0.5);x.restore();
+      x.save();x.font=`800 ${compact?18:24}px "Inter Tight"`;x.textAlign='left';x.textBaseline='alphabetic';x.fillStyle=meta.accent;
+      x.fillText(meta.label,78,panelTop+(compact?30:40));x.restore();
+      const labelH=compact?46:60;
+      const R=compact?Math.max(24,Math.min(Math.round(56*zoom),Math.floor((panelH-labelH-96)/2))):Math.max(50,Math.min(Math.round(92*zoom),Math.floor((panelH-228)/2)));
+      const cy=panelTop+labelH+R;
       colXs.forEach((cx,pi)=>{
         const o=trio3[pi];if(!o)return;
-        const id=`g${li+1}${pi+1}`;
+        const id=`g${li+1}${pi+1}`;const isBest=pi===bestI;
         const oAbbr=$(id+'team').value||forcedAbbr||o.abbr;const oNum=$(id+'num').value.trim()||o.num;
         const oLogo=($(id+'team').value||forcedAbbr)?rteamLogoCache[$(id+'team').value||forcedAbbr]:o.logo;const tcol=teamCol(oAbbr);
         circlePhoto(x,o,cx,cy,R,tcol,null,false);
         if(!o.bmp&&oNum){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(oNum),cx,cy+R*.05);x.restore();}
-        const nm=o.last.toUpperCase();let f=Math.min(26,R*.44);x.font=`${f}px Anton`;while(x.measureText(nm).width>R*3&&f>14){f-=1;x.font=`${f}px Anton`;}
-        const nameY=cy+R+22;x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=8;x.fillStyle='#fff';x.fillText(nm,cx,nameY);x.restore();
-        const abbrY=nameY+20;x.font=`600 ${Math.min(15,R*.2)}px "Inter Tight"`;x.fillStyle=tcol;
-        if(oLogo){const lz=17;const rr2=Math.min(lz/oLogo.width,lz/oLogo.height);const lw2=oLogo.width*rr2,lh2=oLogo.height*rr2;
-          const lab=`${oAbbr}${oNum?' · N°'+oNum:''}`;const tw2=x.measureText(lab).width;const tot=lw2+5+tw2;
-          x.drawImage(oLogo,cx-tot/2,abbrY-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillText(lab,cx-tot/2+lw2+5,abbrY);x.textAlign='center';
+        if(isBest&&!compact){x.save();x.beginPath();x.arc(cx,cy,R+16,0,Math.PI*2);x.strokeStyle='rgba(251,191,36,.6)';x.lineWidth=3;x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=18;x.stroke();x.restore();}
+        const nm=o.last.toUpperCase();let f=compact?Math.min(26,R*.44):Math.min(40,R*.42);x.font=`${f}px Anton`;while(x.measureText(nm).width>R*3&&f>14){f-=1;x.font=`${f}px Anton`;}
+        const nameY=cy+R+(compact?22:32);x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=10;x.fillStyle='#fff';x.fillText(nm,cx,nameY);x.restore();
+        const abbrY=nameY+(compact?20:28);x.font=`600 ${compact?Math.min(15,R*.2):Math.min(22,R*.24)}px "Inter Tight"`;x.fillStyle=tcol;
+        if(oLogo){const lz=compact?17:26;const rr2=Math.min(lz/oLogo.width,lz/oLogo.height);const lw2=oLogo.width*rr2,lh2=oLogo.height*rr2;
+          const lab=`${oAbbr}${oNum?' · N°'+oNum:''}`;const tw2=x.measureText(lab).width;const tot=lw2+6+tw2;
+          x.drawImage(oLogo,cx-tot/2,abbrY-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillText(lab,cx-tot/2+lw2+6,abbrY);x.textAlign='center';
         } else {x.fillText(`${oAbbr}${oNum?' · N°'+oNum:''}`,cx,abbrY);}
         const st=statLineFor(o);
-        if(st){const sn=st.filter(s=>s[0]!=='MJ');const statY=abbrY+24;x.save();x.textAlign='left';
+        if(!st)return;
+        if(compact){
+          const sn=st.filter(s=>s[0]!=='MJ');const statY=abbrY+24;x.save();x.textAlign='left';
           const numFont=`700 ${Math.min(21,R*.28)}px "Inter Tight"`,lblFont=`600 ${Math.min(11,R*.15)}px "Inter Tight"`;
           const widths=sn.map(([v])=>{x.font=numFont;return x.measureText(String(v)).width;});
           const lblWidths=sn.map(([,l])=>{x.font=lblFont;return x.measureText(' '+l).width;});
@@ -927,6 +932,13 @@
           sn.forEach(([v,l],j)=>{x.font=numFont;x.fillStyle='#fff';x.fillText(String(v),sx,statY);sx+=widths[j];
             x.font=lblFont;x.fillStyle='#7d7d96';x.fillText(' '+l,sx,statY);sx+=lblWidths[j]+gap;});
           x.restore();
+        }else{
+          const n=st.length;const sw=Math.min(78,(colXs[1]-colXs[0])*0.78/n);const by=abbrY+18;const bh=76;
+          x.save();roundRect(x,cx-sw*n/2,by,sw*n,bh,14);x.fillStyle='rgba(255,255,255,.045)';x.fill();x.strokeStyle='rgba(255,255,255,.09)';x.lineWidth=1;x.stroke();x.restore();
+          st.forEach((s,j)=>{const sx=cx-sw*n/2+sw*j+sw/2;
+            if(j>0){x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();x.moveTo(cx-sw*n/2+sw*j,by+12);x.lineTo(cx-sw*n/2+sw*j,by+bh-12);x.stroke();}
+            x.textAlign='center';x.font=`${n>3?30:36}px Anton`;x.fillStyle=isBest?gold(x,by+40,n>3?30:36):'#e6e6f2';x.fillText(String(s[1]),sx,by+44);
+            x.font=`600 ${n>3?11:13}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(s[0],sx,by+62);});
         }
       });
     });
