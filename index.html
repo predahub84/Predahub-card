@@ -685,8 +685,8 @@
   function statLineFor(o){
     if(!o)return null;
     const m=buildStats(o.land,'season');
-    if(o.pos==='G')return [['V',m.wins??'-'],['% ARR.',m.svPct??'-'],['BL',m.so??'-']];
-    return [['B',m.goals??'-'],['P',m.assists??'-'],['PTS',m.points??'-']];
+    if(o.pos==='G')return [['MJ',m.gp??'-'],['V',m.wins??'-'],['% ARR.',m.svPct??'-'],['BL',m.so??'-']];
+    return [['MJ',m.gp??'-'],['B',m.goals??'-'],['P',m.assists??'-'],['PTS',m.points??'-']];
   }
   [1,2,3].forEach(i=>{
     hookSearch('r'+i+'q','r'+i+'r',async pl=>{$('rstate').textContent='Chargement…';trio.p[i-1]=await fetchPlayer(pl);$('rstate').textContent='';renderTrio();});
@@ -709,8 +709,9 @@
     x.fillStyle=theme.bg;x.fillRect(0,0,W,H);
     let g=x.createRadialGradient(540,sq?300:340,0,540,sq?300:340,760);g.addColorStop(0,hexA(col,.55));g.addColorStop(.55,hexA('#BF5AF2',.12));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
     texture(x,W,H);
-    if(themeLogo){const lb=themeLogo;const lw=W*0.95;const rr=lw/lb.width;const lh=lb.height*rr;
-      x.save();x.globalAlpha=.10;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,(W-lw)/2,H-lh*0.62,lw,lh);x.restore();}
+    if(themeLogo){const lb=themeLogo;const maxW=W*0.6,maxH=H*0.26;const rr=Math.min(maxW/lb.width,maxH/lb.height);const lw=lb.width*rr,lh=lb.height*rr;
+      const lcx=W/2,lcy=H*0.8;
+      x.save();x.globalAlpha=.09;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,lcx-lw/2,lcy-lh/2,lw,lh);x.restore();}
     frame(x,W,H,col,'#BF5AF2');brand(x,W);
     const title=($('rtitle').value.trim()||(themeTeam?themeTeam[1]:(lead?(lead.team[1]||lead.abbr):'TRIO'))).toUpperCase();
     const sub=$('rsub').value.trim()||(lead?`Saison ${seasonLabel(lead.land)} · saison régulière`:'');
@@ -729,7 +730,7 @@
         roundRect(x,px0,py0,pw,ph,ph/2);x.fillStyle=isBest?gold(x,py0+ph/2,ph):'rgba(255,255,255,.08)';x.fill();
         x.strokeStyle=isBest?'rgba(251,191,36,.7)':'rgba(255,255,255,.18)';x.lineWidth=1.5;x.stroke();
         x.textAlign='center';x.textBaseline='middle';x.fillStyle=isBest?'#050510':'#e6e6f2';x.fillText(lbl,cx,py0+ph/2+1);x.restore();}
-      circlePhoto(x,o,cx,cy,R,tcol);
+      circlePhoto(x,o,cx,cy,R,tcol,null,false);
       if(!o.bmp&&o.num){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(o.num),cx,cy+R*.05);x.restore();}
       if(isBest){x.save();x.beginPath();x.arc(cx,cy,R+18,0,Math.PI*2);x.strokeStyle='rgba(251,191,36,.6)';x.lineWidth=3;x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=20;x.stroke();x.restore();}
       const nm=o.last.toUpperCase();let f=52;x.font=`${f}px Anton`;while(x.measureText(nm).width>320&&f>26){f-=2;x.font=`${f}px Anton`;}
@@ -739,12 +740,12 @@
         x.drawImage(o.logo,cx-tot/2,cy+R+88-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillStyle=tcol;x.fillText(lab,cx-tot/2+lw2+8,cy+R+88);x.textAlign='center';
       } else {x.font='600 24px "Inter Tight"';x.fillStyle=tcol;x.fillText(`${o.abbr}${o.num?' · N° '+o.num:''}`,cx,cy+R+88);}
       const st=statLineFor(o);
-      if(st){const sw=104;const sx0=cx-sw*1.5;const by=cy+R+118;const bh=92;
-        x.save();roundRect(x,sx0,by,sw*3,bh,16);x.fillStyle='rgba(255,255,255,.04)';x.fill();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
+      if(st){const n=st.length;const sw=312/n;const sx0=cx-sw*n/2;const by=cy+R+118;const bh=92;
+        x.save();roundRect(x,sx0,by,sw*n,bh,16);x.fillStyle='rgba(255,255,255,.04)';x.fill();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
         st.forEach((s,j)=>{const sx=sx0+sw*j+sw/2;
           if(j>0){x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();x.moveTo(sx0+sw*j,by+14);x.lineTo(sx0+sw*j,by+bh-14);x.stroke();}
-          x.textAlign='center';x.font='58px Anton';x.fillStyle=isBest?gold(x,by+52,58):'#e6e6f2';x.fillText(String(s[1]),sx,by+62);
-          x.font='600 19px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(s[0],sx,by+82);});
+          x.textAlign='center';x.font=`${n>3?46:58}px Anton`;x.fillStyle=isBest?gold(x,by+52,n>3?46:58):'#e6e6f2';x.fillText(String(s[1]),sx,by+62);
+          x.font=`600 ${n>3?15:19}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(s[0],sx,by+82);});
       }
     });
     footer(x,W,H,'Source : NHL');
