@@ -480,7 +480,7 @@
       footer(x,W,H,$('cfoot').textContent);
       /* téléchargement */
       const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
-      const a=document.createElement('a');a.download=`predahub-${$('last').value.toLowerCase().replace(/\s+/g,'-')}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();
+      const a=document.createElement('a');a.download=`predahub-${$('last').value.toLowerCase().replace(/\s+/g,'-')}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
     }catch(err){$('pstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}
     btn.textContent='Télécharger en PNG';fit();
   }
@@ -695,7 +695,7 @@
     /* pied */
     const st=(A&&A.st)||(B&&B.st);const yr=st?String(st.season):'';footer(x,W,H,$('dperiod').value==='last5'?'5 derniers matchs · saison régulière':(yr?`Saison ${yr.slice(0,4)}-${yr.slice(6,8)} · saison régulière`:''));
   }
-  $('ddl').addEventListener('click',async()=>{const btn=$('ddl');btn.textContent='Export…';try{await drawDuel();const blob=await new Promise(r=>$('duelcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-duel-${(duel.A?duel.A.last:'a').toLowerCase()}-vs-${(duel.B?duel.B.last:'b').toLowerCase()}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('dstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('ddl').addEventListener('click',async()=>{const btn=$('ddl');btn.textContent='Export…';try{await drawDuel();const blob=await new Promise(r=>$('duelcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-duel-${(duel.A?duel.A.last:'a').toLowerCase()}-vs-${(duel.B?duel.B.last:'b').toLowerCase()}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('dstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
 
@@ -773,7 +773,7 @@
     });
     footer(x,W,H,'Source : NHL');
   }
-  $('rdl').addEventListener('click',async()=>{const btn=$('rdl');btn.textContent='Export…';try{await drawTrio();const blob=await new Promise(r=>$('triocv').toBlob(r,'image/png'));const a=document.createElement('a');const names=trio.p.filter(o=>o).map(o=>o.last.toLowerCase()).join('-')||'trio';a.download=`predahub-trio-${names}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('rstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('rdl').addEventListener('click',async()=>{const btn=$('rdl');btn.textContent='Export…';try{await drawTrio();const blob=await new Promise(r=>$('triocv').toBlob(r,'image/png'));const a=document.createElement('a');const names=trio.p.filter(o=>o).map(o=>o.last.toLowerCase()).join('-')||'trio';a.download=`predahub-trio-${names}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('rstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
   /* ==================== LIGNES D'ATTAQUE ==================== */
   const LINE_META=[
@@ -944,7 +944,7 @@
     });
     footer(x,W,H,'Source : NHL');
   }
-  $('gdl').addEventListener('click',async()=>{const btn=$('gdl');btn.textContent='Export…';try{await drawLines();const blob=await new Promise(r=>$('linescv').toBlob(r,'image/png'));const a=document.createElement('a');a.download='predahub-lignes.png';a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('gstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('gdl').addEventListener('click',async()=>{const btn=$('gdl');btn.textContent='Export…';try{await drawLines();const blob=await new Promise(r=>$('linescv').toBlob(r,'image/png'));const a=document.createElement('a');a.download='predahub-lignes.png';a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('gstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
 
@@ -1080,7 +1080,7 @@
     }
     footer(x,W,H,'Source : NHL');
   }
-  $('mdl').addEventListener('click',async()=>{const btn=$('mdl');btn.textContent='Export…';try{await drawMatch();const blob=await new Promise(r=>$('matchcv').toBlob(r,'image/png'));const a=document.createElement('a');const g=match.cur;a.download=`predahub-match-${g?g.awayTeam.abbrev+'-'+g.homeTeam.abbrev:'x'}.png`.toLowerCase();a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('mstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('mdl').addEventListener('click',async()=>{const btn=$('mdl');btn.textContent='Export…';try{await drawMatch();const blob=await new Promise(r=>$('matchcv').toBlob(r,'image/png'));const a=document.createElement('a');const g=match.cur;a.download=`predahub-match-${g?g.awayTeam.abbrev+'-'+g.homeTeam.abbrev:'x'}.png`.toLowerCase();a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('mstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
   /* ==================== TOP 5 ==================== */
@@ -1162,7 +1162,7 @@
     if(two){x.fillStyle='rgba(255,255,255,.1)';x.fillRect(540-1,top0,2,bottom-top0);}
     footer(x,W,H,'Saison régulière · Source : NHL');
   }
-  $('tdl').addEventListener('click',async()=>{const btn=$('tdl');btn.textContent='Export…';try{await drawTop();const blob=await new Promise(r=>$('topcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-top5-${$('tcat').value.replace(':','-')}-${top5.to||''}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('tstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('tdl').addEventListener('click',async()=>{const btn=$('tdl');btn.textContent='Export…';try{await drawTop();const blob=await new Promise(r=>$('topcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-top5-${$('tcat').value.replace(':','-')}-${top5.to||''}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('tstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
   /* ==================== LEADERS ==================== */
@@ -1265,7 +1265,7 @@
     }
     footer(x,W,H,'Source : NHL');
   }
-  $('ldl').addEventListener('click',async()=>{const btn=$('ldl');btn.textContent='Export…';try{await drawLead();const blob=await new Promise(r=>$('leadcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-leaders-${$('lcat').value.replace(':','-')}-${$('lseason').value}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('lstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('ldl').addEventListener('click',async()=>{const btn=$('ldl');btn.textContent='Export…';try{await drawLead();const blob=await new Promise(r=>$('leadcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-leaders-${$('lcat').value.replace(':','-')}-${$('lseason').value}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('lstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
   /* ==================== MILESTONES ==================== */
@@ -1360,7 +1360,7 @@
       x.fillStyle=rem<=0?'#22C55E':'#FF2D55';roundRect(x,W-64-tw,cy+rowH*.26,tw,30,8);x.fill();x.fillStyle='#fff';x.fillText(tag,W-64-11,cy+rowH*.26+15);});
     footer(x,W,H,'Source : NHL');
   }
-  $('xdl').addEventListener('click',async()=>{const btn=$('xdl');btn.textContent='Export…';try{await drawMile();const blob=await new Promise(r=>$('milecv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-milestones-${$('xtype').value}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('xstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('xdl').addEventListener('click',async()=>{const btn=$('xdl');btn.textContent='Export…';try{await drawMile();const blob=await new Promise(r=>$('milecv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-milestones-${$('xtype').value}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('xstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
   /* ==================== PROFIL / BANNIÈRE ==================== */
@@ -1390,7 +1390,7 @@
       x.fillStyle='#FF2D55';x.font='40px Anton';x.fillText($('bhandle').value,W/2,H/2+220);
     }
   }
-  $('bdl').addEventListener('click',async()=>{const btn=$('bdl');btn.textContent='Export…';try{await drawBrand();const blob=await new Promise(r=>$('brandcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-${$('bkind').value}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){alert('Export impossible : '+err.message);}btn.textContent='Télécharger en PNG';});
+  $('bdl').addEventListener('click',async()=>{const btn=$('bdl');btn.textContent='Export…';try{await drawBrand();const blob=await new Promise(r=>$('brandcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-${$('bkind').value}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){alert('Export impossible : '+err.message);}btn.textContent='Télécharger en PNG';});
 
   $('zoomv').textContent=$('zoom').value;
   const jump=$('jump');let jumpDown=true;
