@@ -880,7 +880,7 @@
     }
     footer(x,W,H,'Source : NHL');
   }
-  $('rdl').addEventListener('click',async()=>{const btn=$('rdl');btn.textContent='Export…';try{await drawTrio();const blob=await new Promise(r=>$('triocv').toBlob(r,'image/png'));await offerSave(blob,`predahub-trio-${names}.png`);}catch(err){$('rstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('rdl').addEventListener('click',async()=>{const btn=$('rdl');btn.textContent='Export…';try{await drawTrio();const blob=await new Promise(r=>$('triocv').toBlob(r,'image/png'));const names=trio.p.filter(o=>o).map(o=>o.last.toLowerCase()).join('-')||'trio';await offerSave(blob,`predahub-trio-${names}.png`);}catch(err){$('rstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
   /* ==================== LIGNES D'ATTAQUE ==================== */
   const LINE_META=[
