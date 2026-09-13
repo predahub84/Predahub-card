@@ -1024,8 +1024,10 @@
     const d=o.land;if(!d)return'';
     const dd=d.draftDetails;
     const draftStr=dd&&dd.year?`${dd.overallPick?dd.overallPick+'e au total':(dd.pickInRound&&dd.round?dd.round+'e ronde':'')} ${dd.year}`.trim():'';
-    const others=(d.seasonTotals||[]).filter(s=>s.leagueAbbrev&&s.leagueAbbrev!=='NHL'&&(s.gamesPlayed||0)>0).sort((a,b)=>a.season-b.season);
-    const last=others[others.length-1];
+    const others=(d.seasonTotals||[]).filter(s=>s.leagueAbbrev&&s.leagueAbbrev!=='NHL'&&(s.gamesPlayed||0)>0);
+    const maxSeason=others.reduce((m,s)=>Math.max(m,s.season),0);
+    const candidates=others.filter(s=>s.season===maxSeason);
+    const last=candidates.sort((a,b)=>(b.gamesPlayed||0)-(a.gamesPlayed||0))[0];
     let statStr='';
     if(last){
       const gp=last.gamesPlayed,gl=last.goals??0,as=last.assists??0,pt=last.points??(gl+as);
