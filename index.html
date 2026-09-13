@@ -611,7 +611,15 @@
       const ab=d.currentTeamAbbrev||pl.teamAbbrev;if(ab&&TEAMS.some(t=>t[0]===ab)){sel.value=ab;customLogo=null;applyTeam();}
       pj.land=d;pj.ppToi=null;pj.stats=buildStats(d,$('period').value);applyPlayerStats();
       const sk=lastSeasonKey(d);if(sk&&d.position!=='G')fetchPpToi(pl.playerId,sk).then(v=>{pj.ppToi=v;if([1,2,3].some(i=>$('s'+i).value==='ppToi'))applyPlayerStats();});
-      setPhoto('/api/img?url='+encodeURIComponent(d.headshot||`https://assets.nhle.com/mugs/nhl/${'20252026'}/${ab}/${pl.playerId}.png`));
+      let photoUrl=d.headshot;
+      if(!photoUrl){
+        const seasons=(d.seasonTotals||[]).filter(x=>x.leagueAbbrev==='NHL'&&x.gameTypeId===2).sort((a,b)=>a.season-b.season);
+        const lastS=seasons[seasons.length-1];
+        const lastAb=lastS?(lastS.teamAbbrev||lastS.teamName?.abbrev||ab):ab;
+        const lastSeason=lastS?lastS.season:'20252026';
+        photoUrl=`https://assets.nhle.com/mugs/nhl/${lastSeason}/${lastAb}/${pl.playerId}.png`;
+      }
+      setPhoto('/api/img?url='+encodeURIComponent(photoUrl));
       $('pstate').textContent='';
     }catch(err){
       $('first').value=parts[0];$('cfirst').textContent=parts[0];
@@ -653,7 +661,7 @@
       o.first=d.firstName?.default||o.first;o.last=d.lastName?.default||o.last;o.num=d.sweaterNumber||o.num;o.abbr=d.currentTeamAbbrev||o.abbr;o.pos=d.position||o.pos;
       o.land=d;const seasons=(d.seasonTotals||[]).filter(x=>x.leagueAbbrev==='NHL'&&x.gameTypeId===2).sort((a,b)=>a.season-b.season);o.st=seasons[seasons.length-1]||null;
       if(d.headshot){o.photo='/api/img?url='+encodeURIComponent(d.headshot);}
-      else if(o.st){const lastAb=o.st.teamAbbrev||o.st.teamName?.abbrev||o.abbr;o.photo='/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${o.st.season}/${lastAb}/${pl.playerId}.png`);}
+      else if(o.st){const lastAb=o.st.teamAbbrev||o.st.teamCommonName?.default||o.st.team?.abbrev||o.st.teamName?.abbrev||o.abbr;o.photo='/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${o.st.season}/${lastAb}/${pl.playerId}.png`);}
       if(d.position!=='G'){const sk=lastSeasonKey(d);if(sk)o.ppToi=await fetchPpToi(pl.playerId,sk);}
     }
     if(!o.photo)o.photo='/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${'20252026'}/${pl.teamAbbrev}/${pl.playerId}.png`);
