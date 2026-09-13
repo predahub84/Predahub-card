@@ -107,7 +107,7 @@
   <div class="panel">
     <div class="row2" style="margin-bottom:6px"><div><label>Fond des cards</label><select id="bgsel"><option value="#050510">Nuit (défaut)</option><option value="#000000">Noir pur</option><option value="#0a0a1f">Bleu nuit</option><option value="#12081f">Violet profond</option><option value="#1a0510">Bordeaux</option><option value="#061a12">Vert forêt</option><option value="#101010">Anthracite</option><option value="custom">Personnalisée…</option></select></div><div><label>Couleur du halo</label><select id="glowsel"><option value="">Selon l'équipe / la card</option><option value="#FF2D55">Rouge PredaHUB</option><option value="#BF5AF2">Violet</option><option value="#FBBF24">Or</option><option value="#38BDF8">Bleu glace</option><option value="#22C55E">Vert</option><option value="none">Aucun halo</option></select></div></div>
     <div id="bgcustomwrap" class="hide"><label>Couleur personnalisée</label><input id="bgcustom" type="color" value="#050510" style="height:40px;padding:2px"></div>
-    <div class="tabs"><button type="button" id="tabP" class="on">Joueur</button><button type="button" id="tabD">Duel</button><button type="button" id="tabM">Match</button><button type="button" id="tabT">Top 5</button><button type="button" id="tabL">Leaders</button><button type="button" id="tabX">Milestones</button><button type="button" id="tabB">Profil</button></div>
+    <div class="tabs"><button type="button" id="tabP" class="on">Joueur</button><button type="button" id="tabD">Duel</button><button type="button" id="tabM">Match</button><button type="button" id="tabT">Top 5</button><button type="button" id="tabL">Leaders</button><button type="button" id="tabX">Milestones</button><button type="button" id="tabR">Trio</button><button type="button" id="tabB">Profil</button></div>
     <div id="secP">
     <h1>Card joueur en forme</h1>
     <label>Rechercher un joueur NHL</label>
@@ -232,6 +232,21 @@
     <button id="xdl">Télécharger en PNG</button>
     </div>
 
+    <div id="secR" class="hide">
+    <h1>Trio</h1>
+    <label>Joueur 1 (aile gauche)</label><input id="r1q" placeholder="Nom du joueur" autocomplete="off"><div id="r1r" class="results"></div>
+    <label>Joueur 2 (centre)</label><input id="r2q" placeholder="Nom du joueur" autocomplete="off"><div id="r2r" class="results"></div>
+    <label>Joueur 3 (aile droite)</label><input id="r3q" placeholder="Nom du joueur" autocomplete="off"><div id="r3r" class="results"></div>
+    <div id="rstate" style="font-size:12px;color:#FBBF24"></div>
+    <label>Titre (vide = nom d'équipe automatique)</label><input id="rtitle" value="">
+    <label>Sous-titre</label><input id="rsub" value="">
+    <label>Format</label>
+    <select id="rfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
+    <label>Taille des photos : <span id="rzoomv">100</span> %</label>
+    <input id="rzoom" type="range" min="60" max="160" value="100">
+    <button id="rdl">Télécharger en PNG</button>
+    </div>
+
     <div id="secB" class="hide">
     <h1>Photo de profil et bannière</h1>
     <label>Élément</label>
@@ -251,6 +266,7 @@
     <canvas id="topcv" class="hide" width="1080" height="1350"></canvas>
     <canvas id="leadcv" class="hide" width="1080" height="1350"></canvas>
     <canvas id="milecv" class="hide" width="1080" height="1350"></canvas>
+    <canvas id="triocv" class="hide" width="1080" height="1350"></canvas>
     <canvas id="brandcv" class="hide" width="1080" height="1080"></canvas>
     <div class="scaler" id="scaler">
       <div id="card" class="">
@@ -574,10 +590,10 @@
   /* ==================== ONGLETS ==================== */
   let mode='P';
   function setMode(m){mode=m;
-    [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM'],['T','tabT','secT'],['L','tabL','secL'],['X','tabX','secX'],['B','tabB','secB']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
+    [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM'],['T','tabT','secT'],['L','tabL','secL'],['R','tabR','secR'],['X','tabX','secX'],['B','tabB','secB']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
     scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');$('topcv').classList.toggle('hide',m!=='T');$('leadcv').classList.toggle('hide',m!=='L');$('milecv').classList.toggle('hide',m!=='X');$('brandcv').classList.toggle('hide',m!=='B');
     if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';if(m==='D')renderDuel();else if(m==='M')renderMatch();else if(m==='T')renderTop();else if(m==='L')renderLead();else if(m==='X')renderMile();else drawBrand();}}
-  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));$('tabT').addEventListener('click',()=>setMode('T'));$('tabL').addEventListener('click',()=>setMode('L'));$('tabX').addEventListener('click',()=>setMode('X'));$('tabB').addEventListener('click',()=>setMode('B'));
+  $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));$('tabT').addEventListener('click',()=>setMode('T'));$('tabL').addEventListener('click',()=>setMode('L'));$('tabX').addEventListener('click',()=>setMode('X'));$('tabR').addEventListener('click',()=>setMode('R'));$('tabB').addEventListener('click',()=>setMode('B'));
 
   /* ==================== DUEL ==================== */
   const duel={A:null,B:null};
@@ -660,6 +676,53 @@
     const st=(A&&A.st)||(B&&B.st);const yr=st?String(st.season):'';footer(x,W,H,$('dperiod').value==='last5'?'5 derniers matchs · saison régulière':(yr?`Saison ${yr.slice(0,4)}-${yr.slice(6,8)} · saison régulière`:''));
   }
   $('ddl').addEventListener('click',async()=>{const btn=$('ddl');btn.textContent='Export…';try{await drawDuel();const blob=await new Promise(r=>$('duelcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-duel-${(duel.A?duel.A.last:'a').toLowerCase()}-vs-${(duel.B?duel.B.last:'b').toLowerCase()}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('dstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+
+
+
+  /* ==================== TRIO ==================== */
+  const trio={p:[null,null,null]};
+  function statLineFor(o){
+    if(!o)return null;
+    const m=buildStats(o.land,'season');
+    if(o.pos==='G')return [['V',m.wins??'-'],['% ARR.',m.svPct??'-'],['BL',m.so??'-']];
+    return [['B',m.goals??'-'],['P',m.assists??'-'],['PTS',m.points??'-']];
+  }
+  [1,2,3].forEach(i=>{
+    hookSearch('r'+i+'q','r'+i+'r',async pl=>{$('rstate').textContent='Chargement…';trio.p[i-1]=await fetchPlayer(pl);$('rstate').textContent='';renderTrio();});
+  });
+  ['rtitle','rsub','rfmt','rzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('rzoomv').textContent=$('rzoom').value;renderTrio();}));
+  let rr=null;function renderTrio(){clearTimeout(rr);rr=setTimeout(drawTrio,30);}
+  async function drawTrio(){
+    await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
+    const sq=$('rfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('triocv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+    const ps=trio.p;const lead=ps.find(o=>o);const col=glowOr(lead?teamCol(lead.abbr):'#FF2D55');
+    x.fillStyle=theme.bg;x.fillRect(0,0,W,H);
+    let g=x.createRadialGradient(540,sq?300:340,0,540,sq?300:340,760);g.addColorStop(0,hexA(col,.55));g.addColorStop(.55,hexA('#BF5AF2',.12));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+    texture(x,W,H);
+    if(lead&&lead.logo){const lb=lead.logo;const lw=W*0.95;const rr=lw/lb.width;const lh=lb.height*rr;
+      x.save();x.globalAlpha=.10;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,(W-lw)/2,H-lh*0.62,lw,lh);x.restore();}
+    frame(x,W,H,col,'#BF5AF2');brand(x,W);
+    const title=($('rtitle').value.trim()||(lead?(lead.team[1]||lead.abbr):'TRIO')).toUpperCase();
+    const sub=$('rsub').value.trim()||(lead?`Saison ${seasonLabel(lead.land)} · saison régulière`:'');
+    titleBlock(x,W,title,sub,sq?128:150,col);
+    const cy=sq?400:560;const R=Math.round((sq?128:155)*($('rzoom').value/100));
+    const cxs=[W*0.17,W*0.5,W*0.83];
+    cxs.forEach((cx,i)=>{
+      const o=ps[i];if(!o)return;
+      circlePhoto(x,o,cx,cy,R,teamCol(o.abbr));
+      const nm=o.last.toUpperCase();let f=52;x.font=`${f}px Anton`;while(x.measureText(nm).width>320&&f>26){f-=2;x.font=`${f}px Anton`;}
+      x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=16;x.fillStyle='#fff';x.fillText(nm,cx,cy+R+56);x.restore();
+      x.font='600 24px "Inter Tight"';x.fillStyle=teamCol(o.abbr);x.fillText(`${o.abbr}${o.num?' · N° '+o.num:''}${o.pos?' · '+o.pos:''}`,cx,cy+R+88);
+      const st=statLineFor(o);
+      if(st){const sw=100;const sx0=cx-sw*1.5;
+        st.forEach((s,j)=>{const sx=sx0+sw*j+sw/2;x.font='58px Anton';x.fillStyle='#e6e6f2';x.fillText(String(s[1]),sx,cy+R+156);
+          x.font='600 20px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(s[0],sx,cy+R+182);});
+        x.strokeStyle='rgba(255,255,255,.1)';x.lineWidth=1;x.beginPath();x.moveTo(cx-sw*1.5,cy+R+128);x.lineTo(cx+sw*1.5,cy+R+128);x.stroke();
+      }
+    });
+    footer(x,W,H,'Source : NHL');
+  }
+  $('rdl').addEventListener('click',async()=>{const btn=$('rdl');btn.textContent='Export…';try{await drawTrio();const blob=await new Promise(r=>$('triocv').toBlob(r,'image/png'));const a=document.createElement('a');const names=trio.p.filter(o=>o).map(o=>o.last.toLowerCase()).join('-')||'trio';a.download=`predahub-trio-${names}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();}catch(err){$('rstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
   /* ==================== MATCH ==================== */
