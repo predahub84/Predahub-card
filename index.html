@@ -270,15 +270,15 @@
     <h1>Recrues à suivre</h1>
     <label>Joueur 1</label><input id="q1q" placeholder="Nom du joueur" autocomplete="off"><div id="q1r" class="results"></div>
     <div class="row2"><select id="q1team"><option value="">Équipe : auto</option></select><input id="q1num" placeholder="N° (auto)"></div>
-    <label>Info à afficher (ex. 16 B · 35 PTS · AHL 25-26)</label><input id="q1info" placeholder="Stat, repêchage, fait marquant…">
+    <label>Info à afficher (vide = auto : repêchage + dernière saison AHL/junior)</label><input id="q1info" placeholder="Laisse vide pour auto, ou écris ta propre info">
     <label>Badge (vide = « À suivre »)</label><input id="q1badge" placeholder="À suivre">
     <label>Joueur 2</label><input id="q2q" placeholder="Nom du joueur" autocomplete="off"><div id="q2r" class="results"></div>
     <div class="row2"><select id="q2team"><option value="">Équipe : auto</option></select><input id="q2num" placeholder="N° (auto)"></div>
-    <label>Info à afficher</label><input id="q2info" placeholder="Stat, repêchage, fait marquant…">
+    <label>Info à afficher (vide = auto)</label><input id="q2info" placeholder="Laisse vide pour auto, ou écris ta propre info">
     <label>Badge (vide = « À suivre »)</label><input id="q2badge" placeholder="À suivre">
     <label>Joueur 3 (optionnel)</label><input id="q3q" placeholder="Nom du joueur" autocomplete="off"><div id="q3r" class="results"></div>
     <div class="row2"><select id="q3team"><option value="">Équipe : auto</option></select><input id="q3num" placeholder="N° (auto)"></div>
-    <label>Info à afficher</label><input id="q3info" placeholder="Stat, repêchage, fait marquant…">
+    <label>Info à afficher (vide = auto)</label><input id="q3info" placeholder="Laisse vide pour auto, ou écris ta propre info">
     <label>Badge (vide = « À suivre »)</label><input id="q3badge" placeholder="À suivre">
     <div id="qstate" style="font-size:12px;color:#FBBF24"></div>
     <label>Équipe du thème (optionnel — sinon celle du 1er joueur rempli)</label><select id="qteam"><option value="">Auto</option></select>
@@ -1020,6 +1020,20 @@
   $('qteam').addEventListener('change',()=>renderProspects());
   ['qtitle','qsub','qfmt','qzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('qzoomv').textContent=$('qzoom').value;renderProspects();}));
   let qr=null;function renderProspects(){clearTimeout(qr);qr=setTimeout(drawProspects,30);}
+  function prospectAutoInfo(o){
+    const d=o.land;if(!d)return'';
+    const dd=d.draftDetails;
+    const draftStr=dd&&dd.year?`${dd.overallPick?dd.overallPick+'e au total':(dd.pickInRound&&dd.round?dd.round+'e ronde':'')} ${dd.year}`.trim():'';
+    const others=(d.seasonTotals||[]).filter(s=>s.leagueAbbrev&&s.leagueAbbrev!=='NHL'&&(s.gamesPlayed||0)>0).sort((a,b)=>a.season-b.season);
+    const last=others[others.length-1];
+    let statStr='';
+    if(last){
+      const gp=last.gamesPlayed,gl=last.goals??0,as=last.assists??0,pt=last.points??(gl+as);
+      const yr=String(last.season);const yl=yr.length>=8?`${yr.slice(0,4)}-${yr.slice(6,8)}`:yr;
+      statStr=`${gl} B · ${as} P · ${pt} PTS (${gp} M, ${last.leagueAbbrev} ${yl})`;
+    }
+    return[draftStr,statStr].filter(Boolean).join(' · ');
+  }
   async function drawProspects(){
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
     const sq=$('qfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('prospectcv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
@@ -1043,35 +1057,39 @@
     const title=($('qtitle').value.trim()||"RECRUES À SUIVRE").toUpperCase();
     const sub=$('qsub').value.trim()||(themeTeam?themeTeam[1]:'');
     titleBlock(x,W,title,sub,sq?128:150,col);
-    const cy=sq?400:560;const R=Math.round((sq?128:155)*($('qzoom').value/100));
-    const cxs=[W*0.17,W*0.5,W*0.83];
-    cxs.forEach((cx,i)=>{
-      const o=ps[i];if(!o)return;
-      const oAbbr=ovr[i].abbr||o.abbr;const oNum=ovr[i].num||o.num;
-      const oLogo=ovr[i].abbr?rteamLogoCache[ovr[i].abbr]:o.logo;
+    const active=ps.map((o,i)=>o?{o,ovr:ovr[i]}:null).filter(Boolean);
+    const n=active.length||1;
+    const cy=sq?400:560;
+    const baseR=sq?128:155;const rMult=n===1?1.35:n===2?1.18:1;
+    const R=Math.round(baseR*rMult*($('qzoom').value/100));
+    const cxs=n===1?[W*0.5]:n===2?[W*0.32,W*0.68]:[W*0.17,W*0.5,W*0.83];
+    active.forEach(({o,ovr:ov},pos)=>{
+      const cx=cxs[pos];
+      const oAbbr=ov.abbr||o.abbr;const oNum=ov.num||o.num;
+      const oLogo=ov.abbr?rteamLogoCache[ov.abbr]:o.logo;
       const tcol=teamCol(oAbbr);
-      const badge=ovr[i].badge;
+      const badge=ov.badge;
       x.save();x.font='700 22px "Inter Tight"';const tw=x.measureText(badge).width;const pw=tw+34,ph=40;const px0=cx-pw/2,py0=cy-R-ph-18;
         roundRect(x,px0,py0,pw,ph,ph/2);x.fillStyle='#BF5AF2';x.fill();
         x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.fillText(badge,cx,py0+ph/2+1);x.restore();
       circlePhoto(x,o,cx,cy,R,tcol,null,false);
       if(!o.bmp&&oNum){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(oNum),cx,cy+R*.05);x.restore();}
-      const nm=o.last.toUpperCase();let f=52;x.font=`${f}px Anton`;while(x.measureText(nm).width>320&&f>26){f-=2;x.font=`${f}px Anton`;}
+      const nm=o.last.toUpperCase();let f=Math.round(52*rMult);x.font=`${f}px Anton`;while(x.measureText(nm).width>320*rMult&&f>26){f-=2;x.font=`${f}px Anton`;}
       x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=16;x.fillStyle='#fff';x.fillText(nm,cx,cy+R+56);x.restore();
       if(oLogo){const lz=30;const rr2=Math.min(lz/oLogo.width,lz/oLogo.height);const lw2=oLogo.width*rr2,lh2=oLogo.height*rr2;
         x.font='600 24px "Inter Tight"';const lab=`${oAbbr}${oNum?' · N°'+oNum:''}`;const tw2=x.measureText(lab).width;const tot=lw2+8+tw2;
         x.drawImage(oLogo,cx-tot/2,cy+R+88-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillStyle=tcol;x.fillText(lab,cx-tot/2+lw2+8,cy+R+88);x.textAlign='center';
       } else {x.font='600 24px "Inter Tight"';x.fillStyle=tcol;x.fillText(`${oAbbr}${oNum?' · N°'+oNum:''}`,cx,cy+R+88);}
-      const info=ovr[i].info;
-      if(info){const by=cy+R+118,bh=92;
-        x.save();roundRect(x,cx-156,by,312,bh,16);x.fillStyle='rgba(255,255,255,.04)';x.fill();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
-        x.save();x.textAlign='center';x.font='700 22px "Inter Tight"';x.fillStyle='#e6e6f2';
-        const words=info.split(' ');let line1=info,line2='';
-        if(x.measureText(info).width>288){let acc='';for(const w of words){const t=acc?acc+' '+w:w;if(x.measureText(t).width>288&&acc){line2=info.slice(acc.length).trim();line1=acc;break;}acc=t;}}
-        if(line2){x.fillText(line1,cx,by+40);x.font='600 20px "Inter Tight"';x.fillText(line2,cx,by+66);}
-        else{x.textBaseline='middle';x.fillText(line1,cx,by+bh/2);}
-        x.restore();
-      }
+      const info=ov.info||prospectAutoInfo(o)||'Aucune stat pro disponible';
+      const boxW=n===3?312:380;const by=cy+R+118,bh=92;
+      x.save();roundRect(x,cx-boxW/2,by,boxW,bh,16);x.fillStyle='rgba(255,255,255,.04)';x.fill();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
+      x.save();x.textAlign='center';x.font='700 22px "Inter Tight"';x.fillStyle='#e6e6f2';
+      const maxTextW=boxW-24;
+      const words=info.split(' ');let line1=info,line2='';
+      if(x.measureText(info).width>maxTextW){let acc='';for(const w of words){const t=acc?acc+' '+w:w;if(x.measureText(t).width>maxTextW&&acc){line2=info.slice(acc.length).trim();line1=acc;break;}acc=t;}}
+      if(line2){x.fillText(line1,cx,by+38);x.font='600 19px "Inter Tight"';x.fillText(line2,cx,by+66);}
+      else{x.textBaseline='middle';x.fillText(line1,cx,by+bh/2);}
+      x.restore();
     });
     footer(x,W,H,'Source : NHL / AHL / Junior');
   }
