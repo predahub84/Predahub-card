@@ -591,7 +591,7 @@
   let mode='P';
   function setMode(m){mode=m;
     [['P','tabP','secP'],['D','tabD','secD'],['M','tabM','secM'],['T','tabT','secT'],['L','tabL','secL'],['R','tabR','secR'],['X','tabX','secX'],['B','tabB','secB']].forEach(([k,t,sec])=>{$(t).classList.toggle('on',m===k);$(sec).classList.toggle('hide',m!==k);});
-    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');$('topcv').classList.toggle('hide',m!=='T');$('leadcv').classList.toggle('hide',m!=='L');$('milecv').classList.toggle('hide',m!=='X');$('brandcv').classList.toggle('hide',m!=='B');
+    scaler.classList.toggle('hide',m!=='P');$('duelcv').classList.toggle('hide',m!=='D');$('matchcv').classList.toggle('hide',m!=='M');$('topcv').classList.toggle('hide',m!=='T');$('leadcv').classList.toggle('hide',m!=='L');$('milecv').classList.toggle('hide',m!=='X');$('triocv').classList.toggle('hide',m!=='R');$('brandcv').classList.toggle('hide',m!=='B');
     if(m==='P')fit();else{const w=Math.min(window.innerWidth-40,540);preview.style.width=w+'px';preview.style.height='auto';if(m==='D')renderDuel();else if(m==='M')renderMatch();else if(m==='T')renderTop();else if(m==='L')renderLead();else if(m==='X')renderMile();else drawBrand();}}
   $('tabP').addEventListener('click',()=>setMode('P'));$('tabD').addEventListener('click',()=>setMode('D'));$('tabM').addEventListener('click',()=>setMode('M'));$('tabT').addEventListener('click',()=>setMode('T'));$('tabL').addEventListener('click',()=>setMode('L'));$('tabX').addEventListener('click',()=>setMode('X'));$('tabR').addEventListener('click',()=>setMode('R'));$('tabB').addEventListener('click',()=>setMode('B'));
 
