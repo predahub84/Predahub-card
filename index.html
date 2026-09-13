@@ -848,7 +848,7 @@
     if(!abbr){$('gstate').textContent='Choisis une équipe du thème d\'abord.';return;}
     btn.textContent='Chargement…';btn.disabled=true;$('gstate').textContent='Chargement de l\'effectif…';
     try{
-      const season=seasonId();
+      const season='20252026'; // saison courante affichée dans le reste de l'outil (à mettre à jour manuellement en octobre)
       const exp=`seasonId=${season} and gameTypeId=2 and teamAbbrevs="${abbr}" and (positionCode="C" or positionCode="L" or positionCode="R")`;
       const sort=JSON.stringify([{property:'timeOnIcePerGame',direction:'DESC'}]);
       const url=`/api/nhl?path=stats:skater/summary&isAggregate=false&isGame=false&limit=12&start=0&sort=${encodeURIComponent(sort)}&cayenneExp=${encodeURIComponent(exp)}`;
