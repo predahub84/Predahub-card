@@ -1049,27 +1049,29 @@
     const oRow=others.filter(s=>s.season===oMax).sort((a,b)=>(b.gamesPlayed||0)-(a.gamesPlayed||0))[0]||null;
     const pack=(r,lbl)=>{if(!r)return null;const g=r.goals??0,a=r.assists??0;
       return{label:lbl,stats:[['MJ',r.gamesPlayed],['B',g],['P',a],['PTS',r.points??(g+a)]]};};
+    const clubOf=r=>{if(!r)return'';
+      return r.teamName?.default||r.teamCommonName?.default||r.teamAbbrev||r.teamName?.abbrev||'';};
     return{
-      nhl:pack(nhlRow,`NHL · ${nhlRow?seasonLbl(nhlRow.season):''}`),
-      other:pack(oRow,oRow?`${oRow.leagueAbbrev} · ${seasonLbl(oRow.season)}`:''),
+      nhl:pack(nhlRow,nhlRow?`${clubOf(nhlRow)||'NHL'} · NHL · ${seasonLbl(nhlRow.season)}`:''),
+      other:pack(oRow,oRow?`${clubOf(oRow)?clubOf(oRow)+' · ':''}${oRow.leagueAbbrev} · ${seasonLbl(oRow.season)}`:''),
       draft
     };
   }
   function statRow(x,cx,topY,data,accent,big,sq){
-    const lblSize=sq?15:17;
+    const lblSize=sq?18:20;
     x.save();x.textAlign='center';x.textBaseline='alphabetic';
     x.font=`800 ${lblSize}px "Inter Tight"`;x.fillStyle=accent;
     x.fillText(data.label.toUpperCase(),cx,topY+lblSize);x.restore();
-    const sy=topY+lblSize+12;const n=data.stats.length;
-    const bw=sq?(big?470:430):(big?540:490);const sw=bw/n;const bx0=cx-bw/2;
-    const bh=sq?(big?96:86):(big?112:100);
+    const sy=topY+lblSize+14;const n=data.stats.length;
+    const bw=sq?(big?490:460):(big?560:520);const sw=bw/n;const bx0=cx-bw/2;
+    const bh=sq?(big?104:94):(big?120:108);
     x.save();roundRect(x,bx0,sy,bw,bh,16);x.fillStyle='rgba(255,255,255,.05)';x.fill();
     x.strokeStyle=hexA(accent,.35);x.lineWidth=1.5;x.stroke();x.restore();
-    const numSize=sq?(big?62:54):(big?76:66);
+    const numSize=sq?(big?68:60):(big?82:72);
     data.stats.forEach((s,j)=>{const sx=bx0+sw*j+sw/2;
       if(j>0){x.save();x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();x.moveTo(bx0+sw*j,sy+14);x.lineTo(bx0+sw*j,sy+bh-14);x.stroke();x.restore();}
       x.textAlign='center';x.textBaseline='alphabetic';x.font=`${numSize}px Anton`;x.fillStyle='#fff';x.fillText(String(s[1]),sx,sy+bh*0.64);
-      x.font=`600 ${sq?15:17}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(s[0],sx,sy+bh-14);});
+      x.font=`600 ${sq?17:19}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(s[0],sx,sy+bh-14);});
     return sy+bh;
   }
   async function drawProspects(){
@@ -1097,7 +1099,7 @@
     const badge=($('q1badge').value.trim()||'ROOKIE').toUpperCase();
     /* photo ronde en haut */
     const R=Math.round((sq?190:225)*($('qzoom').value/100));
-    const cy=(sq?300:360)+R*0.1;
+    const cy=(sq?290:340)+R*0.1;
     circlePhoto(x,o,W/2,cy,R,tcol,null,false);
     if(!o.bmp&&oNum){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(oNum),W/2,cy+R*.05);x.restore();}
     /* badge RECRUE */
@@ -1109,7 +1111,7 @@
       x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=20;x.drawImage(oLogo,W/2+R-lw2*0.3,cy+R-lh2*0.75,lw2,lh2);x.restore();}
     /* prénom + NOM : la taille du nom est calculée AVANT de placer le prénom */
     const nm=o.last.toUpperCase();
-    let f=sq?74:86;x.font=`${f}px Anton`;while(x.measureText(nm).width>W-140&&f>38){f-=2;x.font=`${f}px Anton`;}
+    let f=sq?84:96;x.font=`${f}px Anton`;while(x.measureText(nm).width>W-120&&f>38){f-=2;x.font=`${f}px Anton`;}
     const firstSize=Math.max(24,Math.round(f*0.36));
     let y=cy+R+34+firstSize;
     x.save();x.textAlign='center';x.textBaseline='alphabetic';
@@ -1121,7 +1123,7 @@
     const posTxt=POSLBL[o.pos]||o.pos||'';
     const metaBits=[themeTeam?themeTeam[1]:oAbbr,oNum?`N° ${oNum}`:'',posTxt].filter(Boolean);
     const sub=$('qsub').value.trim()||metaBits.join('  ·  ');
-    const subSize=sq?23:26;
+    const subSize=sq?27:30;
     y+=subSize+18;
     x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`700 ${subSize}px "Inter Tight"`;x.fillStyle=tcol;x.fillText(sub,W/2,y);x.restore();
     /* attributs physiques : taille · poids · âge */
@@ -1137,14 +1139,14 @@
       if(age>0&&age<60)bits2.push(`${age} ans`);
     }
     if(bits2.length){
-      const s2=sq?19:21;
+      const s2=sq?22:25;
       y+=s2+12;
       x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`600 ${s2}px "Inter Tight"`;x.fillStyle='#9a9ab4';
       x.fillText(bits2.join('   ·   '),W/2,y);x.restore();
     }
     /* badge repêchage */
     if(draft){
-      const dTxt=draft.toUpperCase();const dSize=19,dph=40;
+      const dTxt=draft.toUpperCase();const dSize=22,dph=46;
       y+=20;
       x.save();x.font=`800 ${dSize}px "Inter Tight"`;const dpw=x.measureText(dTxt).width+38;
       roundRect(x,W/2-dpw/2,y,dpw,dph,dph/2);x.fillStyle='rgba(251,191,36,.13)';x.fill();x.strokeStyle='rgba(251,191,36,.5)';x.lineWidth=1.5;x.stroke();
