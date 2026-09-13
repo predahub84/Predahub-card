@@ -854,7 +854,7 @@
       if(!o.bmp&&oNum){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(oNum),cx,cy+R*.05);x.restore();}
       if(isBest){x.save();x.beginPath();x.arc(cx,cy,R+18,0,Math.PI*2);x.strokeStyle='rgba(251,191,36,.6)';x.lineWidth=3;x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=20;x.stroke();x.restore();}
       const nm=o.last.toUpperCase();let f=52;x.font=`${f}px Anton`;while(x.measureText(nm).width>320&&f>26){f-=2;x.font=`${f}px Anton`;}
-      const firstY=cy+R+46;const nameY=firstY+Math.round(f*0.95);
+      const firstY=cy+R+44;const nameY=firstY+Math.round(f*1.18);
       x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font='600 21px "Inter Tight"';x.fillStyle='#9a9ab4';
       x.fillText(o.first,cx,firstY);x.restore();
       x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${f}px Anton`;x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=16;x.fillStyle='#fff';x.fillText(nm,cx,nameY);x.restore();
