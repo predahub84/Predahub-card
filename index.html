@@ -644,14 +644,19 @@
   }
   async function fetchPlayer(pl){
     const parts=pl.name.split(' ');
-    const o={id:pl.playerId,first:parts[0],last:parts.slice(1).join(' '),num:pl.sweaterNumber||'',abbr:pl.teamAbbrev||'',pos:pl.positionCode||'',st:null,
-      photo:'/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${'20252026'}/${pl.teamAbbrev}/${pl.playerId}.png`)};
-    try{const r=await fetch(`/api/nhl?path=player/${pl.playerId}/landing`);if(!r.ok)throw 0;const d=await r.json();
+    const o={id:pl.playerId,first:parts[0],last:parts.slice(1).join(' '),num:pl.sweaterNumber||'',abbr:pl.teamAbbrev||'',pos:pl.positionCode||'',st:null,photo:null};
+    let d=null;
+    for(let attempt=0;attempt<2&&!d;attempt++){
+      try{const r=await fetch(`/api/nhl?path=player/${pl.playerId}/landing`);if(!r.ok)throw 0;d=await r.json();}catch(e){d=null;}
+    }
+    if(d){
       o.first=d.firstName?.default||o.first;o.last=d.lastName?.default||o.last;o.num=d.sweaterNumber||o.num;o.abbr=d.currentTeamAbbrev||o.abbr;o.pos=d.position||o.pos;
-      if(d.headshot)o.photo='/api/img?url='+encodeURIComponent(d.headshot);
       o.land=d;const seasons=(d.seasonTotals||[]).filter(x=>x.leagueAbbrev==='NHL'&&x.gameTypeId===2).sort((a,b)=>a.season-b.season);o.st=seasons[seasons.length-1]||null;
+      if(d.headshot){o.photo='/api/img?url='+encodeURIComponent(d.headshot);}
+      else if(o.st){const lastAb=o.st.teamAbbrev||o.st.teamName?.abbrev||o.abbr;o.photo='/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${o.st.season}/${lastAb}/${pl.playerId}.png`);}
       if(d.position!=='G'){const sk=lastSeasonKey(d);if(sk)o.ppToi=await fetchPpToi(pl.playerId,sk);}
-    }catch(e){}
+    }
+    if(!o.photo)o.photo='/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${'20252026'}/${pl.teamAbbrev}/${pl.playerId}.png`);
     o.team=TEAMS.find(t=>t[0]===o.abbr)||['','',"#FF2D55","#BF5AF2","#fff"];
     o.bmp=await loadBitmap(o.photo);
     o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.abbr}_dark.svg`);
