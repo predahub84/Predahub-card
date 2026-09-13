@@ -244,7 +244,7 @@
     <label>Équipe du thème (optionnel — sinon celle du 1er joueur rempli)</label><select id="rteam"><option value="">Auto</option></select>
     <label>Titre (vide = nom d'équipe automatique)</label><input id="rtitle" value="">
     <label>Sous-titre</label><input id="rsub" value="">
-    <label>Accroche (ex. PROJECTION L1 — vide = rien)</label><input id="raccroche" value="" placeholder="PROJECTION L1">
+    <label>Accroche (ex. TRIO PROJETÉ · L1 — vide = rien)</label><input id="raccroche" value="" placeholder="TRIO PROJETÉ · L1">
     <label>Format</label>
     <select id="rfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
     <label>Taille des photos : <span id="rzoomv">100</span> %</label>
@@ -839,6 +839,7 @@
     const cxs=[W*0.17,W*0.5,W*0.83];
     /* meilleur pointeur du trio -> accent or */
     let bestI=-1,bestV=-1;ps.forEach((o,i)=>{if(!o||o.pos==='G')return;const m=buildStats(o.land,'season');const v=m.points??-1;if(v>bestV){bestV=v;bestI=i;}});
+    let statsBottom=0;
     cxs.forEach((cx,i)=>{
       const o=ps[i];if(!o)return;
       const oAbbr=ovr[i].abbr||forcedAbbr||o.abbr;const oNum=ovr[i].num||o.num;
@@ -869,8 +870,14 @@
           if(j>0){x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();x.moveTo(sx0+sw*j,by+14);x.lineTo(sx0+sw*j,by+bh-14);x.stroke();}
           x.textAlign='center';x.font=`${n>3?46:58}px Anton`;x.fillStyle=isBest?gold(x,by+52,n>3?46:58):'#e6e6f2';x.fillText(String(s[1]),sx,by+62);
           x.font=`600 ${n>3?15:19}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(s[0],sx,by+82);});
+        statsBottom=Math.max(statsBottom,by+bh);
       }
     });
+    if(statsBottom&&lead){
+      const seasonTxt=`Statistiques réelles ${seasonLabel(lead.land)} · saison régulière`;
+      x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font='600 21px "Inter Tight"';x.fillStyle='#7d7d96';
+      x.fillText(seasonTxt,W/2,statsBottom+42);x.restore();
+    }
     footer(x,W,H,'Source : NHL');
   }
   $('rdl').addEventListener('click',async()=>{const btn=$('rdl');btn.textContent='Export…';try{await drawTrio();const blob=await new Promise(r=>$('triocv').toBlob(r,'image/png'));await offerSave(blob,`predahub-trio-${names}.png`);}catch(err){$('rstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
