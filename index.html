@@ -238,6 +238,7 @@
     <label>Joueur 2 (centre)</label><input id="r2q" placeholder="Nom du joueur" autocomplete="off"><div id="r2r" class="results"></div>
     <label>Joueur 3 (aile droite)</label><input id="r3q" placeholder="Nom du joueur" autocomplete="off"><div id="r3r" class="results"></div>
     <div id="rstate" style="font-size:12px;color:#FBBF24"></div>
+    <label>Équipe du thème (optionnel — sinon celle du 1er joueur rempli)</label><select id="rteam"><option value="">Auto</option></select>
     <label>Titre (vide = nom d'équipe automatique)</label><input id="rtitle" value="">
     <label>Sous-titre</label><input id="rsub" value="">
     <label>Format</label>
@@ -695,14 +696,23 @@
   async function drawTrio(){
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
     const sq=$('rfmt').value==='square';const W=1080,H=sq?1080:1350;const cv=$('triocv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
-    const ps=trio.p;const lead=ps.find(o=>o);const col=glowOr(lead?teamCol(lead.abbr):'#FF2D55');
+    const ps=trio.p;const lead=ps.find(o=>o);
+    const forcedAbbr=$('rteam').value;
+    const themeAbbr=forcedAbbr||(lead?lead.abbr:'');
+    const themeTeam=TEAMS.find(t=>t[0]===themeAbbr);
+    const col=glowOr(themeAbbr?teamCol(themeAbbr):'#FF2D55');
+    let themeLogo=null;
+    if(forcedAbbr){
+      if(!rteamLogoCache[forcedAbbr])rteamLogoCache[forcedAbbr]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${forcedAbbr}_dark.svg`);
+      themeLogo=rteamLogoCache[forcedAbbr];
+    } else if(lead){themeLogo=lead.logo;}
     x.fillStyle=theme.bg;x.fillRect(0,0,W,H);
     let g=x.createRadialGradient(540,sq?300:340,0,540,sq?300:340,760);g.addColorStop(0,hexA(col,.55));g.addColorStop(.55,hexA('#BF5AF2',.12));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
     texture(x,W,H);
-    if(lead&&lead.logo){const lb=lead.logo;const lw=W*0.95;const rr=lw/lb.width;const lh=lb.height*rr;
+    if(themeLogo){const lb=themeLogo;const lw=W*0.95;const rr=lw/lb.width;const lh=lb.height*rr;
       x.save();x.globalAlpha=.10;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,(W-lw)/2,H-lh*0.62,lw,lh);x.restore();}
     frame(x,W,H,col,'#BF5AF2');brand(x,W);
-    const title=($('rtitle').value.trim()||(lead?(lead.team[1]||lead.abbr):'TRIO')).toUpperCase();
+    const title=($('rtitle').value.trim()||(themeTeam?themeTeam[1]:(lead?(lead.team[1]||lead.abbr):'TRIO'))).toUpperCase();
     const sub=$('rsub').value.trim()||(lead?`Saison ${seasonLabel(lead.land)} · saison régulière`:'');
     titleBlock(x,W,title,sub,sq?128:150,col);
     const cy=sq?400:560;const R=Math.round((sq?128:155)*($('rzoom').value/100));
@@ -1065,6 +1075,9 @@
   /* ==================== MILESTONES ==================== */
   const mile={raw:[],rows:[]};
   TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$('xteam').appendChild(o);});
+  TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$('rteam').appendChild(o);});
+  const rteamLogoCache={};
+  $('rteam').addEventListener('change',()=>renderTrio());
   const XCAT={goals:'Buts',assists:'Passes',points:'Points',gamesPlayed:'Matchs joués',wins:'Victoires',shutouts:'Blanchissages',saves:'Arrêts',games:'Matchs joués'};
   const xlabel=k=>XCAT[k]||k;
   $('xload').addEventListener('click',loadMile);
