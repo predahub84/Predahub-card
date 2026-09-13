@@ -543,7 +543,7 @@
   async function searchPlayers(q){
     $('pstate').textContent='Recherche…';
     try{
-      const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=8&q=${encodeURIComponent(q)}&active=true`);
+      const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=8&q=${encodeURIComponent(q)}`);
       const list=await r.json();
       $('results').innerHTML='';
       if(!list.length){$('pstate').textContent='Aucun joueur trouvé.';return;}
@@ -600,7 +600,7 @@
   function hookSearch(inputId,resultsId,onPick){
     let t=null;const inp=$(inputId),box=$(resultsId);
     inp.addEventListener('input',e=>{clearTimeout(t);const v=e.target.value.trim();if(v.length<3){box.innerHTML='';return;}
-      t=setTimeout(async()=>{try{const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=8&q=${encodeURIComponent(v)}&active=true`);const list=await r.json();box.innerHTML='';
+      t=setTimeout(async()=>{try{const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=8&q=${encodeURIComponent(v)}`);const list=await r.json();box.innerHTML='';
         list.forEach(pl=>{const b=document.createElement('button');b.type='button';b.innerHTML=`${pl.name} <small>${pl.teamAbbrev||''} ${pl.sweaterNumber?'#'+pl.sweaterNumber:''} ${pl.positionCode||''}</small>`;b.addEventListener('click',()=>{box.innerHTML='';inp.value=pl.name;onPick(pl);});box.appendChild(b);});}
         catch(e){$('dstate').textContent='Recherche indisponible.';}},300);});
   }
