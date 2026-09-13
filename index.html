@@ -669,6 +669,40 @@
 
   /* ==================== DUEL ==================== */
   const duel={A:null,B:null};
+  const rosterCache={};
+  async function getRoster(abbr){
+    if(!abbr)return[];
+    if(rosterCache[abbr])return rosterCache[abbr];
+    try{
+      const r=await fetch(`/api/nhl?path=roster/${abbr}/current`);if(!r.ok)throw 0;const d=await r.json();
+      const grp=[...(d.forwards||[]),...(d.defensemen||[]),...(d.goalies||[])];
+      const list=grp.map(p=>({playerId:p.id,name:`${p.firstName?.default||''} ${p.lastName?.default||''}`.trim(),teamAbbrev:abbr,sweaterNumber:p.sweaterNumber||'',positionCode:p.positionCode||''}));
+      rosterCache[abbr]=list;return list;
+    }catch(e){return[];}
+  }
+  function hookSearchWithRoster(inputId,resultsId,onPick,getTeamAbbr){
+    let t=null;const inp=$(inputId),box=$(resultsId);
+    const render=list=>{box.innerHTML='';
+      list.forEach(pl=>{const b=document.createElement('button');b.type='button';
+        b.innerHTML=`${pl.name} <small>${pl.teamAbbrev||''} ${pl.sweaterNumber?'#'+pl.sweaterNumber:''} ${pl.positionCode||''}</small>`;
+        b.addEventListener('click',()=>{box.innerHTML='';inp.value=pl.name;onPick(pl);});box.appendChild(b);});};
+    inp.addEventListener('focus',async()=>{
+      if(inp.value.trim().length>=3)return;
+      const abbr=getTeamAbbr&&getTeamAbbr();
+      if(!abbr)return;
+      const list=await getRoster(abbr);
+      if(list.length&&!inp.value.trim())render(list);
+    });
+    inp.addEventListener('input',e=>{clearTimeout(t);const v=e.target.value.trim();
+      if(v.length<3){
+        const abbr=getTeamAbbr&&getTeamAbbr();
+        if(!v&&abbr){getRoster(abbr).then(l=>{if(!inp.value.trim()&&l.length)render(l);});}
+        else box.innerHTML='';
+        return;}
+      t=setTimeout(async()=>{try{const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=8&q=${encodeURIComponent(v)}`);const list=await r.json();render(list);}
+        catch(e){box.innerHTML='';}},300);});
+    document.addEventListener('click',ev=>{if(ev.target!==inp&&!box.contains(ev.target))box.innerHTML='';});
+  }
   function hookSearch(inputId,resultsId,onPick){
     let t=null;const inp=$(inputId),box=$(resultsId);
     inp.addEventListener('input',e=>{clearTimeout(t);const v=e.target.value.trim();if(v.length<3){box.innerHTML='';return;}
@@ -856,7 +890,7 @@
   })();
   for(let L=1;L<=4;L++)for(let P=1;P<=3;P++){const id=`g${L}${P}`,li=L-1,pi=P-1;
     TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$(id+'team').appendChild(o);});
-    hookSearch(id+'q',id+'r',async pl=>{$('gstate').textContent='Chargement…';lines.p[li][pi]=await fetchPlayer(pl);$('gstate').textContent='';updateHandles();renderLines();});
+    hookSearchWithRoster(id+'q',id+'r',async pl=>{$('gstate').textContent='Chargement…';lines.p[li][pi]=await fetchPlayer(pl);$('gstate').textContent='';updateHandles();renderLines();},()=>$(id+'team').value||$('gteam').value);
     $(id+'team').addEventListener('change',()=>renderLines());
     $(id+'num').addEventListener('input',()=>renderLines());
   }
@@ -1100,31 +1134,36 @@
       }
       const custom=ov.info;
       const boxW=n===3?312:392;
-      const bh=(custom?86:(mainStats?(poStats?150:118):74));
+      const bh=(custom?96:(mainStats?(poStats?206:134):84));
       const by=cy+R+112;
       x.save();roundRect(x,cx-boxW/2,by,boxW,bh,18);x.fillStyle='rgba(255,255,255,.045)';x.fill();x.strokeStyle='rgba(255,255,255,.09)';x.lineWidth=1;x.stroke();x.restore();
-      let iy=by+26;
+      let iy=by+30;
       if(draftStr){
-        x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font='800 15px "Inter Tight"';x.fillStyle=gold(x,iy,15);
+        x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font='800 19px "Inter Tight"';x.fillStyle=gold(x,iy,19);
         x.fillText(draftStr.toUpperCase(),cx,iy);x.restore();
-        iy+=(custom||mainStats)?14:0;
+        iy+=(custom||mainStats)?16:0;
       }
       if(custom){
-        x.save();x.textAlign='center';x.textBaseline='middle';x.font='700 20px "Inter Tight"';x.fillStyle='#e6e6f2';
-        x.fillText(custom,cx,draftStr?by+58:by+bh/2);x.restore();
+        x.save();x.textAlign='center';x.textBaseline='middle';x.font='700 23px "Inter Tight"';x.fillStyle='#e6e6f2';
+        x.fillText(custom,cx,draftStr?by+64:by+bh/2);x.restore();
       } else if(mainStats){
-        x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font='800 12px "Inter Tight"';x.fillStyle='#8a8aa3';
-        x.fillText(mainLabel,cx,iy+10);x.restore();
-        const sy=iy+18;const sn=mainStats.length;const sw=(boxW-32)/sn;const bx0=cx-(boxW-32)/2;
+        x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font='800 15px "Inter Tight"';x.fillStyle='#8a8aa3';
+        x.fillText(mainLabel,cx,iy+12);x.restore();
+        const sy=iy+22;const sn=mainStats.length;const sw=(boxW-32)/sn;const bx0=cx-(boxW-32)/2;
         mainStats.forEach((s,j)=>{const sx=bx0+sw*j+sw/2;
-          if(j>0){x.save();x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();x.moveTo(bx0+sw*j,sy+4);x.lineTo(bx0+sw*j,sy+48);x.stroke();x.restore();}
-          x.textAlign='center';x.font='46px Anton';x.fillStyle='#e6e6f2';x.fillText(String(s[1]),sx,sy+42);
-          x.font='600 13px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(s[0],sx,sy+60);});
+          if(j>0){x.save();x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();x.moveTo(bx0+sw*j,sy+4);x.lineTo(bx0+sw*j,sy+52);x.stroke();x.restore();}
+          x.textAlign='center';x.font='50px Anton';x.fillStyle='#e6e6f2';x.fillText(String(s[1]),sx,sy+44);
+          x.font='600 15px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(s[0],sx,sy+64);});
         if(poStats){
-          const py=sy+84;
-          x.save();x.textAlign='center';x.font='600 15px "Inter Tight"';x.fillStyle='#BF5AF2';
-          const poTxt=`SÉRIES · ${poStats[0][1]} MJ · ${poStats[1][1]} B · ${poStats[2][1]} P · ${poStats[3][1]} PTS`;
-          x.fillText(poTxt,cx,py);x.restore();
+          const divY=sy+80;
+          x.save();x.strokeStyle='rgba(255,255,255,.09)';x.beginPath();x.moveTo(cx-boxW/2+20,divY);x.lineTo(cx+boxW/2-20,divY);x.stroke();x.restore();
+          x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font='800 15px "Inter Tight"';x.fillStyle='#BF5AF2';
+          x.fillText('SÉRIES ÉLIMINATOIRES',cx,divY+22);x.restore();
+          const py=divY+30;
+          poStats.forEach((s,j)=>{const sx=bx0+sw*j+sw/2;
+            if(j>0){x.save();x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();x.moveTo(bx0+sw*j,py+4);x.lineTo(bx0+sw*j,py+44);x.stroke();x.restore();}
+            x.textAlign='center';x.font='40px Anton';x.fillStyle='#e6e6f2';x.fillText(String(s[1]),sx,py+38);
+            x.font='600 13px "Inter Tight"';x.fillStyle='#8a8aa3';x.fillText(s[0],sx,py+56);});
         }
       }
     });
