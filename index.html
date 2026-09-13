@@ -244,6 +244,7 @@
     <label>Équipe du thème (optionnel — sinon celle du 1er joueur rempli)</label><select id="rteam"><option value="">Auto</option></select>
     <label>Titre (vide = nom d'équipe automatique)</label><input id="rtitle" value="">
     <label>Sous-titre</label><input id="rsub" value="">
+    <label>Accroche (ex. PROJECTION L1 — vide = rien)</label><input id="raccroche" value="" placeholder="PROJECTION L1">
     <label>Format</label>
     <select id="rfmt"><option value="">Insta 4:5</option><option value="square">X carré</option></select>
     <label>Taille des photos : <span id="rzoomv">100</span> %</label>
@@ -553,7 +554,7 @@
   }
   async function fetchPpToi(playerId,seasonKey){try{const q=`/api/nhl?path=stats:skater/timeonice&isAggregate=false&isGame=false&limit=1&start=0&cayenneExp=${encodeURIComponent(`seasonId=${seasonKey} and gameTypeId=2 and playerId=${playerId}`)}`;const r=await fetch(q);if(!r.ok)return null;const d=await r.json();const row=(d.data||[])[0];return row&&row.ppTimeOnIcePerGame!=null?fmtToi(row.ppTimeOnIcePerGame):null;}catch(e){return null;}}
   const lastSeasonKey=d=>{if(!d)return null;const ss=(d.seasonTotals||[]).filter(x=>x.leagueAbbrev==='NHL'&&x.gameTypeId===2).sort((a,b)=>a.season-b.season);return ss.length?ss[ss.length-1].season:null;};
-  const POSLBL={L:'AG',R:'AD',C:'C',D:'D',G:'G'};
+  const POSLBL={L:'LW',R:'RW',C:'C',D:'D',G:'G'};
   const seasonLabel=d=>{const k=lastSeasonKey(d);return k?`${String(k).slice(0,4)}-${String(k).slice(6,8)}`:'';};
   const statShort=k=>{const d=STATDEFS.find(x=>x[0]===k);return d?d[2]:k;};
 
@@ -792,7 +793,7 @@
   [1,2,3].forEach(i=>{
     hookSearch('r'+i+'q','r'+i+'r',async pl=>{$('rstate').textContent='Chargement…';trio.p[i-1]=await fetchPlayer(pl);$('rstate').textContent='';renderTrio();});
   });
-  ['rtitle','rsub','rfmt','rzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('rzoomv').textContent=$('rzoom').value;renderTrio();}));
+  ['rtitle','rsub','raccroche','rfmt','rzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('rzoomv').textContent=$('rzoom').value;renderTrio();}));
   let rr=null;function renderTrio(){clearTimeout(rr);rr=setTimeout(drawTrio,30);}
   async function drawTrio(){
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
@@ -819,7 +820,22 @@
     const title=($('rtitle').value.trim()||(themeTeam?themeTeam[1]:(lead?(lead.team[1]||lead.abbr):'TRIO'))).toUpperCase();
     const sub=$('rsub').value.trim()||(lead?`Saison ${seasonLabel(lead.land)} · saison régulière`:'');
     titleBlock(x,W,title,sub,sq?128:150,col);
-    const cy=sq?400:560;const R=Math.round((sq?128:155)*($('rzoom').value/100));
+    const acc=$('raccroche').value.trim().toUpperCase();
+    if(acc){
+      const ay=sq?238:268;const aSize=sq?34:40;
+      x.save();x.font=`${aSize}px Anton`;const atw=x.measureText(acc).width;
+      const apw=atw+64,aph=aSize+26;const ax0=W/2-apw/2,ay0=ay-aph/2;
+      const ag=x.createLinearGradient(ax0,0,ax0+apw,0);ag.addColorStop(0,col);ag.addColorStop(1,'#BF5AF2');
+      roundRect(x,ax0,ay0,apw,aph,8);x.fillStyle=ag;x.fill();
+      x.save();x.beginPath();roundRect(x,ax0,ay0,apw,aph,8);x.clip();
+      x.globalAlpha=.22;x.fillStyle='#fff';
+      for(let k=-2;k<12;k++){x.save();x.translate(ax0+k*34,ay0);x.rotate(-Math.PI/9);x.fillRect(0,-20,7,aph+50);x.restore();}
+      x.restore();
+      x.textAlign='center';x.textBaseline='middle';
+      x.shadowColor='rgba(0,0,0,.55)';x.shadowBlur=10;x.fillStyle='#fff';x.fillText(acc,W/2,ay+2);
+      x.restore();
+    }
+    const cy=(sq?400:560)+(acc?34:0);const R=Math.round((sq?128:155)*($('rzoom').value/100));
     const cxs=[W*0.17,W*0.5,W*0.83];
     /* meilleur pointeur du trio -> accent or */
     let bestI=-1,bestV=-1;ps.forEach((o,i)=>{if(!o||o.pos==='G')return;const m=buildStats(o.land,'season');const v=m.points??-1;if(v>bestV){bestV=v;bestI=i;}});
@@ -830,7 +846,7 @@
       const tcol=teamCol(oAbbr);const isBest=i===bestI;
       /* pastille de poste */
       const lbl=POSLBL[o.pos]||o.pos||'';
-      if(lbl){x.save();x.font='700 22px "Inter Tight"';const tw=x.measureText(lbl).width;const pw=tw+34,ph=40;const px0=cx-pw/2,py0=cy-R-ph-18;
+      if(lbl){x.save();x.font='700 22px "Inter Tight"';const tw=x.measureText(lbl).width;const pw=tw+34,ph=40;const px0=cx-pw/2,py0=cy-R-ph-26;
         roundRect(x,px0,py0,pw,ph,ph/2);x.fillStyle=isBest?gold(x,py0+ph/2,ph):'rgba(255,255,255,.08)';x.fill();
         x.strokeStyle=isBest?'rgba(251,191,36,.7)':'rgba(255,255,255,.18)';x.lineWidth=1.5;x.stroke();
         x.textAlign='center';x.textBaseline='middle';x.fillStyle=isBest?'#050510':'#e6e6f2';x.fillText(lbl,cx,py0+ph/2+1);x.restore();}
@@ -838,13 +854,13 @@
       if(!o.bmp&&oNum){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(oNum),cx,cy+R*.05);x.restore();}
       if(isBest){x.save();x.beginPath();x.arc(cx,cy,R+18,0,Math.PI*2);x.strokeStyle='rgba(251,191,36,.6)';x.lineWidth=3;x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=20;x.stroke();x.restore();}
       const nm=o.last.toUpperCase();let f=52;x.font=`${f}px Anton`;while(x.measureText(nm).width>320&&f>26){f-=2;x.font=`${f}px Anton`;}
-      x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=16;x.fillStyle='#fff';x.fillText(nm,cx,cy+R+56);x.restore();
+      x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=16;x.fillStyle='#fff';x.fillText(nm,cx,cy+R+74);x.restore();
       if(oLogo){const lz=30;const rr2=Math.min(lz/oLogo.width,lz/oLogo.height);const lw2=oLogo.width*rr2,lh2=oLogo.height*rr2;
         x.font='600 24px "Inter Tight"';const lab=`${oAbbr}${oNum?' · N° '+oNum:''}`;const tw2=x.measureText(lab).width;const tot=lw2+8+tw2;
-        x.drawImage(oLogo,cx-tot/2,cy+R+88-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillStyle=tcol;x.fillText(lab,cx-tot/2+lw2+8,cy+R+88);x.textAlign='center';
-      } else {x.font='600 24px "Inter Tight"';x.fillStyle=tcol;x.fillText(`${oAbbr}${oNum?' · N° '+oNum:''}`,cx,cy+R+88);}
+        x.drawImage(oLogo,cx-tot/2,cy+R+112-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillStyle=tcol;x.fillText(lab,cx-tot/2+lw2+8,cy+R+112);x.textAlign='center';
+      } else {x.font='600 24px "Inter Tight"';x.fillStyle=tcol;x.fillText(`${oAbbr}${oNum?' · N° '+oNum:''}`,cx,cy+R+112);}
       const st=statLineFor(o);
-      if(st){const n=st.length;const sw=312/n;const sx0=cx-sw*n/2;const by=cy+R+118;const bh=92;
+      if(st){const n=st.length;const sw=312/n;const sx0=cx-sw*n/2;const by=cy+R+146;const bh=92;
         x.save();roundRect(x,sx0,by,sw*n,bh,16);x.fillStyle='rgba(255,255,255,.04)';x.fill();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
         st.forEach((s,j)=>{const sx=sx0+sw*j+sw/2;
           if(j>0){x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();x.moveTo(sx0+sw*j,by+14);x.lineTo(sx0+sw*j,by+bh-14);x.stroke();}
