@@ -899,7 +899,8 @@
         html+=`<div style="display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:center">`;
         html+=`<button type="button" class="secbtn slotHandle" data-slot="${slot}" style="padding:9px 2px;font-size:11px;margin:0;touch-action:none">L${L}</button>`;
         html+=`<input id="${id}q" placeholder="Nom du joueur" autocomplete="off"></div><div id="${id}r" class="results"></div>`;
-        html+=`<div class="row2"><select id="${id}team"><option value="">Équipe : auto</option></select><input id="${id}num" placeholder="N° (auto)"></div>`;}
+        html+=`<div class="row2"><select id="${id}team"><option value="">Équipe : auto</option></select><input id="${id}num" placeholder="N° (auto)"></div>`;
+        html+=`<select id="${id}src"><option value="">Stats : auto (NHL sinon autre ligue)</option><option value="nhl">Forcer NHL</option><option value="other">Forcer AHL / autre ligue</option></select>`;}
       html+='</div>';
     }
     root.innerHTML=html;
@@ -909,6 +910,7 @@
     hookSearchWithRoster(id+'q',id+'r',async pl=>{$('gstate').textContent='Chargement…';lines.p[li][pi]=await fetchPlayer(pl);$('gstate').textContent='';updateHandles();renderLines();},()=>$(id+'team').value||$('gteam').value);
     $(id+'team').addEventListener('change',()=>renderLines());
     $(id+'num').addEventListener('input',()=>renderLines());
+    $(id+'src').addEventListener('change',()=>renderLines());
   }
   TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$('gteam').appendChild(o);});
   $('gteam').addEventListener('change',()=>renderLines());
@@ -930,7 +932,7 @@
     const[la,pa]=slotOf(a),[lb,pb]=slotOf(b);
     const idA=`g${la+1}${pa+1}`,idB=`g${lb+1}${pb+1}`;
     const tmp=lines.p[la][pa];lines.p[la][pa]=lines.p[lb][pb];lines.p[lb][pb]=tmp;
-    ['q','team','num'].forEach(suf=>{const ea=$(idA+suf),eb=$(idB+suf);const tv=ea.value;ea.value=eb.value;eb.value=tv;});
+    ['q','team','num','src'].forEach(suf=>{const ea=$(idA+suf),eb=$(idB+suf);if(!ea||!eb)return;const tv=ea.value;ea.value=eb.value;eb.value=tv;});
     updateHandles();renderLines();
   }
   document.querySelectorAll('.slotHandle').forEach(btn=>{
@@ -967,13 +969,34 @@
         $('gstate').textContent=`Chargement ${i+1}/${list.length}…`;
         const pl={playerId:it.playerId,name:it.skaterFullName,teamAbbrev:abbr,sweaterNumber:'',positionCode:it.positionCode||''};
         const o=await fetchPlayer(pl);
-        lines.p[li][pi]=o;$(id+'q').value=`${o.first} ${o.last}`;$(id+'team').value='';$(id+'num').value='';
+        lines.p[li][pi]=o;$(id+'q').value=`${o.first} ${o.last}`;$(id+'team').value='';$(id+'num').value='';if($(id+'src'))$(id+'src').value='';
         updateHandles();renderLines();
       }
       $('gstate').textContent='';
     }catch(e){$('gstate').textContent='Chargement de l\'effectif impossible : '+(e&&e.message?e.message:e);}
     finally{btn.textContent=orig;btn.disabled=false;}
   });
+  function statsForSource(o,src){
+    /* retourne {stats, league} ; league='' si NHL */
+    const d=o.land;
+    const nhl=statLineFor(o);
+    const nhlReal=nhl&&nhl.some(s=>s[1]!=='-'&&s[1]!==0&&s[1]!=null);
+    const pickOther=()=>{
+      if(!d)return null;
+      const others=(d.seasonTotals||[]).filter(s=>s.leagueAbbrev&&s.leagueAbbrev!=='NHL'&&s.gameTypeId===2&&(s.gamesPlayed||0)>0);
+      if(!others.length)return null;
+      const mx=others.reduce((m,s)=>Math.max(m,s.season),0);
+      const r=others.filter(s=>s.season===mx).sort((a,b)=>(b.gamesPlayed||0)-(a.gamesPlayed||0))[0];
+      if(!r)return null;
+      const g=r.goals??0,a=r.assists??0;
+      return{stats:[['MJ',r.gamesPlayed],['B',g],['P',a],['PTS',r.points??(g+a)]],league:r.leagueAbbrev};
+    };
+    if(src==='other'){const o2=pickOther();if(o2)return o2;}
+    if(src==='nhl')return nhl?{stats:nhl,league:''}:null;
+    if(nhlReal)return{stats:nhl,league:''};
+    const o2=pickOther();if(o2)return o2;
+    return nhl?{stats:nhl,league:''}:null;
+  }
   async function drawLines(){
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
     const compact=$('gfmt').value==='square';const W=1080,H=compact?1350:1920;const cv=$('linescv');cv.width=W;cv.height=H;const x=cv.getContext('2d');
@@ -1025,8 +1048,10 @@
         if(isBest){x.save();x.beginPath();x.arc(cx,cy,R+(compact?12:16),0,Math.PI*2);x.strokeStyle='rgba(251,191,36,.6)';x.lineWidth=3;x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=18;x.stroke();x.restore();}
         const nm=o.last.toUpperCase();let f=compact?Math.min(34,R*.44):Math.min(46,R*.44);x.font=`${f}px Anton`;while(x.measureText(nm).width>R*3&&f>14){f-=1;x.font=`${f}px Anton`;}
         const nameY=cy+R+(compact?22:26);x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=10;x.fillStyle='#fff';x.fillText(nm,cx,nameY);x.restore();
-        const st=statLineFor(o);
-        if(!st)return;
+        const srcSel=$(id+'src')?$(id+'src').value:'';
+        const stRes=statsForSource(o,srcSel);
+        if(!stRes)return;
+        const st=stRes.stats;const lg=stRes.league;
         {
           const n=st.length;const sw=Math.min(compact?62:78,(colXs[1]-colXs[0])*0.82/n);const by=nameY+(compact?12:16);const bh=compact?54:70;
           x.save();roundRect(x,cx-sw*n/2,by,sw*n,bh,14);x.fillStyle='rgba(255,255,255,.045)';x.fill();x.strokeStyle='rgba(255,255,255,.09)';x.lineWidth=1;x.stroke();x.restore();
@@ -1035,6 +1060,11 @@
             const numSize=compact?(n>3?26:30):(n>3?34:40);
             x.textAlign='center';x.font=`${numSize}px Anton`;x.fillStyle=isBest?gold(x,by+(compact?33:43),numSize):'#e6e6f2';x.fillText(String(s[1]),sx,by+(compact?34:44));
             x.font=`600 ${compact?(n>3?10:11):(n>3?12:14)}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(s[0],sx,by+(compact?48:62));});
+          if(lg){const ts=compact?10:12;x.save();x.font=`800 ${ts}px "Inter Tight"`;
+            const tw=x.measureText(lg).width;const tpw=tw+14,tph=ts+8;
+            const tx0=cx+sw*n/2-tpw+2,ty0=by-tph/2;
+            roundRect(x,tx0,ty0,tpw,tph,tph/2);x.fillStyle='#BF5AF2';x.fill();
+            x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.fillText(lg,tx0+tpw/2,ty0+tph/2+1);x.restore();}
         }
       });
     });
