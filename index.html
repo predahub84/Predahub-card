@@ -1082,16 +1082,29 @@
         x.font='600 24px "Inter Tight"';const lab=`${oAbbr}${oNum?' · N°'+oNum:''}`;const tw2=x.measureText(lab).width;const tot=lw2+8+tw2;
         x.drawImage(oLogo,cx-tot/2,cy+R+88-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillStyle=tcol;x.fillText(lab,cx-tot/2+lw2+8,cy+R+88);x.textAlign='center';
       } else {x.font='600 24px "Inter Tight"';x.fillStyle=tcol;x.fillText(`${oAbbr}${oNum?' · N°'+oNum:''}`,cx,cy+R+88);}
-      const info=ov.info||prospectAutoInfo(o)||'Aucune stat pro disponible';
-      const boxW=n===3?312:380;const by=cy+R+118,bh=92;
-      x.save();roundRect(x,cx-boxW/2,by,boxW,bh,16);x.fillStyle='rgba(255,255,255,.04)';x.fill();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
-      x.save();x.textAlign='center';x.font='700 22px "Inter Tight"';x.fillStyle='#e6e6f2';
-      const maxTextW=boxW-24;
-      const words=info.split(' ');let line1=info,line2='';
-      if(x.measureText(info).width>maxTextW){let acc='';for(const w of words){const t=acc?acc+' '+w:w;if(x.measureText(t).width>maxTextW&&acc){line2=info.slice(acc.length).trim();line1=acc;break;}acc=t;}}
-      if(line2){x.fillText(line1,cx,by+38);x.font='600 19px "Inter Tight"';x.fillText(line2,cx,by+66);}
-      else{x.textBaseline='middle';x.fillText(line1,cx,by+bh/2);}
-      x.restore();
+      const nhlStats=statLineFor(o);
+      let nextY=cy+R+118;
+      if(nhlStats){
+        const sn=nhlStats.length;const sw=312/sn;const bx0=cx-sw*sn/2;const sby=nextY;const sbh=92;
+        x.save();roundRect(x,bx0,sby,sw*sn,sbh,16);x.fillStyle='rgba(255,255,255,.04)';x.fill();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
+        nhlStats.forEach((s,j)=>{const sx=bx0+sw*j+sw/2;
+          if(j>0){x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();x.moveTo(bx0+sw*j,sby+14);x.lineTo(bx0+sw*j,sby+sbh-14);x.stroke();}
+          x.textAlign='center';x.font=`${sn>3?46:58}px Anton`;x.fillStyle='#e6e6f2';x.fillText(String(s[1]),sx,sby+62);
+          x.font=`600 ${sn>3?15:19}px "Inter Tight"`;x.fillStyle='#8a8aa3';x.fillText(s[0],sx,sby+82);});
+        nextY=sby+sbh+16;
+      }
+      const info=ov.info||prospectAutoInfo(o)||(nhlStats?'':'Aucune stat pro disponible');
+      if(info){
+        const boxW=n===3?312:380;const by=nextY,bh=nhlStats?66:92;
+        x.save();roundRect(x,cx-boxW/2,by,boxW,bh,16);x.fillStyle='rgba(255,255,255,.04)';x.fill();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
+        x.save();x.textAlign='center';x.font=`700 ${nhlStats?18:22}px "Inter Tight"`;x.fillStyle=nhlStats?'#c9c9de':'#e6e6f2';
+        const maxTextW=boxW-24;
+        const words=info.split(' ');let line1=info,line2='';
+        if(x.measureText(info).width>maxTextW){let acc='';for(const w of words){const t=acc?acc+' '+w:w;if(x.measureText(t).width>maxTextW&&acc){line2=info.slice(acc.length).trim();line1=acc;break;}acc=t;}}
+        if(line2){x.fillText(line1,cx,by+bh*0.4);x.font=`600 ${nhlStats?16:19}px "Inter Tight"`;x.fillText(line2,cx,by+bh*0.72);}
+        else{x.textBaseline='middle';x.fillText(line1,cx,by+bh/2);}
+        x.restore();
+      }
     });
     footer(x,W,H,'Source : NHL / AHL / Junior');
   }
