@@ -271,7 +271,7 @@
     <label>Équipe (pour la liste de l'effectif)</label><select id="qteam"><option value="">Choisir une équipe…</option></select>
     <label>Joueur</label><input id="q1q" placeholder="Nom du joueur" autocomplete="off"><div id="q1r" class="results"></div>
     <div class="row2"><select id="q1team"><option value="">Équipe : auto</option></select><input id="q1num" placeholder="N° (auto)"></div>
-    <label>Badge (vide = « RECRUE »)</label><input id="q1badge" placeholder="RECRUE">
+    <label>Badge (vide = « ROOKIE »)</label><input id="q1badge" placeholder="ROOKIE">
     <div id="qstate" style="font-size:12px;color:#FBBF24"></div>
     <label>Sous-titre (vide = auto)</label><input id="qsub" value="">
     <label>Format</label>
@@ -1034,7 +1034,12 @@
   function prospectLines(o){
     const d=o.land;if(!d)return{nhl:null,other:null,draft:''};
     const dd=d.draftDetails;
-    const draft=dd&&dd.year?(dd.overallPick?`${dd.overallPick}e au total · ${dd.year}`:(dd.round?`${dd.round}e ronde · ${dd.year}`:`Repêché ${dd.year}`)):'';
+    let draft='';
+    if(dd&&dd.year){
+      const rank=dd.overallPick?`${dd.overallPick}e au total`:(dd.round?`${dd.round}e ronde`:'Repêché');
+      const dTeam=dd.teamAbbrev&&dd.teamAbbrev!==(d.currentTeamAbbrev||o.abbr)?` · ${dd.teamAbbrev}`:'';
+      draft=`${rank} · ${dd.year}${dTeam}`;
+    }
     const all=d.seasonTotals||[];
     const nhlReg=all.filter(s=>s.leagueAbbrev==='NHL'&&s.gameTypeId===2&&(s.gamesPlayed||0)>0);
     const nhlMax=nhlReg.reduce((m,s)=>Math.max(m,s.season),0);
@@ -1089,10 +1094,10 @@
     const oLogo=($('q1team').value||forcedAbbr)?rteamLogoCache[$('q1team').value||forcedAbbr]:o.logo;
     const tcol=teamCol(oAbbr);
     const {nhl,other,draft}=prospectLines(o);
-    const badge=($('q1badge').value.trim()||'RECRUE').toUpperCase();
+    const badge=($('q1badge').value.trim()||'ROOKIE').toUpperCase();
     /* photo ronde en haut */
     const R=Math.round((sq?190:225)*($('qzoom').value/100));
-    const cy=(sq?250:300)+R*0.1;
+    const cy=(sq?300:360)+R*0.1;
     circlePhoto(x,o,W/2,cy,R,tcol,null,false);
     if(!o.bmp&&oNum){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(oNum),W/2,cy+R*.05);x.restore();}
     /* badge RECRUE */
@@ -1119,6 +1124,24 @@
     const subSize=sq?23:26;
     y+=subSize+18;
     x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`700 ${subSize}px "Inter Tight"`;x.fillStyle=tcol;x.fillText(sub,W/2,y);x.restore();
+    /* attributs physiques : taille · poids · âge */
+    const d0=o.land||{};
+    const bits2=[];
+    if(d0.heightInInches){bits2.push(`${Math.floor(d0.heightInInches/12)}'${d0.heightInInches%12}"`);}
+    if(d0.weightInPounds){bits2.push(`${d0.weightInPounds} lb`);}
+    if(d0.birthDate){
+      const bd=new Date(d0.birthDate);const now=new Date();
+      let age=now.getFullYear()-bd.getFullYear();
+      const mm=now.getMonth()-bd.getMonth();
+      if(mm<0||(mm===0&&now.getDate()<bd.getDate()))age--;
+      if(age>0&&age<60)bits2.push(`${age} ans`);
+    }
+    if(bits2.length){
+      const s2=sq?19:21;
+      y+=s2+12;
+      x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`600 ${s2}px "Inter Tight"`;x.fillStyle='#9a9ab4';
+      x.fillText(bits2.join('   ·   '),W/2,y);x.restore();
+    }
     /* badge repêchage */
     if(draft){
       const dTxt=draft.toUpperCase();const dSize=19,dph=40;
