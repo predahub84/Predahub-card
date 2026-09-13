@@ -20,7 +20,7 @@
   .tabs button{margin:0;background:#12122a;color:#8a8aa3;border:1px solid #23234a;padding:10px 4px;font-size:13px;font-weight:600;border-radius:8px;white-space:nowrap}
   .tabs button.on{background:linear-gradient(90deg,#FF2D55,#BF5AF2);color:#fff;border-color:transparent}
   .hide{display:none!important}
-  #duelcv,#matchcv,#topcv,#leadcv,#milecv,#triocv,#brandcv{width:100%;height:auto;display:block;border-radius:4px}
+  #duelcv,#matchcv,#topcv,#leadcv,#milecv,#triocv,#linescv,#brandcv{width:100%;height:auto;display:block;border-radius:4px}
   .checklist{max-height:260px;overflow:auto;border:1px solid #23234a;border-radius:8px;background:#0e0e22}
   .checklist label{display:flex;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid #1c1c33;margin:0;font-size:14px;color:#fff;cursor:pointer}
   .checklist label input{width:auto;accent-color:#BF5AF2}
@@ -255,8 +255,8 @@
     <h1>Lignes d'attaque</h1>
     <label>Équipe du thème</label><select id="gteam"><option value="">Choisir une équipe…</option></select>
     <button type="button" id="gauto" class="secbtn">⚡ Remplir auto (effectif, triées par temps de glace)</button>
+    <div id="gstate" style="font-size:12px;color:#FBBF24;min-height:16px;margin-top:2px"></div>
     <div id="gLines"></div>
-    <div id="gstate" style="font-size:12px;color:#FBBF24"></div>
     <label>Titre (vide = nom d'équipe automatique)</label><input id="gtitle" value="">
     <label>Sous-titre</label><input id="gsub" value="">
     <label>Format</label>
@@ -844,15 +844,15 @@
 
   /* ---- remplissage auto depuis l'effectif (triés par temps de glace) ---- */
   $('gauto').addEventListener('click',async()=>{
-    const abbr=$('gteam').value;
+    const abbr=$('gteam').value;const btn=$('gauto');const orig=btn.textContent;
     if(!abbr){$('gstate').textContent='Choisis une équipe du thème d\'abord.';return;}
-    $('gstate').textContent='Chargement de l\'effectif…';
+    btn.textContent='Chargement…';btn.disabled=true;$('gstate').textContent='Chargement de l\'effectif…';
     try{
       const season=seasonId();
       const exp=`seasonId=${season} and gameTypeId=2 and teamAbbrevs="${abbr}" and (positionCode="C" or positionCode="L" or positionCode="R")`;
       const sort=JSON.stringify([{property:'timeOnIcePerGame',direction:'DESC'}]);
       const url=`/api/nhl?path=stats:skater/summary&isAggregate=false&isGame=false&limit=12&start=0&sort=${encodeURIComponent(sort)}&cayenneExp=${encodeURIComponent(exp)}`;
-      const r=await fetch(url);if(!r.ok)throw 0;const d=await r.json();
+      const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();
       const list=(d.data||[]).slice(0,12);
       if(!list.length){$('gstate').textContent='Aucun attaquant trouvé pour cette équipe.';return;}
       for(let i=0;i<list.length;i++){
@@ -864,7 +864,8 @@
         updateHandles();renderLines();
       }
       $('gstate').textContent='';
-    }catch(e){$('gstate').textContent='Chargement de l\'effectif impossible.';}
+    }catch(e){$('gstate').textContent='Chargement de l\'effectif impossible : '+(e&&e.message?e.message:e);}
+    finally{btn.textContent=orig;btn.disabled=false;}
   });
   async function drawLines(){
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
