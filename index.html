@@ -913,16 +913,15 @@
     x.fillStyle=theme.bg;x.fillRect(0,0,W,H);
     let g=x.createRadialGradient(540,compact?260:340,0,540,compact?260:340,H*0.62);g.addColorStop(0,hexA(col,.42));g.addColorStop(.55,hexA('#BF5AF2',.1));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
     texture(x,W,H);
-    if(themeLogo){const lb=themeLogo;const maxW=W*0.48,maxH=H*0.2;const rr=Math.min(maxW/lb.width,maxH/lb.height);const lw=lb.width*rr,lh=lb.height*rr;
-      x.save();x.globalAlpha=.05;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,W-lw*0.6,H-lh*0.6,lw,lh);x.restore();}
+    if(themeLogo){const lb=themeLogo;const maxW=W*0.68,maxH=H*0.28;const rr=Math.min(maxW/lb.width,maxH/lb.height);const lw=lb.width*rr,lh=lb.height*rr;
+      const lcx=W/2,lcy=H*0.78;
+      x.save();x.globalAlpha=.09;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,lcx-lw/2,lcy-lh/2,lw,lh);x.restore();}
     frame(x,W,H,col,'#BF5AF2');brand(x,W);
     const title=($('gtitle').value.trim()||(themeTeam?themeTeam[1]:(lead?(lead.team[1]||lead.abbr):"LIGNES D'ATTAQUE"))).toUpperCase();
     const sub=$('gsub').value.trim()||(lead?`Saison ${seasonLabel(lead.land)} · saison régulière`:'');
-    const titleY=compact?150:190;const blockCenterY=titleY+30;
-    if(themeLogo){const lb=themeLogo;const lsz=compact?120:165;const rr3=Math.min(lsz/lb.width,lsz/lb.height);const lw3=lb.width*rr3,lh3=lb.height*rr3;
-      x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=22;x.drawImage(lb,64,blockCenterY-lh3/2,lw3,lh3);x.restore();}
+    const titleY=compact?110:158;
     titleBlock(x,W,title,sub,titleY,col);
-    const top0=compact?290:335;const bottom=H-64;const rowH=(bottom-top0)/4;
+    const top0=compact?178:250;const bottom=H-64;const rowH=(bottom-top0)/4;
     const zoom=$('gzoom').value/100;
     const colXs=[W*0.215,W*0.5,W*0.785];
     lines.p.forEach((trio3,li)=>{
