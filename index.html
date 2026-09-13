@@ -235,8 +235,11 @@
     <div id="secR" class="hide">
     <h1>Trio</h1>
     <label>Joueur 1 (aile gauche)</label><input id="r1q" placeholder="Nom du joueur" autocomplete="off"><div id="r1r" class="results"></div>
+    <div class="row2"><select id="r1team"><option value="">Équipe : auto</option></select><input id="r1num" placeholder="N° (auto)"></div>
     <label>Joueur 2 (centre)</label><input id="r2q" placeholder="Nom du joueur" autocomplete="off"><div id="r2r" class="results"></div>
+    <div class="row2"><select id="r2team"><option value="">Équipe : auto</option></select><input id="r2num" placeholder="N° (auto)"></div>
     <label>Joueur 3 (aile droite)</label><input id="r3q" placeholder="Nom du joueur" autocomplete="off"><div id="r3r" class="results"></div>
+    <div class="row2"><select id="r3team"><option value="">Équipe : auto</option></select><input id="r3num" placeholder="N° (auto)"></div>
     <div id="rstate" style="font-size:12px;color:#FBBF24"></div>
     <label>Équipe du thème (optionnel — sinon celle du 1er joueur rempli)</label><select id="rteam"><option value="">Auto</option></select>
     <label>Titre (vide = nom d'équipe automatique)</label><input id="rtitle" value="">
@@ -713,6 +716,8 @@
       const lcx=W/2,lcy=H*0.8;
       x.save();x.globalAlpha=.09;x.filter='grayscale(1) brightness(2.4)';x.drawImage(lb,lcx-lw/2,lcy-lh/2,lw,lh);x.restore();}
     frame(x,W,H,col,'#BF5AF2');brand(x,W);
+    const ovr=[1,2,3].map(i=>({abbr:$('r'+i+'team').value,num:$('r'+i+'num').value.trim()}));
+    for(const o2 of ovr){if(o2.abbr&&!rteamLogoCache[o2.abbr])rteamLogoCache[o2.abbr]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o2.abbr}_dark.svg`);}
     const title=($('rtitle').value.trim()||(themeTeam?themeTeam[1]:(lead?(lead.team[1]||lead.abbr):'TRIO'))).toUpperCase();
     const sub=$('rsub').value.trim()||(lead?`Saison ${seasonLabel(lead.land)} · saison régulière`:'');
     titleBlock(x,W,title,sub,sq?128:150,col);
@@ -723,7 +728,9 @@
     let bestI=-1,bestV=-1;ps.forEach((o,i)=>{if(!o||o.pos==='G')return;const m=buildStats(o.land,'season');const v=m.points??-1;if(v>bestV){bestV=v;bestI=i;}});
     cxs.forEach((cx,i)=>{
       const o=ps[i];if(!o)return;
-      const tcol=teamCol(o.abbr);const isBest=i===bestI;
+      const oAbbr=ovr[i].abbr||o.abbr;const oNum=ovr[i].num||o.num;
+      const oLogo=ovr[i].abbr?rteamLogoCache[ovr[i].abbr]:o.logo;
+      const tcol=teamCol(oAbbr);const isBest=i===bestI;
       /* pastille de poste */
       const lbl=POSLBL[o.pos]||o.pos||'';
       if(lbl){x.save();x.font='700 22px "Inter Tight"';const tw=x.measureText(lbl).width;const pw=tw+34,ph=40;const px0=cx-pw/2,py0=cy-R-ph-18;
@@ -731,14 +738,14 @@
         x.strokeStyle=isBest?'rgba(251,191,36,.7)':'rgba(255,255,255,.18)';x.lineWidth=1.5;x.stroke();
         x.textAlign='center';x.textBaseline='middle';x.fillStyle=isBest?'#050510':'#e6e6f2';x.fillText(lbl,cx,py0+ph/2+1);x.restore();}
       circlePhoto(x,o,cx,cy,R,tcol,null,false);
-      if(!o.bmp&&o.num){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(o.num),cx,cy+R*.05);x.restore();}
+      if(!o.bmp&&oNum){x.save();x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(R*.85)}px Anton`;x.fillStyle='rgba(255,255,255,.28)';x.fillText(String(oNum),cx,cy+R*.05);x.restore();}
       if(isBest){x.save();x.beginPath();x.arc(cx,cy,R+18,0,Math.PI*2);x.strokeStyle='rgba(251,191,36,.6)';x.lineWidth=3;x.shadowColor='rgba(251,191,36,.5)';x.shadowBlur=20;x.stroke();x.restore();}
       const nm=o.last.toUpperCase();let f=52;x.font=`${f}px Anton`;while(x.measureText(nm).width>320&&f>26){f-=2;x.font=`${f}px Anton`;}
       x.textAlign='center';x.textBaseline='alphabetic';x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=16;x.fillStyle='#fff';x.fillText(nm,cx,cy+R+56);x.restore();
-      if(o.logo){const lz=30;const rr2=Math.min(lz/o.logo.width,lz/o.logo.height);const lw2=o.logo.width*rr2,lh2=o.logo.height*rr2;
-        x.font='600 24px "Inter Tight"';const lab=`${o.abbr}${o.num?' · N° '+o.num:''}`;const tw2=x.measureText(lab).width;const tot=lw2+8+tw2;
-        x.drawImage(o.logo,cx-tot/2,cy+R+88-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillStyle=tcol;x.fillText(lab,cx-tot/2+lw2+8,cy+R+88);x.textAlign='center';
-      } else {x.font='600 24px "Inter Tight"';x.fillStyle=tcol;x.fillText(`${o.abbr}${o.num?' · N° '+o.num:''}`,cx,cy+R+88);}
+      if(oLogo){const lz=30;const rr2=Math.min(lz/oLogo.width,lz/oLogo.height);const lw2=oLogo.width*rr2,lh2=oLogo.height*rr2;
+        x.font='600 24px "Inter Tight"';const lab=`${oAbbr}${oNum?' · N° '+oNum:''}`;const tw2=x.measureText(lab).width;const tot=lw2+8+tw2;
+        x.drawImage(oLogo,cx-tot/2,cy+R+88-lh2/2-2,lw2,lh2);x.textAlign='left';x.fillStyle=tcol;x.fillText(lab,cx-tot/2+lw2+8,cy+R+88);x.textAlign='center';
+      } else {x.font='600 24px "Inter Tight"';x.fillStyle=tcol;x.fillText(`${oAbbr}${oNum?' · N° '+oNum:''}`,cx,cy+R+88);}
       const st=statLineFor(o);
       if(st){const n=st.length;const sw=312/n;const sx0=cx-sw*n/2;const by=cy+R+118;const bh=92;
         x.save();roundRect(x,sx0,by,sw*n,bh,16);x.fillStyle='rgba(255,255,255,.04)';x.fill();x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
@@ -1077,6 +1084,9 @@
   const mile={raw:[],rows:[]};
   TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$('xteam').appendChild(o);});
   TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$('rteam').appendChild(o);});
+  ['r1team','r2team','r3team'].forEach(id=>{TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$(id).appendChild(o);});});
+  ['r1team','r2team','r3team'].forEach(id=>$(id).addEventListener('change',()=>renderTrio()));
+  ['r1num','r2num','r3num'].forEach(id=>$(id).addEventListener('input',()=>renderTrio()));
   const rteamLogoCache={};
   $('rteam').addEventListener('change',()=>renderTrio());
   const XCAT={goals:'Buts',assists:'Passes',points:'Points',gamesPlayed:'Matchs joués',wins:'Victoires',shutouts:'Blanchissages',saves:'Arrêts',games:'Matchs joués'};
