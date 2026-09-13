@@ -314,6 +314,24 @@
 <script>
   window.addEventListener('error',e=>{try{const el=document.getElementById('pstate')||document.body;const msg=`Erreur : ${e.message} (ligne ${e.lineno})`;if(el.id==='pstate')el.textContent=msg;else{const d=document.createElement('div');d.style.cssText='color:#FBBF24;padding:8px;font-size:12px';d.textContent=msg;document.body.prepend(d);}}catch(_){}});
   const $=id=>document.getElementById(id);
+  async function offerSave(blob,filename){
+    try{
+      const file=new File([blob],filename,{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:filename});return;}
+    }catch(e){if(e&&e.name==='AbortError')return;}
+    const url=URL.createObjectURL(blob);
+    const modal=document.createElement('div');
+    modal.style.cssText='position:fixed;inset:0;background:rgba(2,2,8,.94);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px';
+    const img=document.createElement('img');img.src=url;
+    img.style.cssText='max-width:100%;max-height:72vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.6)';
+    const hint=document.createElement('div');hint.textContent="Appuie longuement sur l'image, puis « Enregistrer l'image »";
+    hint.style.cssText='color:#c9c9de;font-size:14px;text-align:center;font-family:"Inter Tight",sans-serif';
+    const close=document.createElement('button');close.type='button';close.textContent='Fermer';
+    close.style.cssText='margin-top:2px;padding:13px 30px;border:0;border-radius:10px;background:linear-gradient(90deg,#FF2D55,#BF5AF2);color:#fff;font-weight:700;font-size:15px;font-family:"Inter Tight",sans-serif';
+    close.addEventListener('click',()=>{modal.remove();URL.revokeObjectURL(url);});
+    modal.appendChild(img);modal.appendChild(hint);modal.appendChild(close);
+    document.body.appendChild(modal);
+  }
   const theme={bg:'#050510',glow:''};
   const glowOr=c=>theme.glow==='none'?'rgba(0,0,0,0)':(theme.glow||c);
   const seasonId=(d)=>{d=d?new Date(d):new Date();const y=d.getFullYear();return d.getMonth()>=8?`${y}${y+1}`:`${y-1}${y}`;};
@@ -480,7 +498,7 @@
       footer(x,W,H,$('cfoot').textContent);
       /* téléchargement */
       const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
-      const a=document.createElement('a');a.download=`predahub-${$('last').value.toLowerCase().replace(/\s+/g,'-')}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+      await offerSave(blob,`predahub-${$('last').value.toLowerCase().replace(/\s+/g,'-')}.png`);
     }catch(err){$('pstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}
     btn.textContent='Télécharger en PNG';fit();
   }
@@ -593,14 +611,14 @@
       const ab=d.currentTeamAbbrev||pl.teamAbbrev;if(ab&&TEAMS.some(t=>t[0]===ab)){sel.value=ab;customLogo=null;applyTeam();}
       pj.land=d;pj.ppToi=null;pj.stats=buildStats(d,$('period').value);applyPlayerStats();
       const sk=lastSeasonKey(d);if(sk&&d.position!=='G')fetchPpToi(pl.playerId,sk).then(v=>{pj.ppToi=v;if([1,2,3].some(i=>$('s'+i).value==='ppToi'))applyPlayerStats();});
-      setPhoto('/api/img?url='+encodeURIComponent(d.headshot||`https://assets.nhle.com/mugs/nhl/${seasonId()}/${ab}/${pl.playerId}.png`));
+      setPhoto('/api/img?url='+encodeURIComponent(d.headshot||`https://assets.nhle.com/mugs/nhl/${'20252026'}/${ab}/${pl.playerId}.png`));
       $('pstate').textContent='';
     }catch(err){
       $('first').value=parts[0];$('cfirst').textContent=parts[0];
       const ln=parts.slice(1).join(' ');$('last').value=ln;$('clast').textContent=ln;
       if(pl.sweaterNumber){$('num').value=pl.sweaterNumber;$('cnum').textContent=pl.sweaterNumber;}
       if(pl.teamAbbrev&&TEAMS.some(t=>t[0]===pl.teamAbbrev)){sel.value=pl.teamAbbrev;customLogo=null;applyTeam();}
-      setPhoto('/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${seasonId()}/${pl.teamAbbrev}/${pl.playerId}.png`));
+      setPhoto('/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${'20252026'}/${pl.teamAbbrev}/${pl.playerId}.png`));
       $('pstate').textContent='Stats indisponibles pour le moment ; nom, équipe, numéro et photo remplis.';
     }
   }
@@ -627,7 +645,7 @@
   async function fetchPlayer(pl){
     const parts=pl.name.split(' ');
     const o={id:pl.playerId,first:parts[0],last:parts.slice(1).join(' '),num:pl.sweaterNumber||'',abbr:pl.teamAbbrev||'',pos:pl.positionCode||'',st:null,
-      photo:'/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${seasonId()}/${pl.teamAbbrev}/${pl.playerId}.png`)};
+      photo:'/api/img?url='+encodeURIComponent(`https://assets.nhle.com/mugs/nhl/${'20252026'}/${pl.teamAbbrev}/${pl.playerId}.png`)};
     try{const r=await fetch(`/api/nhl?path=player/${pl.playerId}/landing`);if(!r.ok)throw 0;const d=await r.json();
       o.first=d.firstName?.default||o.first;o.last=d.lastName?.default||o.last;o.num=d.sweaterNumber||o.num;o.abbr=d.currentTeamAbbrev||o.abbr;o.pos=d.position||o.pos;
       if(d.headshot)o.photo='/api/img?url='+encodeURIComponent(d.headshot);
@@ -695,7 +713,7 @@
     /* pied */
     const st=(A&&A.st)||(B&&B.st);const yr=st?String(st.season):'';footer(x,W,H,$('dperiod').value==='last5'?'5 derniers matchs · saison régulière':(yr?`Saison ${yr.slice(0,4)}-${yr.slice(6,8)} · saison régulière`:''));
   }
-  $('ddl').addEventListener('click',async()=>{const btn=$('ddl');btn.textContent='Export…';try{await drawDuel();const blob=await new Promise(r=>$('duelcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-duel-${(duel.A?duel.A.last:'a').toLowerCase()}-vs-${(duel.B?duel.B.last:'b').toLowerCase()}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('dstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('ddl').addEventListener('click',async()=>{const btn=$('ddl');btn.textContent='Export…';try{await drawDuel();const blob=await new Promise(r=>$('duelcv').toBlob(r,'image/png'));await offerSave(blob,`predahub-duel-${(duel.A?duel.A.last:'a').toLowerCase()}-vs-${(duel.B?duel.B.last:'b').toLowerCase()}.png`);}catch(err){$('dstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
 
@@ -773,7 +791,7 @@
     });
     footer(x,W,H,'Source : NHL');
   }
-  $('rdl').addEventListener('click',async()=>{const btn=$('rdl');btn.textContent='Export…';try{await drawTrio();const blob=await new Promise(r=>$('triocv').toBlob(r,'image/png'));const a=document.createElement('a');const names=trio.p.filter(o=>o).map(o=>o.last.toLowerCase()).join('-')||'trio';a.download=`predahub-trio-${names}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('rstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('rdl').addEventListener('click',async()=>{const btn=$('rdl');btn.textContent='Export…';try{await drawTrio();const blob=await new Promise(r=>$('triocv').toBlob(r,'image/png'));await offerSave(blob,`predahub-trio-${names}.png`);}catch(err){$('rstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
   /* ==================== LIGNES D'ATTAQUE ==================== */
   const LINE_META=[
@@ -944,7 +962,7 @@
     });
     footer(x,W,H,'Source : NHL');
   }
-  $('gdl').addEventListener('click',async()=>{const btn=$('gdl');btn.textContent='Export…';try{await drawLines();const blob=await new Promise(r=>$('linescv').toBlob(r,'image/png'));const a=document.createElement('a');a.download='predahub-lignes.png';a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('gstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('gdl').addEventListener('click',async()=>{const btn=$('gdl');btn.textContent='Export…';try{await drawLines();const blob=await new Promise(r=>$('linescv').toBlob(r,'image/png'));await offerSave(blob,'predahub-lignes.png');}catch(err){$('gstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
 
@@ -973,7 +991,7 @@
     try{const r=await fetch(`/api/nhl?path=gamecenter/${g.id}/landing`);if(r.ok)match.land=await r.json();}catch(e){}
     try{const r=await fetch(`/api/nhl?path=gamecenter/${g.id}/right-rail`);if(r.ok)match.rail=await r.json();}catch(e){}
     const stars=(match.land&&match.land.summary&&match.land.summary.threeStars)||[];
-    for(const st of stars.slice(0,3)){st.bmp=await loadBitmap(st.headshot||`https://assets.nhle.com/mugs/nhl/${seasonId()}/${st.teamAbbrev}/${st.playerId}.png`);match.stars.push(st);}
+    for(const st of stars.slice(0,3)){st.bmp=await loadBitmap(st.headshot||`https://assets.nhle.com/mugs/nhl/${'20252026'}/${st.teamAbbrev}/${st.playerId}.png`);match.stars.push(st);}
     for(const ab of [g.awayTeam.abbrev,g.homeTeam.abbrev]){if(!match.logos[ab])match.logos[ab]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${ab}_dark.svg`);}
     $('mstate').textContent='';renderMatch();
   }
@@ -1080,7 +1098,7 @@
     }
     footer(x,W,H,'Source : NHL');
   }
-  $('mdl').addEventListener('click',async()=>{const btn=$('mdl');btn.textContent='Export…';try{await drawMatch();const blob=await new Promise(r=>$('matchcv').toBlob(r,'image/png'));const a=document.createElement('a');const g=match.cur;a.download=`predahub-match-${g?g.awayTeam.abbrev+'-'+g.homeTeam.abbrev:'x'}.png`.toLowerCase();a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('mstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('mdl').addEventListener('click',async()=>{const btn=$('mdl');btn.textContent='Export…';try{await drawMatch();const blob=await new Promise(r=>$('matchcv').toBlob(r,'image/png'));await offerSave(blob,`predahub-match-${g?g.awayTeam.abbrev+'-'+g.homeTeam.abbrev:'x'}.png`.toLowerCase());}catch(err){$('mstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
   /* ==================== TOP 5 ==================== */
@@ -1162,7 +1180,7 @@
     if(two){x.fillStyle='rgba(255,255,255,.1)';x.fillRect(540-1,top0,2,bottom-top0);}
     footer(x,W,H,'Saison régulière · Source : NHL');
   }
-  $('tdl').addEventListener('click',async()=>{const btn=$('tdl');btn.textContent='Export…';try{await drawTop();const blob=await new Promise(r=>$('topcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-top5-${$('tcat').value.replace(':','-')}-${top5.to||''}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('tstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('tdl').addEventListener('click',async()=>{const btn=$('tdl');btn.textContent='Export…';try{await drawTop();const blob=await new Promise(r=>$('topcv').toBlob(r,'image/png'));await offerSave(blob,`predahub-top5-${$('tcat').value.replace(':','-')}-${top5.to||''}.png`);}catch(err){$('tstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
   /* ==================== LEADERS ==================== */
@@ -1265,7 +1283,7 @@
     }
     footer(x,W,H,'Source : NHL');
   }
-  $('ldl').addEventListener('click',async()=>{const btn=$('ldl');btn.textContent='Export…';try{await drawLead();const blob=await new Promise(r=>$('leadcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-leaders-${$('lcat').value.replace(':','-')}-${$('lseason').value}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('lstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('ldl').addEventListener('click',async()=>{const btn=$('ldl');btn.textContent='Export…';try{await drawLead();const blob=await new Promise(r=>$('leadcv').toBlob(r,'image/png'));await offerSave(blob,`predahub-leaders-${$('lcat').value.replace(':','-')}-${$('lseason').value}.png`);}catch(err){$('lstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
   /* ==================== MILESTONES ==================== */
@@ -1325,7 +1343,7 @@
   async function applyMileSel(){
     const list=mile.cands.filter(o=>mile.sel.has(o.id+'|'+o.cat));$('xsel').textContent=`(${list.length})`;
     for(const o of list){if(!o.bmp){let hs=null;try{const rr=await fetch(`/api/nhl?path=player/${o.id}/landing`);if(rr.ok){const dd=await rr.json();hs=dd.headshot||null;if(!o.ab&&dd.currentTeamAbbrev)o.ab=dd.currentTeamAbbrev;if(!o.num)o.num=dd.sweaterNumber||'';}}catch(e){}
-      o.bmp=await loadBitmap(hs||`https://assets.nhle.com/mugs/nhl/${seasonId()}/${o.ab}/${o.id}.png`);o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.ab}_dark.svg`);}}
+      o.bmp=await loadBitmap(hs||`https://assets.nhle.com/mugs/nhl/${'20252026'}/${o.ab}/${o.id}.png`);o.logo=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${o.ab}_dark.svg`);}}
     mile.rows=list;renderMile();
   }
   let rx=null;function renderMile(){clearTimeout(rx);rx=setTimeout(drawMile,30);}
@@ -1360,7 +1378,7 @@
       x.fillStyle=rem<=0?'#22C55E':'#FF2D55';roundRect(x,W-64-tw,cy+rowH*.26,tw,30,8);x.fill();x.fillStyle='#fff';x.fillText(tag,W-64-11,cy+rowH*.26+15);});
     footer(x,W,H,'Source : NHL');
   }
-  $('xdl').addEventListener('click',async()=>{const btn=$('xdl');btn.textContent='Export…';try{await drawMile();const blob=await new Promise(r=>$('milecv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-milestones-${$('xtype').value}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){$('xstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
+  $('xdl').addEventListener('click',async()=>{const btn=$('xdl');btn.textContent='Export…';try{await drawMile();const blob=await new Promise(r=>$('milecv').toBlob(r,'image/png'));await offerSave(blob,`predahub-milestones-${$('xtype').value}.png`);}catch(err){$('xstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
 
 
   /* ==================== PROFIL / BANNIÈRE ==================== */
@@ -1390,7 +1408,7 @@
       x.fillStyle='#FF2D55';x.font='40px Anton';x.fillText($('bhandle').value,W/2,H/2+220);
     }
   }
-  $('bdl').addEventListener('click',async()=>{const btn=$('bdl');btn.textContent='Export…';try{await drawBrand();const blob=await new Promise(r=>$('brandcv').toBlob(r,'image/png'));const a=document.createElement('a');a.download=`predahub-${$('bkind').value}.png`;a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}catch(err){alert('Export impossible : '+err.message);}btn.textContent='Télécharger en PNG';});
+  $('bdl').addEventListener('click',async()=>{const btn=$('bdl');btn.textContent='Export…';try{await drawBrand();const blob=await new Promise(r=>$('brandcv').toBlob(r,'image/png'));await offerSave(blob,`predahub-${$('bkind').value}.png`);}catch(err){alert('Export impossible : '+err.message);}btn.textContent='Télécharger en PNG';});
 
   $('zoomv').textContent=$('zoom').value;
   const jump=$('jump');let jumpDown=true;
