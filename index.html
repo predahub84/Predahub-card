@@ -290,7 +290,6 @@
     <div id="secF" class="hide">
     <h1>Performance du soir</h1>
     <label>Accroche (bandeau du haut)</label><input id="facc" value="" placeholder="TOURNOI DES ESPOIRS">
-    <label>Contexte du match (score, adversaire)</label><input id="fmatch" value="" placeholder="MTL 5 – 4 OTT">
     <label>Date affichée</label><input id="fdate" value="" placeholder="13 septembre 2026">
     <label>Équipe (pour la liste de l'effectif)</label><select id="fteam"><option value="">Choisir une équipe…</option></select>
     <div id="fPlayers"></div>
@@ -1278,8 +1277,10 @@
       html+=`<input id="f${i}q" placeholder="Nom du joueur" autocomplete="off"><div id="f${i}r" class="results"></div>`;
       html+=`<div class="row2"><select id="f${i}team"><option value="">Équipe : auto</option></select><input id="f${i}num" placeholder="N° (auto)"></div>`;
       html+=`<div class="row2"><input id="f${i}g" placeholder="Buts du match" inputmode="numeric"><input id="f${i}a" placeholder="Passes du match" inputmode="numeric"></div>`;
+      html+=`<div style="font-size:11px;color:#6c6c88;margin:6px 0 2px">Score du match</div>`;
+      html+=`<div class="row2"><select id="f${i}h"><option value="">Équipe dom.</option></select><input id="f${i}hs" placeholder="Buts" inputmode="numeric"></div>`;
+      html+=`<div class="row2"><select id="f${i}v"><option value="">Équipe vis.</option></select><input id="f${i}vs" placeholder="Buts" inputmode="numeric"></div>`;
       html+=`<input id="f${i}note" placeholder="Note (ex. but gagnant en prolongation)">`;
-      html+=`<select id="f${i}src"><option value="">Stats de référence : auto</option><option value="nhl">Forcer NHL</option><option value="other">Forcer AHL / junior</option></select>`;
       html+='</div>';
     }
     $('fPlayers').innerHTML=html;
@@ -1288,25 +1289,39 @@
   for(let i=1;i<=3;i++){
     TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];$('f'+i+'team').appendChild(o);});
     hookSearchWithRoster('f'+i+'q','f'+i+'r',async pl=>{$('fstate').textContent='Chargement…';perf.p[i-1]=await fetchPlayer(pl);$('fstate').textContent='';renderPerf();},()=>$('f'+i+'team').value||$('fteam').value);
-    ['team','num','g','a','note','src'].forEach(suf=>{const el=$('f'+i+suf);if(el){el.addEventListener('input',()=>renderPerf());el.addEventListener('change',()=>renderPerf());}});
+    ['h','v'].forEach(s=>{TEAMS.forEach(t=>{const op=document.createElement('option');op.value=t[0];op.textContent=t[1];$('f'+i+s).appendChild(op);});});
+    ['team','num','g','a','note','h','v','hs','vs'].forEach(suf=>{const el=$('f'+i+suf);if(el){el.addEventListener('input',()=>renderPerf());el.addEventListener('change',()=>renderPerf());}});
   }
-  ['facc','fmatch','fdate','fteam','ffmt','fzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('fzoomv').textContent=$('fzoom').value;renderPerf();}));
+  ['facc','fdate','fteam','ffmt','fzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('fzoomv').textContent=$('fzoom').value;renderPerf();}));
   ['fteam','ffmt'].forEach(id=>$(id).addEventListener('change',()=>renderPerf()));
   let fr=null;function renderPerf(){clearTimeout(fr);fr=setTimeout(drawPerf,30);}
 
-  function perfRefLine(o,src){
-    /* petite ligne de contexte : repechage + stats de reference */
-    const d=o.land;const bits=[];
-    const dd=d&&d.draftDetails;
-    if(dd&&dd.year)bits.push(dd.overallPick?`${dd.overallPick}e au total ${dd.year}`:(dd.round?`${dd.round}e ronde ${dd.year}`:`Repêché ${dd.year}`));
-    const r=statsForSource(o,src);
-    if(r&&r.stats){
-      const m=Object.fromEntries(r.stats);
-      const lg=r.league||'NHL';
-      if(m.PTS!=null&&m.MJ!=null)bits.push(`${m.PTS} PTS en ${m.MJ} M (${lg})`);
-      else if(m.V!=null)bits.push(`${m.V} V (${lg})`);
-    }
-    return bits.join('   ·   ');
+  function drawScore(x,cx,y,a,size){
+    /* logo dom - score - score - logo vis ; retourne la hauteur utilisee */
+    const hL=a.hT?rteamLogoCache[a.hT]:null, vL=a.vT?rteamLogoCache[a.vT]:null;
+    const hs=a.hS!==''?a.hS:null, vs=a.vS!==''?a.vS:null;
+    if(!hL&&!vL&&hs==null&&vs==null)return 0;
+    const lz=size;const numF=Math.round(size*0.95);
+    x.save();x.font=`${numF}px Anton`;
+    const sepW=x.measureText(' – ').width;
+    const hw=hs!=null?x.measureText(String(hs)).width:0;
+    const vw=vs!=null?x.measureText(String(vs)).width:0;
+    const dims=l=>{if(!l)return[0,0];const r=Math.min(lz/l.width,lz/l.height);return[l.width*r,l.height*r];};
+    const [hlw,hlh]=dims(hL),[vlw,vlh]=dims(vL);
+    const gap=Math.round(size*0.28);
+    const total=hlw+(hlw?gap:0)+hw+sepW+vw+(vlw?gap:0)+vlw;
+    let px=cx-total/2;
+    const midY=y+size*0.5;
+    if(hL){x.drawImage(hL,px,midY-hlh/2,hlw,hlh);px+=hlw+gap;}
+    x.textAlign='left';x.textBaseline='middle';x.fillStyle='#fff';
+    x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=10;
+    if(hs!=null){x.fillText(String(hs),px,midY);px+=hw;}
+    x.fillStyle='#8a8aa3';x.fillText(' – ',px,midY);px+=sepW;
+    x.fillStyle='#fff';
+    if(vs!=null){x.fillText(String(vs),px,midY);px+=vw;}
+    if(vL){px+=gap;x.drawImage(vL,px,midY-vlh/2,vlw,vlh);}
+    x.restore();
+    return size;
   }
   async function drawPerf(){
     await Promise.all([document.fonts.load('100px Anton'),document.fonts.load('600 40px "Inter Tight"')]);
@@ -1314,13 +1329,15 @@
     const active=[];
     for(let i=1;i<=3;i++){const o=perf.p[i-1];if(!o)continue;
       active.push({o,i,g:parseInt($('f'+i+'g').value)||0,a:parseInt($('f'+i+'a').value)||0,
-        note:$('f'+i+'note').value.trim(),src:$('f'+i+'src').value,
-        abbr:$('f'+i+'team').value,num:$('f'+i+'num').value.trim()});}
+        note:$('f'+i+'note').value.trim(),
+        abbr:$('f'+i+'team').value,num:$('f'+i+'num').value.trim(),
+        hT:$('f'+i+'h').value,vT:$('f'+i+'v').value,
+        hS:$('f'+i+'hs').value.trim(),vS:$('f'+i+'vs').value.trim()});}
     const lead=active[0];
     const forcedAbbr=$('fteam').value;
     const themeAbbr=(lead&&(lead.abbr||lead.o.abbr))||forcedAbbr||'';
     const col=glowOr(themeAbbr?teamCol(themeAbbr):'#BF5AF2');
-    for(const a of active){const ab=a.abbr;if(ab&&!rteamLogoCache[ab])rteamLogoCache[ab]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${ab}_dark.svg`);}
+    for(const a of active){for(const ab of [a.abbr,a.hT,a.vT]){if(ab&&!rteamLogoCache[ab])rteamLogoCache[ab]=await loadBitmap(`https://assets.nhle.com/logos/nhl/svg/${ab}_dark.svg`);}}
     x.fillStyle=theme.bg;x.fillRect(0,0,W,H);
     let g=x.createRadialGradient(W/2,H*0.34,0,W/2,H*0.34,H*0.75);
     g.addColorStop(0,hexA(col,.5));g.addColorStop(.5,hexA('#BF5AF2',.14));g.addColorStop(1,'rgba(0,0,0,0)');
@@ -1340,10 +1357,8 @@
      x.textAlign='center';x.textBaseline='middle';x.shadowColor='rgba(0,0,0,.55)';x.shadowBlur=10;x.fillStyle='#fff';
      x.fillText(acc,W/2,accY+2);x.restore();}
     /* contexte du match */
-    const mtxt=$('fmatch').value.trim();const dtxt=$('fdate').value.trim();
-    let y=accY+(sq?48:54);
-    if(mtxt){y+=sq?30:34;x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${sq?40:46}px Anton`;
-      x.fillStyle='#fff';x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=12;x.fillText(mtxt.toUpperCase(),W/2,y);x.restore();}
+    const dtxt=$('fdate').value.trim();
+    let y=accY+(sq?42:48);
     if(dtxt){y+=sq?24:26;x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`600 ${sq?19:21}px "Inter Tight"`;
       x.fillStyle='#9a9ab4';x.fillText(dtxt,W/2,y);x.restore();}
     if(!active.length){x.save();x.textAlign='center';x.fillStyle='#55556e';x.font='600 26px "Inter Tight"';
@@ -1368,8 +1383,12 @@
       py+=Math.round(f*1.0);
       x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${f}px Anton`;
       x.shadowColor='rgba(0,0,0,.85)';x.shadowBlur=20;x.fillStyle='#fff';x.fillText(nm,W/2,py);x.restore();
+      /* score du match avec logos */
+      py+=sq?30:36;
+      const shUsed=drawScore(x,W/2,py,a,sq?52:60);
+      if(shUsed)py+=shUsed+(sq?18:22);
       /* ligne du match en tres gros */
-      py+=sq?34:40;
+      py+=sq?18:22;
       const pts=a.g+a.a;
       const cells=[['B',a.g],['P',a.a],['PTS',pts]];
       const bw=sq?520:600,bh=sq?150:172;const bx0=W/2-bw/2;
@@ -1388,11 +1407,6 @@
         let nf=sq?22:25;x.font=`700 ${nf}px "Inter Tight"`;
         while(x.measureText(a.note).width>W-140&&nf>13){nf--;x.font=`700 ${nf}px "Inter Tight"`;}
         x.fillStyle=col;x.fillText(a.note,W/2,py);x.restore();}
-      const ref=perfRefLine(o,a.src);
-      if(ref){py+=sq?30:34;x.save();x.textAlign='center';x.textBaseline='alphabetic';
-        let rf=sq?17:19;x.font=`600 ${rf}px "Inter Tight"`;
-        while(x.measureText(ref).width>W-140&&rf>11){rf--;x.font=`600 ${rf}px "Inter Tight"`;}
-        x.fillStyle='#8a8aa3';x.fillText(ref,W/2,py);x.restore();}
     } else {
       /* ---- recap 2-3 joueurs ---- */
       const rowH=avail/n;
@@ -1417,11 +1431,11 @@
         x.fillStyle='#9a9ab4';x.fillText(o.first,tx,ty-f*0.78);x.restore();
         x.save();x.textAlign='left';x.textBaseline='alphabetic';x.font=`${f}px Anton`;x.fillStyle='#fff';
         x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=10;x.fillText(nm,tx,ty);x.restore();
-        const sub=a.note||perfRefLine(o,a.src);
-        if(sub){x.save();x.textAlign='left';x.textBaseline='alphabetic';
+        if(a.note){x.save();x.textAlign='left';x.textBaseline='alphabetic';
           let sf=sq?15:17;x.font=`600 ${sf}px "Inter Tight"`;
-          while(x.measureText(sub).width>textW&&sf>10){sf--;x.font=`600 ${sf}px "Inter Tight"`;}
-          x.fillStyle=a.note?col:'#8a8aa3';x.fillText(sub,tx,ty+(sq?26:30));x.restore();}
+          while(x.measureText(a.note).width>textW&&sf>10){sf--;x.font=`600 ${sf}px "Inter Tight"`;}
+          x.fillStyle=col;x.fillText(a.note,tx,ty+(sq?24:28));x.restore();}
+        drawScore(x,tx+Math.min(textW,200)/2,ty+(a.note?(sq?34:40):(sq?14:18)),a,sq?24:28);
         /* stats du match a droite */
         const pts=a.g+a.a;const cells=[['B',a.g],['P',a.a],['PTS',pts]];
         const cw=statW/3;const sx0=W-48-24-statW;
