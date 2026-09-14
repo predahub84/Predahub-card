@@ -1181,7 +1181,7 @@
     const zoom=$('qzoom').value/100;
 
     /* ---------- zone photo (haut) ---------- */
-    const photoH=Math.round(H*(sq?0.46:0.5));
+    const photoH=Math.round(H*(sq?0.50:0.54));
     x.save();x.beginPath();x.rect(0,0,W,photoH);x.clip();
     let pg=x.createRadialGradient(W/2,photoH*0.42,0,W/2,photoH*0.42,photoH*0.95);
     pg.addColorStop(0,hexA(col,.6));pg.addColorStop(.55,hexA('#BF5AF2',.16));pg.addColorStop(1,'rgba(0,0,0,0)');
@@ -1225,26 +1225,30 @@
     /* --- colonne droite : stats --- */
     const rightX=splitX+34;const rightW=W-rightX-48;
     const main=other||nhl;const second=other&&nhl?nhl:null;
-    let ry=panelTop+52;
+    const numSize=sq?46:54;const lblSize=sq?13:14;
+    const slotH=numSize+lblSize+(sq?26:30);
+    const panelBottom=H-90;
+    let ry=panelTop+56;
     if(main){
       x.save();x.textAlign='left';x.textBaseline='alphabetic';
-      x.font=`800 ${sq?17:19}px "Inter Tight"`;x.fillStyle=col;
+      x.font=`800 ${sq?16:18}px "Inter Tight"`;x.fillStyle=col;
       x.fillText(main.label,rightX,ry);x.restore();
-      ry+=sq?14:16;
-      const n=main.stats.length;
-      const slotH=Math.round((sq?58:66));
-      main.stats.forEach(([lbl,val])=>{
-        ry+=slotH;
+      /* les stats sont reparties entre le label et le bas du panneau */
+      const blockTop=ry+(sq?24:28);
+      const avail=panelBottom-blockTop;
+      const step=Math.min(slotH,avail/main.stats.length);
+      main.stats.forEach(([lbl,val],i)=>{
+        const baseY=blockTop+step*i+numSize;
         x.save();x.textAlign='left';x.textBaseline='alphabetic';
-        x.font=`${sq?52:60}px Anton`;x.fillStyle='#fff';
+        x.font=`${numSize}px Anton`;x.fillStyle='#fff';
         x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=10;
-        x.fillText(String(val),rightX,ry);x.restore();
-        x.save();x.textAlign='left';x.font=`600 ${sq?13:15}px "Inter Tight"`;x.fillStyle='#8a8aa3';
-        x.fillText(lbl,rightX+2,ry+(sq?16:18));x.restore();
+        x.fillText(String(val),rightX,baseY);x.restore();
+        x.save();x.textAlign='left';x.font=`600 ${lblSize}px "Inter Tight"`;x.fillStyle='#8a8aa3';
+        x.fillText(lbl,rightX+2,baseY+lblSize+4);x.restore();
       });
     }
     /* --- colonne gauche : club -> equipe, nom, repechage --- */
-    let ly=panelTop+54;
+    let ly=panelTop+64;
     if(club){
       x.save();x.textAlign='left';x.textBaseline='alphabetic';
       x.font=`700 ${sq?19:21}px "Inter Tight"`;x.fillStyle='#9a9ab4';
@@ -1252,11 +1256,11 @@
       let cf=sq?19:21;x.font=`700 ${cf}px "Inter Tight"`;
       while(x.measureText(arrow).width>splitX-padL-20&&cf>12){cf--;x.font=`700 ${cf}px "Inter Tight"`;}
       x.fillText(arrow,padL,ly);x.restore();
-      ly+=sq?18:22;
+      ly+=sq?26:30;
     }
     /* prenom */
     const firstSize=sq?30:34;
-    ly+=firstSize+8;
+    ly+=firstSize+14;
     x.save();x.textAlign='left';x.textBaseline='alphabetic';x.font=`600 ${firstSize}px "Inter Tight"`;x.fillStyle='#b9b9d0';
     x.fillText(o.first,padL,ly);x.restore();
     /* NOM */
@@ -1268,7 +1272,7 @@
     x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=18;x.fillStyle='#fff';x.fillText(nm,padL,ly);x.restore();
     /* repechage */
     if(draft){
-      ly+=sq?30:34;
+      ly+=sq?40:46;
       x.save();x.textAlign='left';x.textBaseline='alphabetic';
       let df=sq?17:19;x.font=`800 ${df}px "Inter Tight"`;
       while(x.measureText(draft).width>splitX-padL-16&&df>11){df--;x.font=`800 ${df}px "Inter Tight"`;}
@@ -1285,7 +1289,7 @@
       if(age>0&&age<60)bits.push(`${age} ans`);}
     const subTxt=$('qsub').value.trim()||bits.join('  ·  ');
     if(subTxt){
-      ly+=sq?28:32;
+      ly+=sq?32:36;
       x.save();x.textAlign='left';x.textBaseline='alphabetic';
       let bf=sq?18:20;x.font=`600 ${bf}px "Inter Tight"`;
       while(x.measureText(subTxt).width>splitX-padL-16&&bf>11){bf--;x.font=`600 ${bf}px "Inter Tight"`;}
@@ -1293,10 +1297,10 @@
     }
     /* deuxieme bloc de stats (si NHL en plus) */
     if(second){
-      ly+=sq?34:38;
+      ly+=sq?46:54;
       x.save();x.textAlign='left';x.textBaseline='alphabetic';
       x.font=`800 ${sq?14:15}px "Inter Tight"`;x.fillStyle=tcol;x.fillText(second.label,padL,ly);x.restore();
-      ly+=sq?26:30;
+      ly+=sq?30:34;
       x.save();x.textAlign='left';x.textBaseline='alphabetic';
       const parts=second.stats.map(([l,v])=>`${v} ${l}`).join('   ·   ');
       let pf=sq?17:19;x.font=`700 ${pf}px "Inter Tight"`;
