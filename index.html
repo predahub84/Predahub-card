@@ -266,7 +266,7 @@
     <label>Style visuel</label>
     <select id="gstyle"><option value="dark">Sombre (PredaHub)</option><option value="light">Clair (tableau d'alignement)</option></select>
     <label>Nombre de lignes affichées</label>
-    <select id="glines"><option value="4">4 lignes (12 joueurs)</option><option value="3">3 lignes (9 joueurs)</option></select>
+    <select id="glines"><option value="3">3 lignes (9 joueurs)</option><option value="4">4 lignes (12 joueurs)</option></select>
     <label>Format</label>
     <select id="gfmt"><option value="square">Insta 4:5 (publication)</option><option value="">Story 9:16 (plein écran)</option></select>
     <label>Taille des photos : <span id="gzoomv">100</span> %</label>
@@ -1141,44 +1141,48 @@
     const words=teamName.split(' ');
     let l1=words[0],l2=words.slice(1).join(' ');
     if(!l2){l1=teamName;l2='';}
-    const logoSz=sq?132:168;
-    let headY=sq?46:60;
-    const txtMax=W-logoSz-130;
-    let f1=sq?58:72;x.font=`${f1}px Anton`;
-    while(x.measureText(l1).width>txtMax&&f1>22){f1-=2;x.font=`${f1}px Anton`;}
-    let f2=sq?86:106;x.font=`${f2}px Anton`;
-    while(l2&&x.measureText(l2).width>txtMax&&f2>26){f2-=2;x.font=`${f2}px Anton`;}
+    const logoSz=sq?116:148;
+    let headY=sq?34:44;
+    const txtMax=W-logoSz-110;
+    let f1=sq?50:62;x.font=`${f1}px Anton`;
+    while(x.measureText(l1).width>txtMax&&f1>20){f1-=2;x.font=`${f1}px Anton`;}
+    let f2=sq?82:100;x.font=`${f2}px Anton`;
+    while(l2&&x.measureText(l2).width>txtMax&&f2>24){f2-=2;x.font=`${f2}px Anton`;}
     x.font=`${f1}px Anton`;const w1=x.measureText(l1).width;
     x.font=`${f2}px Anton`;const w2=l2?x.measureText(l2).width:0;
     const txtW=Math.max(w1,w2);
-    const blockW=logoSz+20+txtW;const bx0=W/2-blockW/2;
+    const blockW=logoSz+18+txtW;const bx0=W/2-blockW/2;
     if(themeLogo){const rr=Math.min(logoSz/themeLogo.width,logoSz/themeLogo.height);
       const lw=themeLogo.width*rr,lh=themeLogo.height*rr;
       x.save();x.shadowColor='rgba(0,0,0,.25)';x.shadowBlur=16;
       x.drawImage(themeLogo,bx0+(logoSz-lw)/2,headY+(logoSz-lh)/2,lw,lh);x.restore();}
-    const txtX=bx0+logoSz+20;
-    const textH=f1*0.86+(l2?f2*0.94:0);
+    const txtX=bx0+logoSz+18;
+    const textH=f1*0.84+(l2?f2*0.9:0);
     const tTop=headY+(logoSz-textH)/2;
     x.save();x.textAlign='left';x.textBaseline='alphabetic';
-    x.font=`${f1}px Anton`;x.fillStyle=c2;x.fillText(l1,txtX,tTop+f1*0.86);
-    if(l2){x.font=`${f2}px Anton`;x.fillStyle=c1;x.fillText(l2,txtX,tTop+f1*0.86+f2*0.94);}
+    x.font=`${f1}px Anton`;x.fillStyle=c2;x.fillText(l1,txtX,tTop+f1*0.84);
+    if(l2){x.font=`${f2}px Anton`;x.fillStyle=c1;x.fillText(l2,txtX,tTop+f1*0.84+f2*0.9);}
     x.restore();
-    let y=headY+logoSz+(sq?14:18);
+    let y=headY+logoSz+(sq?8:12);
     /* bandeau sous-titre */
     const sub=($('gsub').value.trim()||'ATTAQUANTS PARTANTS').toUpperCase();
-    {const bs=sq?34:42;const bh=bs+34;
+    {const bs=sq?30:38;const bh=bs+26;
      x.save();x.font=`${bs}px Anton`;const tw=x.measureText(sub).width;
-     const bw=Math.min(W-88,tw+190);const bx=W/2-bw/2;
-     x.fillStyle='#fff';x.strokeStyle='rgba(0,0,0,.1)';x.lineWidth=1;
-     x.beginPath();x.moveTo(bx+16,y);x.lineTo(bx+bw-16,y);x.lineTo(bx+bw,y+bh);x.lineTo(bx,y+bh);x.closePath();
+     const bw=Math.min(W-200,tw+120);const bx=W/2-bw/2;
+     /* traits lateraux */
+     x.fillStyle=c1;x.fillRect(44,y+bh/2-5,bx-56,5);x.fillRect(bx+bw+12,y+bh/2-5,W-44-(bx+bw+12),5);
+     x.fillStyle=c2;x.fillRect(44,y+bh/2+2,bx-56,3);x.fillRect(bx+bw+12,y+bh/2+2,W-44-(bx+bw+12),3);
+     /* ruban */
+     x.fillStyle='#fff';x.strokeStyle='rgba(0,0,0,.12)';x.lineWidth=1;
+     x.beginPath();x.moveTo(bx+14,y);x.lineTo(bx+bw-14,y);x.lineTo(bx+bw,y+bh);x.lineTo(bx,y+bh);x.closePath();
      x.fill();x.stroke();
-     x.fillStyle=c1;x.fillRect(bx+14,y-7,bw-28,5);
-     x.fillStyle=c2;x.fillRect(bx+14,y+bh+2,bw-28,5);
+     x.fillStyle=c1;x.fillRect(bx+12,y-6,bw-24,5);
+     x.fillStyle=c2;x.fillRect(bx+12,y+bh+1,bw-24,5);
      x.textAlign='center';x.textBaseline='middle';x.fillStyle=c2;
      x.fillText(sub,W/2,y+bh/2+1);x.restore();
-     y+=bh+(sq?20:26);}
+     y+=bh+(sq?16:20);}
     /* en-tetes de colonnes */
-    const gx=44,gw=W-88;const colW=gw/3;const gap=sq?12:16;
+    const gx=40,gw=W-80;const colW=gw/3;const gap=sq?10:13;
     const heads=['AILIER GAUCHE','CENTRE','AILIER DROIT'];
     {const hs=sq?20:24;x.save();x.font=`${hs}px Anton`;x.textBaseline='middle';
      heads.forEach((t,i)=>{const cx0=gx+colW*i+gap/2;const cw=colW-gap;
@@ -1215,12 +1219,12 @@
         const oAbbr=$(id+'team').value||forcedAbbr||o.abbr;
         const oNum=$(id+'num').value.trim()||o.num;
         /* photo ronde sur fond clair */
-        const nfBase=Math.min(sq?30:36,cw*0.115);
-        const nfsBase=Math.min(sq?44:54,cw*0.17);
-        const textBlock=nfBase+nfsBase*0.95+(sq?22:26);
-        const R=Math.min(Math.round(cw*0.315*zoom),Math.floor((ch-textBlock-26)/2));
+        const nfBase=Math.min(sq?32:38,cw*0.125);
+        const nfsBase=Math.min(sq?48:58,cw*0.185);
+        const textBlock=nfBase*0.9+nfsBase*0.95+(sq?14:18);
+        const R=Math.min(Math.round(cw*0.37*zoom),Math.floor((ch-textBlock-18)/2));
         const contentH=R*2+textBlock;
-        const padTop=Math.max(16,(ch-contentH)/2+4);
+        const padTop=Math.max(12,(ch-contentH)/2+2);
         const pcx=cx0+cw/2,pcy=cy0+padTop+R;
         x.save();x.beginPath();x.arc(pcx,pcy,R,0,Math.PI*2);
         x.fillStyle='#EFEFEF';x.fill();
@@ -1235,7 +1239,7 @@
         const nm=o.last.toUpperCase();
         let nf=nfBase;x.font=`${nf}px Anton`;
         while(x.measureText(nm).width>cw-22&&nf>12){nf-=1;x.font=`${nf}px Anton`;}
-        const ny=pcy+R+(sq?26:30)+nf*0.4;
+        const ny=pcy+R+(sq?20:24)+nf*0.42;
         x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${nf}px Anton`;
         x.fillStyle=c2;x.fillText(nm,pcx,ny);x.restore();
         if(oNum){const nfs=nfsBase;
