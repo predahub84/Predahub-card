@@ -289,7 +289,8 @@
 
     <div id="secF" class="hide">
     <h1>Performance du soir</h1>
-    <label>Accroche (bandeau du haut)</label><input id="facc" value="" placeholder="TOURNOI DES ESPOIRS">
+    <label>Titre principal</label><input id="ftitle" value="" placeholder="PERFS DU SOIR">
+    <label>Accroche (bandeau sous le titre)</label><input id="facc" value="" placeholder="TOURNOI DES ESPOIRS">
     <label>Date affichée</label><input id="fdate" value="" placeholder="13 septembre 2026">
     <label>Équipe (pour la liste de l'effectif)</label><select id="fteam"><option value="">Choisir une équipe…</option></select>
     <div id="fPlayers"></div>
@@ -1292,7 +1293,7 @@
     ['h','v'].forEach(s=>{TEAMS.forEach(t=>{const op=document.createElement('option');op.value=t[0];op.textContent=t[1];$('f'+i+s).appendChild(op);});});
     ['team','num','g','a','note','h','v','hs','vs'].forEach(suf=>{const el=$('f'+i+suf);if(el){el.addEventListener('input',()=>renderPerf());el.addEventListener('change',()=>renderPerf());}});
   }
-  ['facc','fdate','fteam','ffmt','fzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('fzoomv').textContent=$('fzoom').value;renderPerf();}));
+  ['ftitle','facc','fdate','fteam','ffmt','fzoom'].forEach(id=>$(id).addEventListener('input',()=>{$('fzoomv').textContent=$('fzoom').value;renderPerf();}));
   ['fteam','ffmt'].forEach(id=>$(id).addEventListener('change',()=>renderPerf()));
   let fr=null;function renderPerf(){clearTimeout(fr);fr=setTimeout(drawPerf,30);}
 
@@ -1344,9 +1345,16 @@
     x.fillStyle=g;x.fillRect(0,0,W,H);
     texture(x,W,H);
     frame(x,W,H,col,'#BF5AF2');brand(x,W);
+    /* titre principal */
+    const ttl=($('ftitle').value.trim()||'PERFS DU SOIR').toUpperCase();
+    const ttlY=sq?86:98;
+    {let tf=sq?60:72;x.font=`${tf}px Anton`;
+     while(x.measureText(ttl).width>W-120&&tf>28){tf-=2;x.font=`${tf}px Anton`;}
+     x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${tf}px Anton`;
+     x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=18;x.fillStyle='#fff';x.fillText(ttl,W/2,ttlY);x.restore();}
     /* bandeau accroche */
     const acc=($('facc').value.trim()||'TOURNOI DES ESPOIRS').toUpperCase();
-    const accY=sq?92:104;
+    const accY=ttlY+(sq?44:52);
     {const aSize=sq?34:40;x.save();x.font=`${aSize}px Anton`;const atw=x.measureText(acc).width;
      const apw=atw+64,aph=aSize+26;const ax0=W/2-apw/2,ay0=accY-aph/2;
      const ag=x.createLinearGradient(ax0,0,ax0+apw,0);ag.addColorStop(0,col);ag.addColorStop(1,'#BF5AF2');
@@ -1408,43 +1416,64 @@
         while(x.measureText(a.note).width>W-140&&nf>13){nf--;x.font=`700 ${nf}px "Inter Tight"`;}
         x.fillStyle=col;x.fillText(a.note,W/2,py);x.restore();}
     } else {
-      /* ---- recap 2-3 joueurs ---- */
-      const rowH=avail/n;
+      /* ---- recap 2-3 joueurs cote a cote ---- */
+      const cxs=n===2?[W*0.27,W*0.73]:[W*0.18,W*0.5,W*0.82];
+      const colW=n===2?W*0.42:W*0.30;
+      const R=Math.min(Math.round((n===2?(sq?128:150):(sq?96:116))*($('fzoom').value/100)),Math.floor(colW/2)-10);
+      const cy=top+R+(sq?14:20);
       active.forEach((a,idx)=>{
-        const o=a.o;const rt=top+rowH*idx;const rh=rowH-14;
+        const o=a.o;const cx=cxs[idx];
         const oAbbr=a.abbr||o.abbr;const oNum=a.num||o.num;
         const oLogo=a.abbr?rteamLogoCache[a.abbr]:o.logo;const tcol=teamCol(oAbbr);
-        x.save();roundRect(x,48,rt,W-96,rh,18);x.fillStyle='rgba(255,255,255,.035)';x.fill();
-        x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;x.stroke();x.restore();
-        x.save();roundRect(x,48,rt,7,rh,3.5);x.fillStyle=tcol;x.fill();x.restore();
-        const R=Math.min(Math.round((sq?62:76)*($('fzoom').value/100)),Math.floor(rh/2)-14);
-        const pcx=48+34+R,pcy=rt+rh/2;
-        circlePhoto(x,o,pcx,pcy,R,tcol,null,false);
-        if(oLogo){const lz=34;const rr=Math.min(lz/oLogo.width,lz/oLogo.height);const lw=oLogo.width*rr,lh=oLogo.height*rr;
-          x.drawImage(oLogo,pcx+R-lw*0.4,pcy+R-lh*0.8,lw,lh);}
-        const tx=pcx+R+30;
-        const statW=sq?250:280;const textW=W-48-24-statW-tx;
-        let ty=rt+rh*0.42;
-        const nm=o.last.toUpperCase();let f=sq?36:42;x.font=`${f}px Anton`;
-        while(x.measureText(nm).width>textW&&f>20){f-=1;x.font=`${f}px Anton`;}
-        x.save();x.textAlign='left';x.textBaseline='alphabetic';x.font=`600 ${Math.round(f*0.42)}px "Inter Tight"`;
-        x.fillStyle='#9a9ab4';x.fillText(o.first,tx,ty-f*0.78);x.restore();
-        x.save();x.textAlign='left';x.textBaseline='alphabetic';x.font=`${f}px Anton`;x.fillStyle='#fff';
-        x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=10;x.fillText(nm,tx,ty);x.restore();
-        if(a.note){x.save();x.textAlign='left';x.textBaseline='alphabetic';
-          let sf=sq?15:17;x.font=`600 ${sf}px "Inter Tight"`;
-          while(x.measureText(a.note).width>textW&&sf>10){sf--;x.font=`600 ${sf}px "Inter Tight"`;}
-          x.fillStyle=col;x.fillText(a.note,tx,ty+(sq?24:28));x.restore();}
-        drawScore(x,tx+Math.min(textW,200)/2,ty+(a.note?(sq?34:40):(sq?14:18)),a,sq?24:28);
-        /* stats du match a droite */
+        circlePhoto(x,o,cx,cy,R,tcol,null,false);
+        if(oLogo){const lz=n===2?(sq?54:62):(sq?42:50);const rr=Math.min(lz/oLogo.width,lz/oLogo.height);
+          const lw=oLogo.width*rr,lh=oLogo.height*rr;
+          x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=14;
+          x.drawImage(oLogo,cx+R-lw*0.35,cy+R-lh*0.75,lw,lh);x.restore();}
+        /* prenom + NOM */
+        const nm=o.last.toUpperCase();
+        let f=n===2?(sq?48:56):(sq?36:44);x.font=`${f}px Anton`;
+        while(x.measureText(nm).width>colW-16&&f>18){f-=1;x.font=`${f}px Anton`;}
+        const firstSize=Math.max(16,Math.round(f*0.38));
+        let py=cy+R+(sq?32:40)+firstSize;
+        x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`600 ${firstSize}px "Inter Tight"`;
+        x.fillStyle='#b9b9d0';x.fillText(o.first,cx,py);x.restore();
+        py+=Math.round(f*1.04);
+        x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${f}px Anton`;
+        x.shadowColor='rgba(0,0,0,.85)';x.shadowBlur=16;x.fillStyle='#fff';x.fillText(nm,cx,py);x.restore();
+        /* score avec logos */
+        py+=sq?16:20;
+        const scUsed=drawScore(x,cx,py,a,n===2?(sq?34:40):(sq?28:32));
+        if(scUsed)py+=scUsed+(sq?14:18);
+        /* stats du match */
+        py+=sq?8:12;
         const pts=a.g+a.a;const cells=[['B',a.g],['P',a.a],['PTS',pts]];
-        const cw=statW/3;const sx0=W-48-24-statW;
-        cells.forEach((c,j)=>{const cxx=sx0+cw*j+cw/2;
-          x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${sq?46:54}px Anton`;
-          x.fillStyle=j===2?gold(x,pcy+10,sq?46:54):'#e6e6f2';
-          x.fillText(String(c[1]),cxx,pcy+10);x.restore();
-          x.save();x.textAlign='center';x.font=`600 ${sq?13:14}px "Inter Tight"`;x.fillStyle='#8a8aa3';
-          x.fillText(c[0],cxx,pcy+32);x.restore();});
+        const bw=Math.min(colW,n===2?(sq?320:360):(sq?250:280));
+        const bh=n===2?(sq?106:118):(sq?86:98);
+        const bx0=cx-bw/2;
+        x.save();roundRect(x,bx0,py,bw,bh,16);x.fillStyle='rgba(255,255,255,.055)';x.fill();
+        x.strokeStyle=hexA(tcol,.45);x.lineWidth=1.5;x.stroke();x.restore();
+        const cw=bw/3;const numF=n===2?(sq?56:64):(sq?44:52);
+        cells.forEach((c,j)=>{const cxx=bx0+cw*j+cw/2;
+          if(j>0){x.save();x.strokeStyle='rgba(255,255,255,.1)';x.beginPath();
+            x.moveTo(bx0+cw*j,py+14);x.lineTo(bx0+cw*j,py+bh-14);x.stroke();x.restore();}
+          x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${numF}px Anton`;
+          x.fillStyle=j===2?gold(x,py+bh*0.62,numF):'#fff';
+          x.fillText(String(c[1]),cxx,py+bh*0.64);x.restore();
+          x.save();x.textAlign='center';x.font=`600 ${n===2?(sq?15:16):(sq?12:13)}px "Inter Tight"`;
+          x.fillStyle='#8a8aa3';x.fillText(c[0],cxx,py+bh-14);x.restore();});
+        py+=bh;
+        /* note */
+        if(a.note){py+=sq?26:30;
+          x.save();x.textAlign='center';x.textBaseline='alphabetic';
+          let nf=n===2?(sq?18:20):(sq?15:17);x.font=`700 ${nf}px "Inter Tight"`;
+          const words=a.note.split(' ');let l1=a.note,l2='';
+          if(x.measureText(a.note).width>colW-10){let acc2='';
+            for(const w of words){const t=acc2?acc2+' '+w:w;
+              if(x.measureText(t).width>colW-10&&acc2){l2=a.note.slice(acc2.length).trim();l1=acc2;break;}acc2=t;}}
+          x.fillStyle=col;x.fillText(l1,cx,py);
+          if(l2)x.fillText(l2,cx,py+nf+6);
+          x.restore();}
       });
     }
     footer(x,W,H,'Source : NHL · stats du match saisies manuellement');
