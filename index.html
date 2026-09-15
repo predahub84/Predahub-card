@@ -1166,20 +1166,24 @@
     let y=headY+logoSz+(sq?4:8);
     /* bandeau sous-titre */
     const sub=($('gsub').value.trim()||'ATTAQUANTS PARTANTS').toUpperCase();
-    {const bs=sq?30:38;const bh=bs+26;
-     x.save();x.font=`${bs}px Anton`;const tw=x.measureText(sub).width;
-     const bw=Math.min(W-200,tw+120);const bx=W/2-bw/2;
-     /* traits lateraux */
-     x.fillStyle=c1;x.fillRect(44,y+bh/2-5,bx-56,5);x.fillRect(bx+bw+12,y+bh/2-5,W-44-(bx+bw+12),5);
-     x.fillStyle=c2;x.fillRect(44,y+bh/2+2,bx-56,3);x.fillRect(bx+bw+12,y+bh/2+2,W-44-(bx+bw+12),3);
-     /* ruban */
+    {const bs=sq?30:38;const bh=bs+30;
+     const trk=sq?9:11;
+     const subLtr=sub.split('');
+     x.save();x.font=`${bs}px Anton`;
+     const tw=subLtr.reduce((t,ch2)=>t+x.measureText(ch2).width,0)+trk*(subLtr.length-1);
+     const bw=Math.min(W-190,tw+110);const bx=W/2-bw/2;
+     x.fillStyle=c1;x.fillRect(40,y+bh/2-5,bx-54,5);x.fillRect(bx+bw+14,y+bh/2-5,W-40-(bx+bw+14),5);
+     x.fillStyle=c2;x.fillRect(40,y+bh/2+2,bx-54,3);x.fillRect(bx+bw+14,y+bh/2+2,W-40-(bx+bw+14),3);
      x.fillStyle='#fff';x.strokeStyle='rgba(0,0,0,.12)';x.lineWidth=1;
-     x.beginPath();x.moveTo(bx+14,y);x.lineTo(bx+bw-14,y);x.lineTo(bx+bw,y+bh);x.lineTo(bx,y+bh);x.closePath();
+     x.beginPath();x.moveTo(bx+16,y);x.lineTo(bx+bw-16,y);x.lineTo(bx+bw,y+bh);x.lineTo(bx,y+bh);x.closePath();
      x.fill();x.stroke();
-     x.fillStyle=c1;x.fillRect(bx+12,y-6,bw-24,5);
-     x.fillStyle=c2;x.fillRect(bx+12,y+bh+1,bw-24,5);
-     x.textAlign='center';x.textBaseline='middle';x.fillStyle=c2;
-     x.fillText(sub,W/2,y+bh/2+1);x.restore();
+     x.fillStyle=c1;x.fillRect(bx+14,y-6,bw-28,5);
+     x.fillStyle=c2;x.fillRect(bx+14,y+bh+1,bw-28,5);
+     /* lettrage espace */
+     x.textAlign='left';x.textBaseline='middle';x.fillStyle=c2;
+     let lx=W/2-tw/2;
+     subLtr.forEach(ch2=>{x.fillText(ch2,lx,y+bh/2+1);lx+=x.measureText(ch2).width+trk;});
+     x.restore();
      y+=bh+(sq?16:20);}
     /* en-tetes de colonnes */
     const gx=40,gw=W-80;const colW=gw/3;const gap=sq?10:13;
@@ -1248,13 +1252,22 @@
       }
     }
     /* pied */
-    {const by=H-(sq?54:66);
-     x.fillStyle=c2;x.fillRect(44,by-14,W-88,5);
-     x.fillStyle=c1;x.fillRect(44,by-7,W-88,3);
-     x.save();x.textAlign='left';x.textBaseline='alphabetic';x.font='800 16px "Inter Tight"';
-     x.fillStyle=c2;x.fillText('PREDAHUB',44,by+22);x.restore();
-     x.save();x.textAlign='right';x.font='600 15px "Inter Tight"';x.fillStyle='rgba(0,0,0,.45)';
-     x.fillText('Source : NHL',W-44,by+22);x.restore();}
+    {const by=H-(sq?58:72);
+     x.fillStyle=c1;x.fillRect(40,by-16,W-80,6);
+     x.fillStyle=c2;x.fillRect(40,by-8,W-80,3);
+     x.save();x.textAlign='left';x.textBaseline='alphabetic';x.font=`600 ${sq?15:17}px "Inter Tight"`;
+     x.fillStyle='rgba(0,0,0,.45)';x.fillText('Source : NHL',40,by+26);x.restore();
+     /* bloc PREDAHUB a droite */
+     {const fs=sq?30:36;x.save();x.font=`${fs}px Anton`;
+      const w1=x.measureText('PREDA').width,w2=x.measureText('HUB').width;
+      const padX=14,padY=8;const tot=w1+w2;
+      const bxw=tot+padX*2,bxh=fs+padY*2;
+      const bx1=W-40-bxw,by1=by+26-fs*0.78-padY;
+      roundRect(x,bx1,by1,bxw,bxh,6);x.fillStyle=c2;x.fill();
+      x.textAlign='left';x.textBaseline='alphabetic';
+      x.fillStyle='#fff';x.fillText('PREDA',bx1+padX,by1+padY+fs*0.78);
+      x.fillStyle=c1;x.fillText('HUB',bx1+padX+w1,by1+padY+fs*0.78);
+      x.restore();}}
   }
 
   $('gdl').addEventListener('click',async()=>{const btn=$('gdl');btn.textContent='Export…';try{await drawLines();const blob=await new Promise(r=>$('linescv').toBlob(r,'image/png'));await offerSave(blob,'predahub-lignes.png');}catch(err){$('gstate').textContent='Export impossible : '+(err&&err.message?err.message:err);}btn.textContent='Télécharger en PNG';});
