@@ -1231,11 +1231,21 @@
         const padTop=Math.max(12,(ch-contentH)/2+2);
         const pcx=cx0+cw/2,pcy=cy0+padTop+R;
         x.save();x.beginPath();x.arc(pcx,pcy,R,0,Math.PI*2);
-        x.fillStyle='#EFEFEF';x.fill();
-        x.strokeStyle='rgba(0,0,0,.08)';x.lineWidth=1;x.stroke();x.restore();
-        if(o.bmp){x.save();x.beginPath();x.arc(pcx,pcy,R-1,0,Math.PI*2);x.clip();
-          const ih=R*2.16,iw=ih*(o.bmp.width/o.bmp.height);
-          x.drawImage(o.bmp,pcx-iw/2,pcy-R-R*0.1,iw,ih);x.restore();}
+        const cg=x.createLinearGradient(0,pcy-R,0,pcy+R);
+        cg.addColorStop(0,'#FFFFFF');cg.addColorStop(1,'#E8E6DF');
+        x.fillStyle=cg;x.fill();
+        x.strokeStyle='rgba(0,0,0,.07)';x.lineWidth=1;x.stroke();x.restore();
+        if(o.bmp){
+          /* la tete deborde au-dessus du cercle : on coupe seulement sous le centre */
+          x.save();
+          x.beginPath();
+          x.arc(pcx,pcy,R-1,0,Math.PI*2);
+          x.rect(pcx-R*1.35,pcy-R*2.6,R*2.7,R*2.6);
+          x.clip();
+          const ih=R*2.62,iw=ih*(o.bmp.width/o.bmp.height);
+          x.shadowColor='rgba(0,0,0,.3)';x.shadowBlur=14;x.shadowOffsetY=5;
+          x.drawImage(o.bmp,pcx-iw/2,pcy-R*1.42,iw,ih);
+          x.restore();}
         else if(oNum){x.save();x.textAlign='center';x.textBaseline='middle';
           x.font=`${Math.round(R*0.9)}px Anton`;x.fillStyle='rgba(0,0,0,.18)';
           x.fillText(String(oNum),pcx,pcy);x.restore();}
@@ -1245,10 +1255,18 @@
         while(x.measureText(nm).width>cw-22&&nf>12){nf-=1;x.font=`${nf}px Anton`;}
         const ny=pcy+R+(sq?20:24)+nf*0.42;
         x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${nf}px Anton`;
+        x.shadowColor='rgba(0,0,0,.18)';x.shadowBlur=3;x.shadowOffsetY=2;
         x.fillStyle=c2;x.fillText(nm,pcx,ny);x.restore();
-        if(oNum){const nfs=nfsBase;
+        if(oNum){const nfs=nfsBase;const numY=ny+nfs*0.95;
           x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${nfs}px Anton`;
-          x.fillStyle=c1;x.fillText(String(oNum),pcx,ny+nfs*0.95);x.restore();}
+          x.lineJoin='round';x.miterLimit=2;
+          x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=6;x.shadowOffsetY=3;
+          x.lineWidth=Math.max(4,nfs*0.13);x.strokeStyle=c2;x.strokeText(String(oNum),pcx,numY);
+          x.restore();
+          x.save();x.textAlign='center';x.textBaseline='alphabetic';x.font=`${nfs}px Anton`;
+          x.fillStyle=c1;x.fillText(String(oNum),pcx,numY);
+          x.lineWidth=Math.max(1.5,nfs*0.045);x.strokeStyle='rgba(255,255,255,.35)';
+          x.strokeText(String(oNum),pcx,numY);x.restore();}
       }
     }
     /* pied */
