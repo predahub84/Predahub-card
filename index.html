@@ -1141,29 +1141,29 @@
     const words=teamName.split(' ');
     let l1=words[0],l2=words.slice(1).join(' ');
     if(!l2){l1=teamName;l2='';}
-    const logoSz=sq?116:148;
-    let headY=sq?34:44;
-    const txtMax=W-logoSz-110;
-    let f1=sq?50:62;x.font=`${f1}px Anton`;
+    const logoSz=sq?186:230;
+    let headY=sq?30:40;
+    const txtMax=W-logoSz-90;
+    let f1=sq?74:92;x.font=`${f1}px Anton`;
     while(x.measureText(l1).width>txtMax&&f1>20){f1-=2;x.font=`${f1}px Anton`;}
-    let f2=sq?82:100;x.font=`${f2}px Anton`;
+    let f2=sq?118:146;x.font=`${f2}px Anton`;
     while(l2&&x.measureText(l2).width>txtMax&&f2>24){f2-=2;x.font=`${f2}px Anton`;}
     x.font=`${f1}px Anton`;const w1=x.measureText(l1).width;
     x.font=`${f2}px Anton`;const w2=l2?x.measureText(l2).width:0;
     const txtW=Math.max(w1,w2);
-    const blockW=logoSz+18+txtW;const bx0=W/2-blockW/2;
+    const blockW=logoSz+22+txtW;const bx0=W/2-blockW/2;
     if(themeLogo){const rr=Math.min(logoSz/themeLogo.width,logoSz/themeLogo.height);
       const lw=themeLogo.width*rr,lh=themeLogo.height*rr;
       x.save();x.shadowColor='rgba(0,0,0,.25)';x.shadowBlur=16;
       x.drawImage(themeLogo,bx0+(logoSz-lw)/2,headY+(logoSz-lh)/2,lw,lh);x.restore();}
-    const txtX=bx0+logoSz+18;
+    const txtX=bx0+logoSz+22;
     const textH=f1*0.84+(l2?f2*0.9:0);
     const tTop=headY+(logoSz-textH)/2;
     x.save();x.textAlign='left';x.textBaseline='alphabetic';
     x.font=`${f1}px Anton`;x.fillStyle=c2;x.fillText(l1,txtX,tTop+f1*0.84);
     if(l2){x.font=`${f2}px Anton`;x.fillStyle=c1;x.fillText(l2,txtX,tTop+f1*0.84+f2*0.9);}
     x.restore();
-    let y=headY+logoSz+(sq?8:12);
+    let y=headY+logoSz+(sq?4:8);
     /* bandeau sous-titre */
     const sub=($('gsub').value.trim()||'ATTAQUANTS PARTANTS').toUpperCase();
     {const bs=sq?30:38;const bh=bs+26;
