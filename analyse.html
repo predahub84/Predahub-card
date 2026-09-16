@@ -427,6 +427,7 @@ const MoneyPuckProvider={
     try{
       const c=await cached(key,6,async()=>{
         let last=null;
+        /* fichier par equipe : le plus rapide (~50 ms) */
         if(teamAbbr){
           try{
             const a=await this.call({kind:'teamGameByGame',season:this.mpSeason(season),
@@ -435,6 +436,7 @@ const MoneyPuckProvider={
             last='teamGameByGame: 0 ligne';
           }catch(e){last='teamGameByGame: '+e.message;}
         }
+        /* repli : ZIP de toute la ligue (~3,5 s) */
         const b=await this.call({kind:'seasonGameZip',season:this.mpSeason(season),playerId});
         if((b.rows||[]).length)return{via:'seasonGameZip',...b};
         throw new Error((last?last+' · ':'')+'seasonGameZip: 0 ligne');
@@ -479,22 +481,27 @@ function toSec(t){
 const fmtTOI=s=>s==null?null:`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
 
 function buildGames(nhlGames,mpRows){
-  /* index MoneyPuck par gameId quand disponible */
+  /* MoneyPuck renvoie une ligne PAR MATCH ET PAR SITUATION
+     (all / 5on5 / 5on4 / 4on5 / other). On indexe donc sur les deux,
+     sinon on ecrase les lignes entre elles. */
   const mpBy={};
   (mpRows||[]).forEach(r=>{
-    const gid=r.gameId||r.game_id||r.gameID;
-    if(gid!=null)mpBy[String(gid)]=r;
+    const gid=r.gameId??r.game_id??r.gameID;
+    if(gid==null)return;
+    const sit=r.situation||'all';
+    (mpBy[String(gid)]=mpBy[String(gid)]||{})[sit]=r;
   });
+  const num=v=>(v==null||v===''||Number.isNaN(+v))?null:+v;
   return nhlGames.map((g,i)=>{
-    const mp=mpBy[String(g.gameId)]||null;
-    const num=v=>(v==null||v===''||Number.isNaN(+v))?null:+v;
+    const byS=mpBy[String(g.gameId)]||{};
+    const all=byS.all||null;        // stats individuelles toutes situations
+    const ev=byS['5on5']||null;     // impact a 5 contre 5
+    const pp=byS['5on4']||null;     // avantage numerique
+    const pk=byS['4on5']||null;     // inferiorite
+    const onIce=(r,f)=>r?num(r[f]):null;
     return{
-      idx:i+1,
-      gameId:g.gameId,
-      date:g.gameDate,
-      opp:g.opponentAbbrev,
-      home:g.homeRoadFlag==='H',
-      result:g.decision||null,
+      idx:i+1, gameId:g.gameId, date:g.gameDate, opp:g.opponentAbbrev,
+      home:g.homeRoadFlag==='H', result:g.decision||null,
       score:(g.teamScore!=null&&g.opponentScore!=null)?`${g.teamScore}-${g.opponentScore}`:null,
       /* --- NHL --- */
       g:num(g.goals), a:num(g.assists), p:num(g.points),
@@ -503,28 +510,31 @@ function buildGames(nhlGames,mpRows){
       ppG:num(g.powerPlayGoals), ppP:num(g.powerPlayPoints),
       shG:num(g.shorthandedGoals), shP:num(g.shorthandedPoints),
       gwg:num(g.gameWinningGoals), shifts:num(g.shifts),
-      fow:num(g.faceoffWinningPctg)!=null?+g.faceoffWinningPctg:null,
-      /* --- champs prévus mais non fournis par le game log NHL --- */
-      ppToi:null, pkToi:null, evToi:null,
-      /* --- MoneyPuck --- */
-      xg:  mp?num(mp.I_F_xGoals??mp.xGoals):null,
-      xgf: mp?num(mp.OnIce_F_xGoals):null,
-      xga: mp?num(mp.OnIce_A_xGoals):null,
-      cf:  mp?num(mp.OnIce_F_shotAttempts):null,
-      ca:  mp?num(mp.OnIce_A_shotAttempts):null,
-      ff:  mp?num(mp.OnIce_F_unblockedShotAttempts):null,
-      fa:  mp?num(mp.OnIce_A_unblockedShotAttempts):null,
-      hdcf:mp?num(mp.OnIce_F_highDangerShots):null,
-      hdca:mp?num(mp.OnIce_A_highDangerShots):null,
-      _mp:mp
+      fow:g.faceoffWinningPctg!=null?+g.faceoffWinningPctg:null,
+      /* --- TOI par situation : desormais alimente par MoneyPuck --- */
+      evToi:ev?num(ev.icetime):null,
+      ppToi:pp?num(pp.icetime):null,
+      pkToi:pk?num(pk.icetime):null,
+      /* --- MoneyPuck, toutes situations --- */
+      xg:  onIce(all,'I_F_xGoals'),
+      xgf: onIce(all,'OnIce_F_xGoals'),  xga: onIce(all,'OnIce_A_xGoals'),
+      cf:  onIce(all,'OnIce_F_shotAttempts'), ca: onIce(all,'OnIce_A_shotAttempts'),
+      ff:  onIce(all,'OnIce_F_unblockedShotAttempts'), fa: onIce(all,'OnIce_A_unblockedShotAttempts'),
+      hdcf:onIce(all,'OnIce_F_highDangerShots'), hdca:onIce(all,'OnIce_A_highDangerShots'),
+      /* --- MoneyPuck, 5 contre 5 --- */
+      xgf5: onIce(ev,'OnIce_F_xGoals'), xga5: onIce(ev,'OnIce_A_xGoals'),
+      cf5:  onIce(ev,'OnIce_F_shotAttempts'), ca5: onIce(ev,'OnIce_A_shotAttempts'),
+      xg5:  onIce(ev,'I_F_xGoals'), p5: onIce(ev,'I_F_points'),
+      _sit:byS
     };
-  }).map(x=>({
-    ...x,
-    xgfPct:(x.xgf!=null&&x.xga!=null&&(x.xgf+x.xga)>0)?x.xgf/(x.xgf+x.xga)*100:null,
-    cfPct: (x.cf!=null&&x.ca!=null&&(x.cf+x.ca)>0)?x.cf/(x.cf+x.ca)*100:null,
-    ffPct: (x.ff!=null&&x.fa!=null&&(x.ff+x.fa)>0)?x.ff/(x.ff+x.fa)*100:null,
-    hdcfPct:(x.hdcf!=null&&x.hdca!=null&&(x.hdcf+x.hdca)>0)?x.hdcf/(x.hdcf+x.hdca)*100:null
-  }));
+  }).map(x=>{
+    const r=(f,a)=>(f!=null&&a!=null&&(f+a)>0)?f/(f+a)*100:null;
+    return{...x,
+      xgfPct:r(x.xgf,x.xga), cfPct:r(x.cf,x.ca),
+      ffPct:r(x.ff,x.fa), hdcfPct:r(x.hdcf,x.hdca),
+      xgfPct5:r(x.xgf5,x.xga5), cfPct5:r(x.cf5,x.ca5)
+    };
+  });
 }
 
 /* =====================================================================
@@ -636,22 +646,28 @@ const LineCombinationAnalysis={
     const norm=s=>String(s||'').toLowerCase().replace(/[^a-z ]/g,'').trim();
     const target=norm(fullName);
     const last=target.split(' ').slice(-1)[0];
+    /* les noms de colonnes de lines.csv different de ceux de skaters.csv :
+       on essaie plusieurs variantes pour rester robuste */
+    const pick=(r,...keys)=>{for(const k of keys){if(r[k]!=null)return +r[k];}return null;};
     return rows.filter(r=>{
       const n=norm(r.name);
       return n.includes(target)||(last.length>3&&n.includes(last));
-    }).filter(r=>(r.situation||'all')==='all')
+    }).filter(r=>(r.situation||'all')==='5on5'||(r.situation||'all')==='all')
       .sort((a,b)=>(b.icetime||0)-(a.icetime||0))
       .slice(0,6)
-      .map(r=>({
-        line:r.name,
-        toi:r.icetime!=null?Math.round(r.icetime/60):null,
-        xgf:r.xGoalsFor,xga:r.xGoalsAgainst,
-        xgfPct:(r.xGoalsFor!=null&&r.xGoalsAgainst!=null&&(r.xGoalsFor+r.xGoalsAgainst)>0)
-          ?r.xGoalsFor/(r.xGoalsFor+r.xGoalsAgainst)*100:null,
-        cfPct:(r.shotAttemptsFor!=null&&r.shotAttemptsAgainst!=null&&(r.shotAttemptsFor+r.shotAttemptsAgainst)>0)
-          ?r.shotAttemptsFor/(r.shotAttemptsFor+r.shotAttemptsAgainst)*100:null,
-        gf:r.goalsFor,ga:r.goalsAgainst
-      }));
+      .map(r=>{
+        const xgf=pick(r,'xGoalsFor','OnIce_F_xGoals','xGoalsForAfterShifts');
+        const xga=pick(r,'xGoalsAgainst','OnIce_A_xGoals','xGoalsAgainstAfterShifts');
+        const cf =pick(r,'shotAttemptsFor','corsiFor','OnIce_F_shotAttempts');
+        const ca =pick(r,'shotAttemptsAgainst','corsiAgainst','OnIce_A_shotAttempts');
+        const pc=(f,a)=>(f!=null&&a!=null&&(f+a)>0)?f/(f+a)*100:null;
+        return{
+          line:r.name, situation:r.situation||'all',
+          toi:r.icetime!=null?Math.round(r.icetime/60):null,
+          xgf,xga,xgfPct:pc(xgf,xga),cfPct:pc(cf,ca),
+          gf:pick(r,'goalsFor','GF'), ga:pick(r,'goalsAgainst','GA')
+        };
+      });
   }
 };
 
@@ -866,7 +882,9 @@ const SERIES={
   toi:{lbl:'TOI',c:()=>'#A78BFA',type:'line',fmt:v=>fmtTOI(v)},
   xg:{lbl:'xG',c:()=>'#F43F5E',type:'line'},
   xgfPct:{lbl:'xGF%',c:()=>'#60A5FA',type:'line'},
-  cfPct:{lbl:'CF%',c:()=>'#34D399',type:'line'}
+  cfPct:{lbl:'CF%',c:()=>'#34D399',type:'line'},
+  ppToi:{lbl:'TOI en AN',c:()=>'#FBBF24',type:'line'},
+  xgfPct5:{lbl:'xGF% 5v5',c:()=>'#F472B6',type:'line'}
 };
 function buildToggles(){
   const tg=$('serieTg');tg.innerHTML='';
@@ -907,7 +925,7 @@ function drawChart(){
   if(!active.length){x.fillStyle='#5a5a75';x.font='13px "Inter Tight"';
     x.textAlign='center';x.fillText('Sélectionne au moins une statistique',W/2,H/2);return;}
   /* deux échelles : compteurs (gauche) et pourcentages/TOI (droite) */
-  const isRight=k=>k==='toi'||k.endsWith('Pct');
+  const isRight=k=>k==='toi'||k==='ppToi'||k.indexOf('Pct')>-1;
   const lefts=active.filter(k=>!isRight(k)),rights=active.filter(isRight);
   const maxOf=ks=>{let m=0;ks.forEach(k=>G.forEach(g=>{if(g[k]!=null&&g[k]>m)m=g[k];}));return m||1;};
   const minOf=ks=>{let m=Infinity;ks.forEach(k=>G.forEach(g=>{if(g[k]!=null&&g[k]<m)m=g[k];}));
@@ -927,7 +945,7 @@ function drawChart(){
     if(lefts.length){x.textAlign='right';x.fillText((lMax*i/4).toFixed(lMax<5?1:0),L-7,yy+3);}
     if(rights.length){x.textAlign='left';
       const v=rMin+(rMax-rMin)*i/4;
-      x.fillText(rights[0]==='toi'?fmtTOI(v):v.toFixed(0),L+pw+7,yy+3);}
+      x.fillText(/Toi$/i.test(rights[0])?fmtTOI(v):v.toFixed(0),L+pw+7,yy+3);}
   }
   /* barres */
   const bars=lefts.filter(k=>SERIES[k].type==='bar');
@@ -1057,7 +1075,7 @@ function renderMonths(){
   ],M);
 }
 
-/* ---------- TOI ---------- */
+/* ---------- TOI : EV / PP / PK ---------- */
 function drawToi(){
   const G=S.games;
   const{x,W,H}=chartBase($('toiChart'),250);
@@ -1065,44 +1083,80 @@ function drawToi(){
   const vals=G.map(g=>g.toi).filter(v=>v!=null);
   if(!vals.length){x.fillStyle='#5a5a75';x.font='13px "Inter Tight"';x.textAlign='center';
     x.fillText('Temps de glace indisponible',W/2,H/2);return;}
-  const mx=Math.max(...vals)*1.1,mn=Math.min(...vals)*0.85;
+  const hasSplit=has(G,'ppToi')||has(G,'evToi');
+  const mx=Math.max(...vals)*1.1,mn=0;
   const xAt=i=>L+(G.length===1?pw/2:(i/(G.length-1))*pw);
   const yAt=v=>T+ph-((v-mn)/(mx-mn||1))*ph;
   x.strokeStyle='rgba(255,255,255,.07)';x.fillStyle='#5a5a75';x.font='10px "Inter Tight"';
   for(let i=0;i<=4;i++){const yy=T+ph-(i/4)*ph;
     x.beginPath();x.moveTo(L,yy);x.lineTo(L+pw,yy);x.stroke();
     x.textAlign='right';x.fillText(fmtTOI(mn+(mx-mn)*i/4),L-7,yy+3);}
-  /* aire */
-  x.beginPath();let st=false;
+  if(hasSplit){
+    /* aires empilees : EV puis PP puis PK */
+    const layers=[
+      {k:'evToi',c:S.pal.base,lbl:'5 contre 5'},
+      {k:'ppToi',c:'#FBBF24',lbl:'Avantage numérique'},
+      {k:'pkToi',c:'#F43F5E',lbl:'Infériorité'}
+    ];
+    const cum=G.map(()=>0);
+    layers.forEach(ly=>{
+      x.beginPath();let st=false;
+      G.forEach((g,i)=>{const v=cum[i]+(g[ly.k]||0);
+        if(!st){x.moveTo(xAt(i),yAt(v));st=true;}else x.lineTo(xAt(i),yAt(v));});
+      for(let i=G.length-1;i>=0;i--)x.lineTo(xAt(i),yAt(cum[i]));
+      x.closePath();x.fillStyle=alpha(ly.c,.55);x.fill();
+      G.forEach((g,i)=>{cum[i]+=(g[ly.k]||0);});
+    });
+    /* legende */
+    let lx=L+4;x.textAlign='left';x.font='10px "Inter Tight"';
+    layers.forEach(ly=>{
+      x.fillStyle=ly.c;x.fillRect(lx,T+2,9,9);
+      x.fillStyle='#9a9ab4';x.fillText(ly.lbl,lx+13,T+10);
+      lx+=x.measureText(ly.lbl).width+30;});
+  }else{
+    x.beginPath();let st=false;
+    G.forEach((g,i)=>{if(g.toi==null)return;
+      if(!st){x.moveTo(xAt(i),yAt(g.toi));st=true;}else x.lineTo(xAt(i),yAt(g.toi));});
+    const grad=x.createLinearGradient(0,T,0,T+ph);
+    grad.addColorStop(0,alpha(S.pal.base,.35));grad.addColorStop(1,alpha(S.pal.base,0));
+    x.lineTo(xAt(G.length-1),T+ph);x.lineTo(xAt(0),T+ph);x.closePath();
+    x.fillStyle=grad;x.fill();
+  }
+  /* total en trait plein */
+  x.beginPath();let st2=false;
   G.forEach((g,i)=>{if(g.toi==null)return;
-    if(!st){x.moveTo(xAt(i),yAt(g.toi));st=true;}else x.lineTo(xAt(i),yAt(g.toi));});
-  const grad=x.createLinearGradient(0,T,0,T+ph);
-  grad.addColorStop(0,alpha(S.pal.base,.35));grad.addColorStop(1,alpha(S.pal.base,0));
-  x.lineTo(xAt(G.length-1),T+ph);x.lineTo(xAt(0),T+ph);x.closePath();
-  x.fillStyle=grad;x.fill();
-  x.beginPath();st=false;
-  G.forEach((g,i)=>{if(g.toi==null)return;
-    if(!st){x.moveTo(xAt(i),yAt(g.toi));st=true;}else x.lineTo(xAt(i),yAt(g.toi));});
-  x.strokeStyle=S.pal.bright;x.lineWidth=2.4;x.stroke();
-  /* moyenne 10 */
+    if(!st2){x.moveTo(xAt(i),yAt(g.toi));st2=true;}else x.lineTo(xAt(i),yAt(g.toi));});
+  x.strokeStyle=S.pal.bright;x.lineWidth=2.2;x.stroke();
+  /* moyenne 10 matchs */
   const r=PlayerAnalysisEngine.rolling(G,'toi',10);
-  x.beginPath();st=false;x.setLineDash([5,4]);
+  x.beginPath();let st3=false;x.setLineDash([5,4]);
   r.forEach((v,i)=>{if(v==null)return;
-    if(!st){x.moveTo(xAt(i),yAt(v));st=true;}else x.lineTo(xAt(i),yAt(v));});
+    if(!st3){x.moveTo(xAt(i),yAt(v));st3=true;}else x.lineTo(xAt(i),yAt(v));});
   x.strokeStyle='rgba(255,255,255,.75)';x.lineWidth=2;x.stroke();x.setLineDash([]);
-  /* indicateur de rôle */
+  /* indicateur de role */
   const c=TrendDetectionEngine.cmp(G,'toi');
-  const el=$('roleInd');
+  const el=$('roleInd');let html='';
   if(c){
     const up=c.diff>45,dn=c.diff<-45;
-    el.innerHTML=`<div class="trend"><div><b>${up?'Rôle en hausse':dn?'Rôle en baisse':'Rôle stable'}</b>
+    html+=`<div class="trend"><div><b>${up?'Rôle en hausse':dn?'Rôle en baisse':'Rôle stable'}</b>
       <small>${fmtTOI(c.first)} → ${fmtTOI(c.last)} en moyenne</small></div>
       <div class="tag ${up?'up':dn?'down':'flat'}">${up?'↗':dn?'↘':'→'} ${
         (c.diff>=0?'+':'-')+fmtTOI(Math.abs(c.diff))}</div></div>`;
-  }else el.innerHTML='';
-  $('toiNote').innerHTML='Ligne pleine : temps de glace par match. Pointillés : moyenne sur 10 matchs.<br>'+
-    '<span class="na">La répartition AN / infériorité par match n\'est pas fournie par le game log NHL. '+
-    'Les champs sont prévus dans le modèle de données et seront alimentés dès qu\'une source le permettra.</span>';
+  }
+  const cpp=has(G,'ppToi')?TrendDetectionEngine.cmp(G,'ppToi'):null;
+  if(cpp){
+    const up=cpp.diff>20,dn=cpp.diff<-20;
+    html+=`<div class="trend"><div><b>Temps en avantage numérique</b>
+      <small>${fmtTOI(cpp.first)} → ${fmtTOI(cpp.last)} par match</small></div>
+      <div class="tag ${up?'up':dn?'down':'flat'}">${up?'↗':dn?'↘':'→'} ${
+        (cpp.diff>=0?'+':'-')+fmtTOI(Math.abs(cpp.diff))}</div></div>`;
+  }
+  el.innerHTML=html;
+  $('toiNote').innerHTML=hasSplit
+    ? 'Aires empilées : répartition 5 contre 5 / avantage numérique / infériorité (source MoneyPuck). '+
+      'Ligne pleine : temps de glace total NHL. Pointillés : moyenne sur 10 matchs.'
+    : 'Ligne pleine : temps de glace par match. Pointillés : moyenne sur 10 matchs.<br>'+
+      '<span class="na">Répartition par situation indisponible pour cette saison.</span>';
 }
 
 /* ---------- situations ---------- */
@@ -1212,13 +1266,14 @@ function renderLog(){
     {t:'B',k:'g'},{t:'A',k:'a'},{t:'PTS',k:'p',hi:r=>(r.p||0)>=2},
     {t:'T',k:'sog'},{t:'+/-',k:'plusMinus'},{t:'PUN',k:'pim'},
     {t:'TOI',k:'toi',f:r=>fmtTOI(r.toi),hi:r=>r.toi>17*60},
-    {t:'PP TOI',f:()=>null},
+    {t:'PP TOI',k:'ppToi',f:r=>fmtTOI(r.ppToi)},
     {t:'xG',k:'xg',f:r=>r.xg!=null?r.xg.toFixed(2):null},
     {t:'xGF%',k:'xgfPct',f:r=>r.xgfPct!=null?r.xgfPct.toFixed(1):null},
-    {t:'CF%',k:'cfPct',f:r=>r.cfPct!=null?r.cfPct.toFixed(1):null}
+    {t:'CF%',k:'cfPct',f:r=>r.cfPct!=null?r.cfPct.toFixed(1):null},
+    {t:'xGF% 5v5',k:'xgfPct5',f:r=>r.xgfPct5!=null?r.xgfPct5.toFixed(1):null}
   ],G,{sortable:true});
   $('logNote').textContent=`${G.length} match(s) affiché(s) sur ${S.games.length}. `+
-    `Clique sur un en-tête pour trier. La colonne PP TOI reste vide : le game log NHL ne la fournit pas.`;
+    `Clique sur un en-tête pour trier. PP TOI et xGF% proviennent de MoneyPuck.`;
 }
 ['logSearch','logFilter'].forEach(id=>$(id).addEventListener('input',renderLog));
 
@@ -1339,13 +1394,20 @@ $('runDiag').addEventListener('click',async()=>{
         log(`  Colonnes clés présentes : ${presentes.join(', ')||'aucune'}`);
         const manquantes=utiles.filter(k=>r[k]===undefined);
         if(manquantes.length)log(`  Absentes : ${manquantes.join(', ')}`);
-        if(r.gameId!==undefined)log(`  ✓ Données match par match exploitables`);
+        if(r.gameId!==undefined){
+          const sits=[...new Set(j.rows.map(z=>z.situation))].filter(Boolean);
+          const gids=new Set(j.rows.map(z=>z.gameId)).size;
+          log(`  ✓ ${gids} matchs × ${sits.length} situations (${sits.join(', ')})`);
+        }
+        if(nom==='seasonLines'){
+          log(`  Colonnes disponibles : ${j.columns.slice(0,26).join(', ')}…`);
+        }
       }
     }catch(e){
       log(`  ÉCHEC · ${e.message}`);
     }
   }
-  log('\n─'.repeat(46));
+  log('\n'+'─'.repeat(46));
   log('Rappel : /api/mp doit être déployé sur Vercel pour que ces tests passent.');
 });
 </script>
