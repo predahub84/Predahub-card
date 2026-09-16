@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PredaHUB · Analyse Joueur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05050f; --panel:#0c0c1c; --panel2:#12122a; --line:#1e1e3a;
+  --txt:#e9e9f5; --mut:#8a8aa3; --dim:#5a5a75;
+  --t1:#BF5AF2; --t2:#7b3fa0; --t3:#d79bff;
+  --ok:#22C55E; --warn:#FBBF24; --bad:#F43F5E;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);
+  font-family:"Inter Tight",system-ui,sans-serif;font-size:15px;line-height:1.5}
+h1,h2,h3{font-family:Anton,sans-serif;font-weight:400;letter-spacing:.5px;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 14px 80px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+  border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden}
+.card>.accent{position:absolute;inset:0 0 auto 0;height:3px;
+  background:linear-gradient(90deg,var(--t1),var(--t3))}
+.sec-title{font-size:13px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--t3);margin-bottom:12px}
+label{display:block;font-size:12px;color:var(--mut);margin:10px 0 5px}
+input,select,button{width:100%;background:var(--panel2);border:1px solid var(--line);
+  color:var(--txt);border-radius:9px;padding:10px 11px;font:inherit;font-size:16px}
+button{cursor:pointer;font-weight:700}
+.btn{background:linear-gradient(90deg,var(--t1),var(--t3));border:0;color:#fff}
+.btn.ghost{background:var(--panel2);color:var(--txt)}
+.row{display:grid;gap:8px}
+.row2{grid-template-columns:1fr 1fr}
+.row3{grid-template-columns:repeat(3,1fr)}
+.results{position:relative;z-index:5}
+.results button{display:block;text-align:left;margin-top:5px;background:var(--panel2);font-weight:600}
+.results button small{color:var(--mut);font-weight:400;margin-left:6px}
+/* entete joueur */
+#hero{padding:0}
+#heroBg{position:relative;padding:18px 16px 16px;overflow:hidden}
+#heroBg canvas{position:absolute;inset:0;width:100%;height:100%}
+.heroIn{position:relative;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.heroPic{width:104px;height:104px;border-radius:50%;flex:0 0 auto;
+  background:#12122a;overflow:hidden;position:relative;border:3px solid var(--t1)}
+.heroPic img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.heroTxt{flex:1;min-width:190px}
+.heroTxt .first{font-size:15px;color:#b9b9d0;letter-spacing:2px;text-transform:uppercase}
+.heroTxt h1{font-size:40px;line-height:1}
+.heroMeta{font-size:13px;color:var(--mut);margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.chip{font-size:11px;font-weight:800;letter-spacing:1px;padding:5px 11px;border-radius:99px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);color:#c9c9de}
+.chip.gold{background:rgba(251,191,36,.13);border-color:rgba(251,191,36,.5);color:#FBBF24}
+/* stats */
+.grid{display:grid;gap:8px;grid-template-columns:repeat(4,1fr)}
+.grid.g5{grid-template-columns:repeat(5,1fr)}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;
+  padding:11px 6px;text-align:center;position:relative;overflow:hidden}
+.stat .v{font-family:Anton,sans-serif;font-size:27px;line-height:1.05}
+.stat .k{font-size:10px;font-weight:700;letter-spacing:1.4px;color:var(--mut);margin-top:3px}
+.stat.na .v{color:var(--dim);font-size:15px;font-family:"Inter Tight";padding:6px 0}
+/* tendances */
+.trend{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:10px;background:var(--panel2);
+  border:1px solid var(--line);margin-bottom:7px}
+.trend b{font-weight:700;font-size:14px}
+.trend .tag{font-size:12px;font-weight:800;letter-spacing:.5px;white-space:nowrap}
+.up{color:var(--ok)} .down{color:var(--bad)} .flat{color:var(--mut)} .wa{color:var(--warn)}
+.trend small{display:block;color:var(--mut);font-size:11.5px;font-weight:400;margin-top:2px}
+/* toggles serie */
+.toggles{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tg{font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:99px;cursor:pointer;
+  background:var(--panel2);border:1px solid var(--line);color:var(--mut);width:auto}
+.tg.on{color:#fff}
+canvas.chart{width:100%;display:block;border-radius:10px;background:rgba(255,255,255,.02)}
+/* tableaux */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th,td{padding:8px 9px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);z-index:1}
+th{background:var(--panel2);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--mut);cursor:pointer;user-select:none;position:sticky;top:0}
+th:first-child{z-index:2;background:var(--panel2)}
+tbody tr:hover td{background:rgba(255,255,255,.035)}
+td.hi{color:var(--warn);font-weight:700}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{width:auto;background:var(--panel2);color:var(--mut);font-size:13px;padding:8px 14px}
+.tabs button.on{background:linear-gradient(90deg,var(--t1),var(--t3));color:#fff}
+.note{font-size:12.5px;color:var(--mut);line-height:1.65}
+.synth{font-size:14.5px;line-height:1.75}
+.synth b{color:#fff}
+.na{color:var(--dim)}
+.flag{font-size:11.5px;padding:8px 11px;border-radius:9px;margin-top:8px;
+  background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.28);color:#FBBF24}
+.diag{font-family:ui-monospace,monospace;font-size:11.5px;white-space:pre-wrap;
+  background:#08081a;border:1px solid var(--line);border-radius:9px;padding:11px;
+  max-height:280px;overflow:auto;color:#9a9ab4}
+.upd{font-size:11.5px;color:var(--dim);margin-top:8px}
+.hide{display:none !important}
+@media(max-width:620px){
+  .grid{grid-template-columns:repeat(4,1fr)} .grid.g5{grid-template-columns:repeat(3,1fr)}
+  .heroTxt h1{font-size:32px} .row3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ SELECTION ============ -->
+  <div class="card"><div class="accent"></div>
+    <div class="sec-title">Analyse joueur</div>
+    <label>Équipe (pour proposer l'effectif)</label>
+    <select id="teamSel"><option value="">Choisir une équipe…</option></select>
+    <label>Joueur</label>
+    <input id="pq" placeholder="Nom du joueur" autocomplete="off">
+    <div id="pr" class="results"></div>
+    <div class="row row3" style="margin-top:10px">
+      <div><label>Saison</label><select id="seasonSel"></select></div>
+      <div><label>Type</label><select id="typeSel">
+        <option value="2">Saison régulière</option><option value="3">Séries</option></select></div>
+      <div><label>Lieu</label><select id="venueSel">
+        <option value="all">Tous les matchs</option>
+        <option value="home">Domicile</option><option value="away">Extérieur</option></select></div>
+    </div>
+    <button id="refresh" class="btn ghost" style="margin-top:10px">↻ Actualiser les données</button>
+    <div class="upd" id="updTxt"></div>
+    <div id="state" class="flag hide"></div>
+  </div>
+
+  <div id="app" class="hide">
+
+    <!-- ============ ENTETE JOUEUR ============ -->
+    <div class="card" id="hero"><div id="heroBg">
+      <canvas id="heroCv"></canvas>
+      <div class="heroIn">
+        <div class="heroPic"><img id="hPic" alt=""></div>
+        <div class="heroTxt">
+          <div class="first" id="hFirst"></div>
+          <h1 id="hLast"></h1>
+          <div class="heroMeta" id="hMeta"></div>
+          <div class="chips" id="hChips"></div>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- ============ RESUME ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Résumé de saison</div>
+      <div class="grid" id="sumBase"></div>
+      <div class="sec-title" style="margin:14px 0 10px">Statistiques avancées · MoneyPuck</div>
+      <div class="grid g5" id="sumAdv"></div>
+      <div id="advFlag" class="flag hide"></div>
+    </div>
+
+    <!-- ============ COURBE ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Évolution match par match</div>
+      <div class="toggles" id="serieTg"></div>
+      <div class="toggles" id="avgTg"></div>
+      <canvas id="chart" class="chart" height="330"></canvas>
+      <div class="note" id="chartNote" style="margin-top:8px"></div>
+    </div>
+
+    <!-- ============ TENDANCES ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Tendances détectées</div>
+      <div id="trends"></div>
+      <div class="note" style="margin-top:8px">Indicateurs calculés en comparant la première et la
+        dernière partie de la saison. Aucune note globale n'est attribuée : chaque signal est
+        rattaché à une mesure vérifiable.</div>
+    </div>
+
+    <!-- ============ BLOCS ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Blocs de matchs</div>
+      <div class="tw"><table id="blocks"></table></div>
+    </div>
+
+    <!-- ============ MOIS ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Comparaison mensuelle</div>
+      <div class="tw"><table id="months"></table></div>
+    </div>
+
+    <!-- ============ ROLE / TOI ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Utilisation et rôle</div>
+      <canvas id="toiChart" class="chart" height="250"></canvas>
+      <div id="roleInd" style="margin-top:10px"></div>
+      <div class="note" id="toiNote" style="margin-top:8px"></div>
+    </div>
+
+    <!-- ============ SPLITS ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Situations de jeu</div>
+      <div class="tabs" id="sitTabs"></div>
+      <div class="grid g5" id="sitStats"></div>
+      <div class="note" style="margin-top:8px">Source : totaux de saison MoneyPuck par situation.</div>
+    </div>
+
+    <!-- ============ LIGNES ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Avec qui joue-t-il ?</div>
+      <div class="tw"><table id="linesTbl"></table></div>
+      <div id="linesFlag" class="flag hide"></div>
+    </div>
+
+    <!-- ============ SAISONS ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Comparaison entre saisons</div>
+      <div class="tw"><table id="seasonsTbl"></table></div>
+    </div>
+
+    <!-- ============ GAME LOG ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Game log complet</div>
+      <div class="row row2">
+        <input id="logSearch" placeholder="Rechercher (adversaire, date…)">
+        <select id="logFilter">
+          <option value="">Tous les matchs</option>
+          <option value="p2">2 points ou plus</option>
+          <option value="g1">Au moins 1 but</option>
+          <option value="toi17">Plus de 17 min de TOI</option>
+          <option value="s3">3 tirs ou plus</option>
+          <option value="blank">Aucun point</option>
+        </select>
+      </div>
+      <div class="tw" style="margin-top:10px;max-height:460px;overflow:auto">
+        <table id="logTbl"></table></div>
+      <div class="note" id="logNote" style="margin-top:8px"></div>
+    </div>
+
+    <!-- ============ SYNTHESE ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Synthèse automatique</div>
+      <div class="synth" id="synth"></div>
+    </div>
+
+    <!-- ============ CONTRAT ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Contrat</div>
+      <div class="row row3">
+        <div><label>AAV (M$)</label><input id="cAav" placeholder="ex. 1.85" inputmode="decimal"></div>
+        <div><label>Durée (années)</label><input id="cYears" placeholder="ex. 2" inputmode="numeric"></div>
+        <div><label>Expire en</label><input id="cEnd" placeholder="ex. 2028"></div>
+      </div>
+      <div class="row row2" style="margin-top:8px">
+        <div><label>Type</label><select id="cType">
+          <option value="">—</option><option>Contrat d'entrée</option>
+          <option>RFA</option><option>UFA</option><option>Prolongation</option></select></div>
+        <div><label>Clause</label><input id="cClause" placeholder="ex. aucune"></div>
+      </div>
+      <button id="cSave" class="btn ghost" style="margin-top:10px">Enregistrer le contrat</button>
+      <div id="cAnalysis" style="margin-top:12px"></div>
+      <div class="note" style="margin-top:8px">Aucune API publique ne fournit les contrats NHL
+        depuis la fermeture de CapFriendly. Saisie manuelle pour l'instant ; l'architecture
+        <code>ContractProvider</code> permettra de brancher une source plus tard.</div>
+    </div>
+
+    <!-- ============ DIAGNOSTIC ============ -->
+    <div class="card"><div class="accent"></div>
+      <div class="sec-title">Diagnostic MoneyPuck</div>
+      <button id="runDiag" class="btn ghost">Tester les fichiers pour ce joueur</button>
+      <div class="diag hide" id="diagOut"></div>
+      <div class="note" style="margin-top:8px">Vérifie réellement quels fichiers répondent et
+        quelles colonnes sont exploitables, au lieu de le supposer.</div>
+    </div>
+
+    <div class="note" style="text-align:center;padding:10px 0">
+      Données : NHL · Statistiques avancées : MoneyPuck.com
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   PredaHUB — Module Analyse Joueur
+   Architecture en providers pour pouvoir changer de source sans
+   toucher au reste du module.
+   ===================================================================== */
+const $=id=>document.getElementById(id);
+const CUR_SEASON='20252026';
+
+/* ---------- équipes (abbr, nom, couleur1, couleur2) ---------- */
+const TEAMS=[
+['ANA','Anaheim Ducks','#F47A38','#B9975B'],['BOS','Boston Bruins','#FFB81C','#000000'],
+['BUF','Buffalo Sabres','#FCB514','#002654'],['CGY','Calgary Flames','#C8102E','#F1BE48'],
+['CAR','Carolina Hurricanes','#CC0000','#000000'],['CHI','Chicago Blackhawks','#CF0A2C','#000000'],
+['COL','Colorado Avalanche','#6F263D','#236192'],['CBJ','Columbus Blue Jackets','#CE1126','#002654'],
+['DAL','Dallas Stars','#006847','#8F8F8C'],['DET','Detroit Red Wings','#CE1126','#7c1420'],
+['EDM','Edmonton Oilers','#FF4C00','#041E42'],['FLA','Florida Panthers','#C8102E','#041E42'],
+['LAK','Los Angeles Kings','#A2AAAD','#111111'],['MIN','Minnesota Wild','#154734','#A6192E'],
+['MTL','Montréal Canadiens','#AF1E2D','#192168'],['NSH','Nashville Predators','#FFB81C','#041E42'],
+['NJD','New Jersey Devils','#CE1126','#000000'],['NYI','New York Islanders','#00539B','#F47D30'],
+['NYR','New York Rangers','#0038A8','#CE1126'],['OTT','Ottawa Senators','#C52032','#000000'],
+['PHI','Philadelphia Flyers','#F74902','#000000'],['PIT','Pittsburgh Penguins','#FCB514','#000000'],
+['SJS','San Jose Sharks','#006D75','#EA7200'],['SEA','Seattle Kraken','#99D9D9','#001628'],
+['STL','St. Louis Blues','#002F87','#FCB514'],['TBL','Tampa Bay Lightning','#0067C8','#002868'],
+['TOR','Toronto Maple Leafs','#00205B','#001F5B'],['UTA','Utah Mammoth','#6CACE4','#010101'],
+['VAN','Vancouver Canucks','#00205B','#00843D'],['VGK','Vegas Golden Knights','#B4975A','#333F42'],
+['WSH','Washington Capitals','#C8102E','#041E42'],['WPG','Winnipeg Jets','#041E42','#004C97']];
+const TEAM=ab=>TEAMS.find(t=>t[0]===ab);
+
+/* ---------- utilitaires couleur ---------- */
+const hx2rgb=h=>{h=(h||'#888').replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  const n=parseInt(h,16);return[n>>16,(n>>8)&255,n&255];};
+const rgb2hx=(r,g,b)=>'#'+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+const lighten=(h,a)=>{const[r,g,b]=hx2rgb(h);return rgb2hx(r+(255-r)*a,g+(255-g)*a,b+(255-b)*a);};
+const darken=(h,a)=>{const[r,g,b]=hx2rgb(h);return rgb2hx(r*(1-a),g*(1-a),b*(1-a));};
+const lum=h=>{const[r,g,b]=hx2rgb(h);return(0.299*r+0.587*g+0.114*b)/255;};
+const alpha=(h,a)=>{const[r,g,b]=hx2rgb(h);return`rgba(${r},${g},${b},${a})`;};
+function palette(ab){
+  const t=TEAM(ab);
+  if(!t)return{base:'#BF5AF2',deep:'#2a1046',bright:'#d79bff'};
+  const base=t[2];
+  let deep=t[3]&&lum(t[3])>0.05&&lum(t[3])<lum(base)?t[3]:darken(base,.6);
+  if(lum(deep)>.45)deep=darken(base,.6);
+  return{base,deep,bright:lighten(base,lum(base)>.7?.22:.45)};
+}
+
+/* =====================================================================
+   CACHE  (localStorage, avec horodatage et invalidation)
+   ===================================================================== */
+const Cache={
+  P:'ph_an_',
+  key(k){return this.P+k;},
+  get(k,maxAgeH=12){
+    try{
+      const raw=localStorage.getItem(this.key(k));if(!raw)return null;
+      const o=JSON.parse(raw);
+      if(Date.now()-o.t>maxAgeH*3600e3)return null;
+      return o;
+    }catch(e){return null;}
+  },
+  set(k,v){
+    try{localStorage.setItem(this.key(k),JSON.stringify({t:Date.now(),v}));}
+    catch(e){this.trim();}
+  },
+  clear(prefix){
+    Object.keys(localStorage).filter(x=>x.startsWith(this.P)&&(!prefix||x.includes(prefix)))
+      .forEach(x=>localStorage.removeItem(x));
+  },
+  trim(){
+    const ks=Object.keys(localStorage).filter(x=>x.startsWith(this.P));
+    ks.slice(0,Math.ceil(ks.length/2)).forEach(x=>localStorage.removeItem(x));
+  },
+  stamp(k){const o=this.get(k,99999);return o?o.t:null;}
+};
+async function cached(key,maxAgeH,fn){
+  const hit=Cache.get(key,maxAgeH);
+  if(hit)return{data:hit.v,at:hit.t,fromCache:true};
+  const data=await fn();
+  Cache.set(key,data);
+  return{data,at:Date.now(),fromCache:false};
+}
+
+/* =====================================================================
+   PROVIDER 1 — NHLDataProvider
+   ===================================================================== */
+const NHLDataProvider={
+  async search(q){
+    const r=await fetch(`https://search.d3.nhle.com/api/v1/search/player?culture=fr-ca&limit=10&q=${encodeURIComponent(q)}`);
+    return r.ok?r.json():[];
+  },
+  async roster(abbr){
+    const c=await cached(`roster_${abbr}`,24,async()=>{
+      const r=await fetch(`/api/nhl?path=roster/${abbr}/current`);
+      if(!r.ok)throw new Error('roster '+r.status);
+      const d=await r.json();
+      return[...(d.forwards||[]),...(d.defensemen||[]),...(d.goalies||[])].map(p=>({
+        playerId:p.id,name:`${p.firstName?.default||''} ${p.lastName?.default||''}`.trim(),
+        teamAbbrev:abbr,sweaterNumber:p.sweaterNumber||'',positionCode:p.positionCode||''}));
+    });
+    return c.data;
+  },
+  /* fiche complète : bio, draft, totaux par saison */
+  async landing(playerId){
+    const c=await cached(`land_${playerId}`,12,async()=>{
+      const r=await fetch(`/api/nhl?path=player/${playerId}/landing`);
+      if(!r.ok)throw new Error('landing '+r.status);
+      return r.json();
+    });
+    return c.data;
+  },
+  /* game log : un objet par match — la base de tout le module */
+  async gameLog(playerId,season,type){
+    const c=await cached(`log_${playerId}_${season}_${type}`,6,async()=>{
+      const r=await fetch(`/api/nhl?path=player/${playerId}/game-log/${season}/${type}`);
+      if(!r.ok)throw new Error('gamelog '+r.status);
+      return r.json();
+    });
+    return{...c,games:(c.data.gameLog||[]).slice().reverse()};
+  }
+};
+
+/* =====================================================================
+   PROVIDER 2 — AdvancedStatsProvider  (implémentation MoneyPuck)
+   Toute la logique propre à MoneyPuck est isolée ici : si la source
+   change, seul ce bloc est à remplacer.
+   ===================================================================== */
+const MoneyPuckProvider={
+  name:'MoneyPuck.com',
+  mpSeason(s){return String(s).slice(0,4);}, // 20252026 -> 2025
+  async call(params){
+    const qs=new URLSearchParams(params).toString();
+    const r=await fetch(`/api/mp?${qs}`);
+    const j=await r.json().catch(()=>({error:'réponse illisible'}));
+    if(!r.ok)throw Object.assign(new Error(j.detail||j.error||('HTTP '+r.status)),{payload:j});
+    return j;
+  },
+  /* totaux de saison, toutes situations confondues ou par situation */
+  async seasonTotals(playerId,season){
+    const key=`mp_season_${playerId}_${season}`;
+    try{
+      const c=await cached(key,12,()=>this.call({
+        kind:'seasonSkaters',season:this.mpSeason(season),playerId}));
+      const rows=c.data.rows||[];
+      const by={};rows.forEach(r=>{by[r.situation||'all']=r;});
+      return{ok:rows.length>0,bySituation:by,columns:c.data.columns||[],at:c.at};
+    }catch(e){return{ok:false,error:e.message};}
+  },
+  /* match par match : on tente le fichier par équipe puis le ZIP de saison */
+  async gameByGame(playerId,season,teamAbbr){
+    const key=`mp_gbg_${playerId}_${season}`;
+    try{
+      const c=await cached(key,6,async()=>{
+        let last=null;
+        if(teamAbbr){
+          try{
+            const a=await this.call({kind:'teamGameByGame',season:this.mpSeason(season),
+              team:teamAbbr,playerId});
+            if((a.rows||[]).length)return{via:'teamGameByGame',...a};
+            last='teamGameByGame: 0 ligne';
+          }catch(e){last='teamGameByGame: '+e.message;}
+        }
+        const b=await this.call({kind:'seasonGameZip',season:this.mpSeason(season),playerId});
+        if((b.rows||[]).length)return{via:'seasonGameZip',...b};
+        throw new Error((last?last+' · ':'')+'seasonGameZip: 0 ligne');
+      });
+      return{ok:true,via:c.data.via,rows:c.data.rows,columns:c.data.columns,at:c.at};
+    }catch(e){return{ok:false,error:e.message};}
+  },
+  /* trios / paires */
+  async lines(season,teamAbbr){
+    const key=`mp_lines_${teamAbbr}_${season}`;
+    try{
+      const c=await cached(key,24,()=>this.call({
+        kind:'seasonLines',season:this.mpSeason(season)}));
+      const rows=(c.data.rows||[]).filter(r=>!teamAbbr||r.team===teamAbbr);
+      return{ok:true,rows,at:c.at};
+    }catch(e){return{ok:false,error:e.message};}
+  }
+};
+const AdvancedStatsProvider=MoneyPuckProvider; // remplaçable
+
+/* =====================================================================
+   PROVIDER 3 — ContractProvider  (saisie manuelle en V1)
+   ===================================================================== */
+const ContractProvider={
+  get(playerId){
+    try{return JSON.parse(localStorage.getItem('ph_contract_'+playerId)||'null');}
+    catch(e){return null;}
+  },
+  set(playerId,obj){localStorage.setItem('ph_contract_'+playerId,JSON.stringify(obj));}
+};
+
+/* =====================================================================
+   MODELE DE DONNEES UNIFIE
+   Chaque match produit un objet aux champs stables. Les champs non
+   alimentés restent à null (jamais 0) pour que l'affichage puisse
+   distinguer "zéro" de "donnée indisponible".
+   ===================================================================== */
+function toSec(t){
+  if(!t)return null;const p=String(t).split(':');
+  if(p.length!==2)return null;return(+p[0])*60+(+p[1]);
+}
+const fmtTOI=s=>s==null?null:`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
+
+function buildGames(nhlGames,mpRows){
+  /* index MoneyPuck par gameId quand disponible */
+  const mpBy={};
+  (mpRows||[]).forEach(r=>{
+    const gid=r.gameId||r.game_id||r.gameID;
+    if(gid!=null)mpBy[String(gid)]=r;
+  });
+  return nhlGames.map((g,i)=>{
+    const mp=mpBy[String(g.gameId)]||null;
+    const num=v=>(v==null||v===''||Number.isNaN(+v))?null:+v;
+    return{
+      idx:i+1,
+      gameId:g.gameId,
+      date:g.gameDate,
+      opp:g.opponentAbbrev,
+      home:g.homeRoadFlag==='H',
+      result:g.decision||null,
+      score:(g.teamScore!=null&&g.opponentScore!=null)?`${g.teamScore}-${g.opponentScore}`:null,
+      /* --- NHL --- */
+      g:num(g.goals), a:num(g.assists), p:num(g.points),
+      sog:num(g.shots), pim:num(g.pim), plusMinus:num(g.plusMinus),
+      toi:toSec(g.toi),
+      ppG:num(g.powerPlayGoals), ppP:num(g.powerPlayPoints),
+      shG:num(g.shorthandedGoals), shP:num(g.shorthandedPoints),
+      gwg:num(g.gameWinningGoals), shifts:num(g.shifts),
+      fow:num(g.faceoffWinningPctg)!=null?+g.faceoffWinningPctg:null,
+      /* --- champs prévus mais non fournis par le game log NHL --- */
+      ppToi:null, pkToi:null, evToi:null,
+      /* --- MoneyPuck --- */
+      xg:  mp?num(mp.I_F_xGoals??mp.xGoals):null,
+      xgf: mp?num(mp.OnIce_F_xGoals):null,
+      xga: mp?num(mp.OnIce_A_xGoals):null,
+      cf:  mp?num(mp.OnIce_F_shotAttempts):null,
+      ca:  mp?num(mp.OnIce_A_shotAttempts):null,
+      ff:  mp?num(mp.OnIce_F_unblockedShotAttempts):null,
+      fa:  mp?num(mp.OnIce_A_unblockedShotAttempts):null,
+      hdcf:mp?num(mp.OnIce_F_highDangerShots):null,
+      hdca:mp?num(mp.OnIce_A_highDangerShots):null,
+      _mp:mp
+    };
+  }).map(x=>({
+    ...x,
+    xgfPct:(x.xgf!=null&&x.xga!=null&&(x.xgf+x.xga)>0)?x.xgf/(x.xgf+x.xga)*100:null,
+    cfPct: (x.cf!=null&&x.ca!=null&&(x.cf+x.ca)>0)?x.cf/(x.cf+x.ca)*100:null,
+    ffPct: (x.ff!=null&&x.fa!=null&&(x.ff+x.fa)>0)?x.ff/(x.ff+x.fa)*100:null,
+    hdcfPct:(x.hdcf!=null&&x.hdca!=null&&(x.hdcf+x.hdca)>0)?x.hdcf/(x.hdcf+x.hdca)*100:null
+  }));
+}
+
+/* =====================================================================
+   MOTEURS D'ANALYSE
+   ===================================================================== */
+const sum=(a,k)=>a.reduce((t,x)=>t+(x[k]||0),0);
+const avgOf=(a,k)=>{const v=a.map(x=>x[k]).filter(x=>x!=null);
+  return v.length?v.reduce((t,x)=>t+x,0)/v.length:null;};
+const has=(a,k)=>a.some(x=>x[k]!=null);
+
+const PlayerAnalysisEngine={
+  block(games){
+    if(!games.length)return null;
+    const gp=games.length;
+    return{
+      gp,g:sum(games,'g'),a:sum(games,'a'),p:sum(games,'p'),sog:sum(games,'sog'),
+      ppg:sum(games,'p')/gp,
+      spg:sum(games,'sog')/gp,
+      toi:avgOf(games,'toi'),
+      shPct:sum(games,'sog')>0?sum(games,'g')/sum(games,'sog')*100:null,
+      xg:has(games,'xg')?sum(games,'xg'):null,
+      xgfPct:avgOf(games,'xgfPct'),
+      cfPct:avgOf(games,'cfPct')
+    };
+  },
+  rolling(games,key,win){
+    return games.map((_,i)=>{
+      const s=Math.max(0,i-win+1);
+      const w=games.slice(s,i+1).map(x=>x[key]).filter(x=>x!=null);
+      return w.length?w.reduce((t,x)=>t+x,0)/w.length:null;
+    });
+  },
+  months(games){
+    const by={};
+    games.forEach(g=>{
+      if(!g.date)return;
+      const k=g.date.slice(0,7);
+      (by[k]=by[k]||[]).push(g);
+    });
+    return Object.keys(by).sort().map(k=>({month:k,...this.block(by[k])}));
+  },
+  streaks(games){
+    /* séries chaudes/froides : fenêtres de 5 matchs */
+    const out=[];let cur=null;
+    const r=this.rolling(games,'p',5);
+    games.forEach((g,i)=>{
+      if(i<4||r[i]==null)return;
+      const st=r[i]>=1?'hot':(r[i]<=0.2?'cold':null);
+      if(st&&(!cur||cur.type!==st)){cur={type:st,from:i-4,to:i};out.push(cur);}
+      else if(st&&cur)cur.to=i;
+      else cur=null;
+    });
+    return out.map(s=>({
+      type:s.type,
+      from:games[s.from].date,to:games[s.to].date,
+      gp:s.to-s.from+1,
+      pts:sum(games.slice(s.from,s.to+1),'p')
+    })).filter(s=>s.gp>=4);
+  }
+};
+
+const TrendDetectionEngine={
+  /* compare le début et la fin de saison sur une mesure donnée */
+  cmp(games,key,mode='avg'){
+    const n=games.length;
+    if(n<8)return null;
+    const w=Math.max(4,Math.min(20,Math.round(n/3)));
+    const first=games.slice(0,w),last=games.slice(-w);
+    const f=mode==='sumPerGame'?sum(first,key)/first.length:avgOf(first,key);
+    const l=mode==='sumPerGame'?sum(last,key)/last.length:avgOf(last,key);
+    if(f==null||l==null)return null;
+    const diff=l-f;
+    const pct=f!==0?diff/Math.abs(f)*100:null;
+    return{first:f,last:l,diff,pct,window:w};
+  },
+  run(games){
+    const T=[];
+    const push=(label,c,fmt,thr,unit)=>{
+      if(!c)return;
+      const dir=c.diff>thr?'up':(c.diff<-thr?'down':'flat');
+      T.push({label,dir,
+        detail:`${fmt(c.first)} → ${fmt(c.last)} (${c.window} premiers vs ${c.window} derniers matchs)`,
+        pct:c.pct,unit});
+    };
+    push('Production',this.cmp(games,'p','sumPerGame'),v=>v.toFixed(2)+' pt/m',0.12);
+    push('Rôle (temps de glace)',this.cmp(games,'toi'),v=>fmtTOI(v),45);
+    push('Volume de tirs',this.cmp(games,'sog','sumPerGame'),v=>v.toFixed(1)+' tirs/m',0.4);
+    if(has(games,'xg'))push('Chances générées (xG)',this.cmp(games,'xg','sumPerGame'),v=>v.toFixed(2)+' xG/m',0.05);
+    if(has(games,'xgfPct'))push('Impact 5v5 (xGF%)',this.cmp(games,'xgfPct'),v=>v.toFixed(1)+' %',1.8);
+    if(has(games,'cfPct'))push('Contrôle du jeu (CF%)',this.cmp(games,'cfPct'),v=>v.toFixed(1)+' %',1.8);
+
+    /* régularité : part de matchs sans point */
+    const blanks=games.filter(g=>g.p===0).length;
+    const share=games.length?blanks/games.length*100:null;
+    if(share!=null){
+      T.push({label:'Régularité',
+        dir:share>65?'warn':(share<45?'up':'flat'),
+        detail:`${blanks} matchs sans point sur ${games.length} (${share.toFixed(0)} %)`,
+        pct:null});
+    }
+    return T;
+  }
+};
+
+const LineCombinationAnalysis={
+  /* trios MoneyPuck contenant le joueur */
+  forPlayer(rows,fullName){
+    if(!rows||!rows.length)return[];
+    const norm=s=>String(s||'').toLowerCase().replace(/[^a-z ]/g,'').trim();
+    const target=norm(fullName);
+    const last=target.split(' ').slice(-1)[0];
+    return rows.filter(r=>{
+      const n=norm(r.name);
+      return n.includes(target)||(last.length>3&&n.includes(last));
+    }).filter(r=>(r.situation||'all')==='all')
+      .sort((a,b)=>(b.icetime||0)-(a.icetime||0))
+      .slice(0,6)
+      .map(r=>({
+        line:r.name,
+        toi:r.icetime!=null?Math.round(r.icetime/60):null,
+        xgf:r.xGoalsFor,xga:r.xGoalsAgainst,
+        xgfPct:(r.xGoalsFor!=null&&r.xGoalsAgainst!=null&&(r.xGoalsFor+r.xGoalsAgainst)>0)
+          ?r.xGoalsFor/(r.xGoalsFor+r.xGoalsAgainst)*100:null,
+        cfPct:(r.shotAttemptsFor!=null&&r.shotAttemptsAgainst!=null&&(r.shotAttemptsFor+r.shotAttemptsAgainst)>0)
+          ?r.shotAttemptsFor/(r.shotAttemptsFor+r.shotAttemptsAgainst)*100:null,
+        gf:r.goalsFor,ga:r.goalsAgainst
+      }));
+  }
+};
+
+/* =====================================================================
+   ETAT
+   ===================================================================== */
+const S={player:null,land:null,games:[],mpSeason:null,mpGbg:null,mpLines:null,
+  series:{p:true,g:true,toi:false,sog:false,xg:false,xgfPct:false,cfPct:false,a:false},
+  avg:{r5:true,r10:true},sit:'all',logSort:{k:'idx',dir:1},pal:palette('')};
+
+/* =====================================================================
+   RECHERCHE ET CHARGEMENT
+   ===================================================================== */
+TEAMS.forEach(t=>{const o=document.createElement('option');o.value=t[0];o.textContent=t[1];
+  $('teamSel').appendChild(o);});
+(function seasons(){
+  const sel=$('seasonSel');
+  for(let y=2025;y>=2010;y--){
+    const v=`${y}${y+1}`;const o=document.createElement('option');
+    o.value=v;o.textContent=`${y}-${String(y+1).slice(2)}`;sel.appendChild(o);}
+  sel.value=CUR_SEASON;
+})();
+
+function flash(msg,kind){
+  const el=$('state');
+  if(!msg){el.classList.add('hide');return;}
+  el.textContent=msg;el.classList.remove('hide');
+  el.style.color=kind==='err'?'#F43F5E':'#FBBF24';
+  el.style.borderColor=kind==='err'?'rgba(244,63,94,.3)':'rgba(251,191,36,.28)';
+}
+
+let searchTimer=null;
+$('pq').addEventListener('focus',async()=>{
+  const ab=$('teamSel').value;
+  if(!ab||$('pq').value.trim())return;
+  try{renderResults(await NHLDataProvider.roster(ab));}catch(e){}
+});
+$('pq').addEventListener('input',e=>{
+  clearTimeout(searchTimer);
+  const v=e.target.value.trim();
+  if(v.length<3){$('pr').innerHTML='';return;}
+  searchTimer=setTimeout(async()=>{
+    try{renderResults(await NHLDataProvider.search(v));}catch(err){$('pr').innerHTML='';}
+  },300);
+});
+function renderResults(list){
+  const box=$('pr');box.innerHTML='';
+  (list||[]).slice(0,12).forEach(pl=>{
+    const b=document.createElement('button');b.type='button';
+    b.innerHTML=`${pl.name} <small>${pl.teamAbbrev||''} ${pl.sweaterNumber?'#'+pl.sweaterNumber:''} ${pl.positionCode||''}</small>`;
+    b.onclick=()=>{box.innerHTML='';$('pq').value=pl.name;load(pl.playerId);};
+    box.appendChild(b);
+  });
+}
+document.addEventListener('click',e=>{
+  if(e.target!==$('pq')&&!$('pr').contains(e.target))$('pr').innerHTML='';
+});
+['seasonSel','typeSel','venueSel'].forEach(id=>
+  $(id).addEventListener('change',()=>{if(S.player)load(S.player);}));
+$('refresh').addEventListener('click',()=>{
+  Cache.clear();
+  if(S.player)load(S.player,true);else flash('Cache vidé.','warn');
+});
+
+/* =====================================================================
+   CHARGEMENT PRINCIPAL
+   ===================================================================== */
+async function load(playerId,forced){
+  S.player=playerId;
+  flash('Chargement des données NHL…');
+  try{
+    const season=$('seasonSel').value,type=$('typeSel').value;
+    const land=await NHLDataProvider.landing(playerId);
+    S.land=land;
+    const abbr=land.currentTeamAbbrev||'';
+    S.pal=palette(abbr);
+    document.documentElement.style.setProperty('--t1',S.pal.base);
+    document.documentElement.style.setProperty('--t2',S.pal.deep);
+    document.documentElement.style.setProperty('--t3',S.pal.bright);
+
+    const log=await NHLDataProvider.gameLog(playerId,season,type);
+    let nhlGames=log.games;
+    const venue=$('venueSel').value;
+    if(venue==='home')nhlGames=nhlGames.filter(g=>g.homeRoadFlag==='H');
+    if(venue==='away')nhlGames=nhlGames.filter(g=>g.homeRoadFlag==='R');
+
+    if(!nhlGames.length){
+      $('app').classList.add('hide');
+      flash('Aucun match trouvé pour cette saison / ce type.','err');return;
+    }
+    flash('Chargement des statistiques avancées…');
+    const fullName=`${land.firstName?.default||''} ${land.lastName?.default||''}`.trim();
+    const [mpS,mpG,mpL]=await Promise.all([
+      AdvancedStatsProvider.seasonTotals(playerId,season),
+      AdvancedStatsProvider.gameByGame(playerId,season,abbr),
+      AdvancedStatsProvider.lines(season,abbr)
+    ]);
+    S.mpSeason=mpS;S.mpGbg=mpG;S.mpLines=mpL;
+    S.games=buildGames(nhlGames,mpG.ok?mpG.rows:null);
+    S.fullName=fullName;
+
+    $('app').classList.remove('hide');
+    flash('');
+    renderAll();
+    const at=Cache.stamp(`log_${playerId}_${season}_${type}`);
+    $('updTxt').textContent='Dernière mise à jour : '+
+      new Date(at||Date.now()).toLocaleString('fr-CA',{dateStyle:'short',timeStyle:'short'});
+  }catch(e){
+    console.error(e);
+    flash('Erreur de chargement : '+(e.message||e),'err');
+  }
+}
+
+/* =====================================================================
+   RENDU
+   ===================================================================== */
+function renderAll(){
+  renderHero();renderSummary();buildToggles();drawChart();
+  renderTrends();renderBlocks();renderMonths();drawToi();
+  renderSit();renderLines();renderSeasons();renderLog();renderSynth();
+  renderContract();
+}
+
+/* ---------- entête ---------- */
+function renderHero(){
+  const l=S.land,p=S.pal;
+  $('hPic').src=l.headshot||'';
+  $('hFirst').textContent=l.firstName?.default||'';
+  $('hLast').textContent=(l.lastName?.default||'').toUpperCase();
+  const t=TEAM(l.currentTeamAbbrev);
+  const bits=[t?t[1]:l.currentTeamAbbrev,l.sweaterNumber?'N° '+l.sweaterNumber:'',l.position]
+    .filter(Boolean);
+  $('hMeta').textContent=bits.join('  ·  ');
+  const chips=[];
+  if(l.heightInInches)chips.push(`${Math.floor(l.heightInInches/12)}'${l.heightInInches%12}"`);
+  if(l.weightInPounds)chips.push(l.weightInPounds+' lb');
+  if(l.birthDate){
+    const b=new Date(l.birthDate),n=new Date();let age=n.getFullYear()-b.getFullYear();
+    const m=n.getMonth()-b.getMonth();if(m<0||(m===0&&n.getDate()<b.getDate()))age--;
+    chips.push(age+' ans');
+  }
+  if(l.shootsCatches)chips.push('Tir '+(l.shootsCatches==='L'?'gaucher':'droitier'));
+  const d=l.draftDetails;
+  let draft=null;
+  if(d&&d.year)draft=`${d.overallPick?d.overallPick+'e au total':(d.round?d.round+'e ronde':'Repêché')} · ${d.year}${d.teamAbbrev?' · '+d.teamAbbrev:''}`;
+  $('hChips').innerHTML=
+    (draft?`<span class="chip gold">${draft}</span>`:'<span class="chip">Non repêché</span>')+
+    chips.map(c=>`<span class="chip">${c}</span>`).join('');
+  document.querySelector('.heroPic').style.borderColor=p.base;
+  /* fond d'équipe */
+  const cv=$('heroCv'),box=$('heroBg');
+  const W=box.clientWidth,H=box.clientHeight||150;
+  cv.width=W*2;cv.height=H*2;const x=cv.getContext('2d');x.scale(2,2);
+  const g=x.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,alpha(p.deep,.9));g.addColorStop(1,alpha(p.base,.18));
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.save();x.globalAlpha=.07;x.translate(W*.5,H*.5);x.rotate(-Math.PI/9);
+  for(let i=-8;i<8;i++){x.fillStyle=i%2?p.base:p.bright;x.fillRect(-W,i*26,W*2,8);}
+  x.restore();
+  const ab=l.currentTeamAbbrev;
+  if(ab){
+    const img=new Image();img.crossOrigin='anonymous';
+    img.onload=()=>{const sc=Math.min(W*.5/img.width,H*1.5/img.height);
+      x.save();x.globalAlpha=.1;
+      x.drawImage(img,W-img.width*sc*.75,H/2-img.height*sc/2,img.width*sc,img.height*sc);
+      x.restore();};
+    img.src=`/api/img?url=${encodeURIComponent(`https://assets.nhle.com/logos/nhl/svg/${ab}_dark.svg`)}`;
+  }
+}
+
+/* ---------- résumé ---------- */
+function statCell(k,v,na){
+  return v==null||na
+    ? `<div class="stat na"><div class="v">Indispo.</div><div class="k">${k}</div></div>`
+    : `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`;
+}
+function renderSummary(){
+  const G=S.games,b=PlayerAnalysisEngine.block(G);
+  $('sumBase').innerHTML=[
+    statCell('MJ',b.gp),statCell('B',b.g),statCell('A',b.a),statCell('PTS',b.p),
+    statCell('PTS/M',b.ppg.toFixed(2)),statCell('TIRS',b.sog),
+    statCell('% TIRS',b.shPct!=null?b.shPct.toFixed(1):null),
+    statCell('TOI',fmtTOI(b.toi))
+  ].join('');
+  const mp=S.mpSeason;
+  if(mp&&mp.ok){
+    const r=mp.bySituation[S.sit]||mp.bySituation.all||Object.values(mp.bySituation)[0];
+    const pct=(f,a)=>(r&&r[f]!=null&&r[a]!=null&&(r[f]+r[a])>0)?(r[f]/(r[f]+r[a])*100).toFixed(1):null;
+    $('sumAdv').innerHTML=[
+      statCell('xG',r&&r.I_F_xGoals!=null?(+r.I_F_xGoals).toFixed(1):null),
+      statCell('xGF%',pct('OnIce_F_xGoals','OnIce_A_xGoals')),
+      statCell('CF%',pct('OnIce_F_shotAttempts','OnIce_A_shotAttempts')),
+      statCell('FF%',pct('OnIce_F_unblockedShotAttempts','OnIce_A_unblockedShotAttempts')),
+      statCell('HDCF%',pct('OnIce_F_highDangerShots','OnIce_A_highDangerShots'))
+    ].join('');
+    $('advFlag').classList.add('hide');
+  }else{
+    $('sumAdv').innerHTML=['xG','xGF%','CF%','FF%','HDCF%']
+      .map(k=>statCell(k,null,true)).join('');
+    $('advFlag').classList.remove('hide');
+    $('advFlag').textContent='Statistiques avancées indisponibles : '+
+      ((mp&&mp.error)||'source injoignable')+'. Le proxy /api/mp doit être déployé.';
+  }
+}
+
+/* ---------- graphique principal ---------- */
+const SERIES={
+  p:{lbl:'Points',c:()=>S.pal.base,type:'bar'},
+  g:{lbl:'Buts',c:()=>'#FBBF24',type:'bar'},
+  a:{lbl:'Passes',c:()=>'#38BDF8',type:'bar'},
+  sog:{lbl:'Tirs',c:()=>'#22C55E',type:'line'},
+  toi:{lbl:'TOI',c:()=>'#A78BFA',type:'line',fmt:v=>fmtTOI(v)},
+  xg:{lbl:'xG',c:()=>'#F43F5E',type:'line'},
+  xgfPct:{lbl:'xGF%',c:()=>'#60A5FA',type:'line'},
+  cfPct:{lbl:'CF%',c:()=>'#34D399',type:'line'}
+};
+function buildToggles(){
+  const tg=$('serieTg');tg.innerHTML='';
+  Object.keys(SERIES).forEach(k=>{
+    const avail=has(S.games,k);
+    const b=document.createElement('button');
+    b.className='tg'+(S.series[k]&&avail?' on':'');
+    b.textContent=SERIES[k].lbl+(avail?'':' (indispo.)');
+    b.disabled=!avail;
+    if(S.series[k]&&avail){b.style.background=alpha(SERIES[k].c(),.22);
+      b.style.borderColor=SERIES[k].c();}
+    b.onclick=()=>{S.series[k]=!S.series[k];buildToggles();drawChart();};
+    tg.appendChild(b);
+  });
+  const av=$('avgTg');av.innerHTML='';
+  [['r5','Moyenne 5 matchs'],['r10','Moyenne 10 matchs']].forEach(([k,l])=>{
+    const b=document.createElement('button');
+    b.className='tg'+(S.avg[k]?' on':'');
+    b.textContent=l;
+    if(S.avg[k]){b.style.background='rgba(255,255,255,.12)';b.style.borderColor='#888';}
+    b.onclick=()=>{S.avg[k]=!S.avg[k];buildToggles();drawChart();};
+    av.appendChild(b);
+  });
+}
+function chartBase(cv,H){
+  const W=cv.parentElement.clientWidth;
+  cv.width=W*2;cv.height=H*2;cv.style.height=H+'px';
+  const x=cv.getContext('2d');x.scale(2,2);
+  x.clearRect(0,0,W,H);
+  return{x,W,H};
+}
+function drawChart(){
+  const G=S.games;if(!G.length)return;
+  const{x,W,H}=chartBase($('chart'),330);
+  const L=44,R=44,T=16,B=30;
+  const pw=W-L-R,ph=H-T-B;
+  const active=Object.keys(SERIES).filter(k=>S.series[k]&&has(G,k));
+  if(!active.length){x.fillStyle='#5a5a75';x.font='13px "Inter Tight"';
+    x.textAlign='center';x.fillText('Sélectionne au moins une statistique',W/2,H/2);return;}
+  /* deux échelles : compteurs (gauche) et pourcentages/TOI (droite) */
+  const isRight=k=>k==='toi'||k.endsWith('Pct');
+  const lefts=active.filter(k=>!isRight(k)),rights=active.filter(isRight);
+  const maxOf=ks=>{let m=0;ks.forEach(k=>G.forEach(g=>{if(g[k]!=null&&g[k]>m)m=g[k];}));return m||1;};
+  const minOf=ks=>{let m=Infinity;ks.forEach(k=>G.forEach(g=>{if(g[k]!=null&&g[k]<m)m=g[k];}));
+    return m===Infinity?0:m;};
+  const lMax=maxOf(lefts)*1.15;
+  const rMin=rights.length?Math.max(0,minOf(rights)*0.9):0;
+  const rMax=rights.length?maxOf(rights)*1.06:1;
+  const yL=v=>T+ph-(v/lMax)*ph;
+  const yR=v=>T+ph-((v-rMin)/(rMax-rMin||1))*ph;
+  const xAt=i=>L+(G.length===1?pw/2:(i/(G.length-1))*pw);
+  /* grille */
+  x.strokeStyle='rgba(255,255,255,.07)';x.lineWidth=1;
+  x.fillStyle='#5a5a75';x.font='10px "Inter Tight"';
+  for(let i=0;i<=4;i++){
+    const yy=T+ph-(i/4)*ph;
+    x.beginPath();x.moveTo(L,yy);x.lineTo(L+pw,yy);x.stroke();
+    if(lefts.length){x.textAlign='right';x.fillText((lMax*i/4).toFixed(lMax<5?1:0),L-7,yy+3);}
+    if(rights.length){x.textAlign='left';
+      const v=rMin+(rMax-rMin)*i/4;
+      x.fillText(rights[0]==='toi'?fmtTOI(v):v.toFixed(0),L+pw+7,yy+3);}
+  }
+  /* barres */
+  const bars=lefts.filter(k=>SERIES[k].type==='bar');
+  if(bars.length){
+    const bw=Math.max(2,Math.min(13,pw/G.length/bars.length-1));
+    G.forEach((g,i)=>{
+      bars.forEach((k,j)=>{
+        if(g[k]==null)return;
+        const cx=xAt(i)-(bars.length*bw)/2+j*bw;
+        const hh=(g[k]/lMax)*ph;
+        x.fillStyle=alpha(SERIES[k].c(),.75);
+        x.fillRect(cx,T+ph-hh,bw,hh);
+      });
+    });
+  }
+  /* courbes */
+  const lines=active.filter(k=>SERIES[k].type==='line');
+  lines.forEach(k=>{
+    x.strokeStyle=SERIES[k].c();x.lineWidth=2;x.beginPath();let started=false;
+    G.forEach((g,i)=>{
+      if(g[k]==null){started=false;return;}
+      const yy=isRight(k)?yR(g[k]):yL(g[k]);
+      if(!started){x.moveTo(xAt(i),yy);started=true;}else x.lineTo(xAt(i),yy);
+    });
+    x.stroke();
+  });
+  /* moyennes glissantes sur la 1re série active */
+  const base=active[0];
+  [['r5',5,'rgba(255,255,255,.85)'],['r10',10,'rgba(255,255,255,.45)']].forEach(([k,win,col])=>{
+    if(!S.avg[k])return;
+    const r=PlayerAnalysisEngine.rolling(G,base,win);
+    x.strokeStyle=col;x.lineWidth=2.5;x.setLineDash(k==='r10'?[5,4]:[]);
+    x.beginPath();let st=false;
+    r.forEach((v,i)=>{
+      if(v==null)return;
+      const yy=isRight(base)?yR(v):yL(v);
+      if(!st){x.moveTo(xAt(i),yy);st=true;}else x.lineTo(xAt(i),yy);
+    });
+    x.stroke();x.setLineDash([]);
+  });
+  /* axe X */
+  x.fillStyle='#5a5a75';x.font='10px "Inter Tight"';x.textAlign='center';
+  const step=Math.ceil(G.length/8);
+  G.forEach((g,i)=>{if(i%step)return;
+    x.fillText(String(i+1),xAt(i),H-10);});
+  $('chartNote').innerHTML=
+    `Échelle gauche : ${lefts.map(k=>SERIES[k].lbl).join(', ')||'—'} · `+
+    `Échelle droite : ${rights.map(k=>SERIES[k].lbl).join(', ')||'—'} · `+
+    `Les moyennes glissantes s'appliquent à <b>${SERIES[base].lbl}</b> et lissent les matchs exceptionnels.`;
+}
+
+/* ---------- tendances ---------- */
+function renderTrends(){
+  const T=TrendDetectionEngine.run(S.games);
+  const ic={up:'↗',down:'↘',flat:'→',warn:'⚠'};
+  const cl={up:'up',down:'down',flat:'flat',warn:'wa'};
+  $('trends').innerHTML=T.length?T.map(t=>`
+    <div class="trend">
+      <div><b>${t.label}</b><small>${t.detail}</small></div>
+      <div class="tag ${cl[t.dir]}">${ic[t.dir]} ${
+        t.pct!=null?(t.pct>0?'+':'')+t.pct.toFixed(0)+' %':''}</div>
+    </div>`).join(''):'<div class="note">Pas assez de matchs pour dégager une tendance fiable.</div>';
+  /* séries chaudes/froides */
+  const st=PlayerAnalysisEngine.streaks(S.games);
+  if(st.length){
+    $('trends').innerHTML+=st.slice(0,4).map(s=>`
+      <div class="trend">
+        <div><b>${s.type==='hot'?'Série chaude':'Série froide'}</b>
+        <small>${s.from} → ${s.to} · ${s.gp} matchs · ${s.pts} pts</small></div>
+        <div class="tag ${s.type==='hot'?'up':'down'}">${s.type==='hot'?'🔥':'❄'}</div>
+      </div>`).join('');
+  }
+}
+
+/* ---------- blocs ---------- */
+function tbl(el,cols,rows,opt={}){
+  const th=cols.map(c=>`<th data-k="${c.k||''}">${c.t}</th>`).join('');
+  const tr=rows.map(r=>'<tr>'+cols.map(c=>{
+    const v=c.f?c.f(r):r[c.k];
+    return `<td class="${c.hi&&c.hi(r)?'hi':''}">${v==null?'<span class="na">—</span>':v}</td>`;
+  }).join('')+'</tr>').join('');
+  el.innerHTML=`<thead><tr>${th}</tr></thead><tbody>${tr}</tbody>`;
+  if(opt.sortable){
+    el.querySelectorAll('th').forEach(h=>{
+      h.onclick=()=>{const k=h.dataset.k;if(!k)return;
+        S.logSort.dir=S.logSort.k===k?-S.logSort.dir:1;S.logSort.k=k;renderLog();};
+    });
+  }
+}
+function renderBlocks(){
+  const G=S.games,mk=(lbl,arr)=>({lbl,...PlayerAnalysisEngine.block(arr)});
+  const half=Math.floor(G.length/2);
+  const rows=[
+    mk('5 derniers',G.slice(-5)),mk('10 derniers',G.slice(-10)),
+    mk('20 derniers',G.slice(-20)),
+    mk('1re moitié',G.slice(0,half)),mk('2e moitié',G.slice(half))
+  ].filter(r=>r.gp);
+  /* différence entre les deux moitiés */
+  tbl($('blocks'),[
+    {t:'Bloc',k:'lbl'},{t:'MJ',k:'gp'},{t:'B',k:'g'},{t:'A',k:'a'},{t:'PTS',k:'p'},
+    {t:'PTS/M',f:r=>r.ppg.toFixed(2)},{t:'Tirs/M',f:r=>r.spg.toFixed(1)},
+    {t:'TOI',f:r=>fmtTOI(r.toi)},
+    {t:'xG',f:r=>r.xg!=null?r.xg.toFixed(1):null},
+    {t:'xGF%',f:r=>r.xgfPct!=null?r.xgfPct.toFixed(1):null}
+  ],rows);
+  const a=rows.find(r=>r.lbl==='1re moitié'),b=rows.find(r=>r.lbl==='2e moitié');
+  if(a&&b){
+    const d=(b.ppg-a.ppg),t=(b.toi||0)-(a.toi||0);
+    $('blocks').insertAdjacentHTML('afterend',
+      `<div class="note" style="margin-top:8px">Écart entre les deux moitiés :
+       <b style="color:${d>=0?'#22C55E':'#F43F5E'}">${d>=0?'+':''}${d.toFixed(2)} pt/match</b>
+       · temps de glace <b style="color:${t>=0?'#22C55E':'#F43F5E'}">${t>=0?'+':''}${fmtTOI(Math.abs(t))}</b></div>`);
+  }
+}
+
+/* ---------- mois ---------- */
+function renderMonths(){
+  const M=PlayerAnalysisEngine.months(S.games);
+  const nom=k=>{const[y,m]=k.split('-');
+    return['janv.','févr.','mars','avr.','mai','juin','juill.','août','sept.','oct.','nov.','déc.'][+m-1]+' '+y;};
+  tbl($('months'),[
+    {t:'Mois',f:r=>nom(r.month)},{t:'MJ',k:'gp'},{t:'B',k:'g'},{t:'A',k:'a'},{t:'PTS',k:'p'},
+    {t:'PTS/M',f:r=>r.ppg.toFixed(2),hi:r=>r.ppg>=1},
+    {t:'Tirs',k:'sog'},{t:'TOI',f:r=>fmtTOI(r.toi)},
+    {t:'xG',f:r=>r.xg!=null?r.xg.toFixed(1):null},
+    {t:'xGF%',f:r=>r.xgfPct!=null?r.xgfPct.toFixed(1):null}
+  ],M);
+}
+
+/* ---------- TOI ---------- */
+function drawToi(){
+  const G=S.games;
+  const{x,W,H}=chartBase($('toiChart'),250);
+  const L=46,R=14,T=14,B=26,pw=W-L-R,ph=H-T-B;
+  const vals=G.map(g=>g.toi).filter(v=>v!=null);
+  if(!vals.length){x.fillStyle='#5a5a75';x.font='13px "Inter Tight"';x.textAlign='center';
+    x.fillText('Temps de glace indisponible',W/2,H/2);return;}
+  const mx=Math.max(...vals)*1.1,mn=Math.min(...vals)*0.85;
+  const xAt=i=>L+(G.length===1?pw/2:(i/(G.length-1))*pw);
+  const yAt=v=>T+ph-((v-mn)/(mx-mn||1))*ph;
+  x.strokeStyle='rgba(255,255,255,.07)';x.fillStyle='#5a5a75';x.font='10px "Inter Tight"';
+  for(let i=0;i<=4;i++){const yy=T+ph-(i/4)*ph;
+    x.beginPath();x.moveTo(L,yy);x.lineTo(L+pw,yy);x.stroke();
+    x.textAlign='right';x.fillText(fmtTOI(mn+(mx-mn)*i/4),L-7,yy+3);}
+  /* aire */
+  x.beginPath();let st=false;
+  G.forEach((g,i)=>{if(g.toi==null)return;
+    if(!st){x.moveTo(xAt(i),yAt(g.toi));st=true;}else x.lineTo(xAt(i),yAt(g.toi));});
+  const grad=x.createLinearGradient(0,T,0,T+ph);
+  grad.addColorStop(0,alpha(S.pal.base,.35));grad.addColorStop(1,alpha(S.pal.base,0));
+  x.lineTo(xAt(G.length-1),T+ph);x.lineTo(xAt(0),T+ph);x.closePath();
+  x.fillStyle=grad;x.fill();
+  x.beginPath();st=false;
+  G.forEach((g,i)=>{if(g.toi==null)return;
+    if(!st){x.moveTo(xAt(i),yAt(g.toi));st=true;}else x.lineTo(xAt(i),yAt(g.toi));});
+  x.strokeStyle=S.pal.bright;x.lineWidth=2.4;x.stroke();
+  /* moyenne 10 */
+  const r=PlayerAnalysisEngine.rolling(G,'toi',10);
+  x.beginPath();st=false;x.setLineDash([5,4]);
+  r.forEach((v,i)=>{if(v==null)return;
+    if(!st){x.moveTo(xAt(i),yAt(v));st=true;}else x.lineTo(xAt(i),yAt(v));});
+  x.strokeStyle='rgba(255,255,255,.75)';x.lineWidth=2;x.stroke();x.setLineDash([]);
+  /* indicateur de rôle */
+  const c=TrendDetectionEngine.cmp(G,'toi');
+  const el=$('roleInd');
+  if(c){
+    const up=c.diff>45,dn=c.diff<-45;
+    el.innerHTML=`<div class="trend"><div><b>${up?'Rôle en hausse':dn?'Rôle en baisse':'Rôle stable'}</b>
+      <small>${fmtTOI(c.first)} → ${fmtTOI(c.last)} en moyenne</small></div>
+      <div class="tag ${up?'up':dn?'down':'flat'}">${up?'↗':dn?'↘':'→'} ${
+        (c.diff>=0?'+':'-')+fmtTOI(Math.abs(c.diff))}</div></div>`;
+  }else el.innerHTML='';
+  $('toiNote').innerHTML='Ligne pleine : temps de glace par match. Pointillés : moyenne sur 10 matchs.<br>'+
+    '<span class="na">La répartition AN / infériorité par match n\'est pas fournie par le game log NHL. '+
+    'Les champs sont prévus dans le modèle de données et seront alimentés dès qu\'une source le permettra.</span>';
+}
+
+/* ---------- situations ---------- */
+const SITS=[['all','Toutes situations'],['5on5','5 contre 5'],['5on4','Avantage numérique'],['4on5','Infériorité']];
+function renderSit(){
+  const tabs=$('sitTabs');tabs.innerHTML='';
+  SITS.forEach(([k,l])=>{
+    const b=document.createElement('button');b.textContent=l;
+    b.className=S.sit===k?'on':'';
+    b.onclick=()=>{S.sit=k;renderSit();renderSummary();};
+    tabs.appendChild(b);
+  });
+  const mp=S.mpSeason;
+  if(!mp||!mp.ok){$('sitStats').innerHTML=['Pts','xG','xGF%','Tirs','CF%']
+    .map(k=>statCell(k,null,true)).join('');return;}
+  const r=mp.bySituation[S.sit];
+  if(!r){$('sitStats').innerHTML=['Pts','xG','xGF%','Tirs','CF%']
+    .map(k=>statCell(k,null,true)).join('');return;}
+  const pct=(f,a)=>(r[f]!=null&&r[a]!=null&&(r[f]+r[a])>0)?(r[f]/(r[f]+r[a])*100).toFixed(1):null;
+  $('sitStats').innerHTML=[
+    statCell('PTS',r.I_F_points),
+    statCell('xG',r.I_F_xGoals!=null?(+r.I_F_xGoals).toFixed(1):null),
+    statCell('xGF%',pct('OnIce_F_xGoals','OnIce_A_xGoals')),
+    statCell('TIRS',r.I_F_shotsOnGoal),
+    statCell('CF%',pct('OnIce_F_shotAttempts','OnIce_A_shotAttempts'))
+  ].join('');
+}
+
+/* ---------- trios ---------- */
+function renderLines(){
+  const L=S.mpLines;
+  if(!L||!L.ok){
+    $('linesTbl').innerHTML='';
+    $('linesFlag').classList.remove('hide');
+    $('linesFlag').textContent='Combinaisons indisponibles : '+((L&&L.error)||'source injoignable');
+    return;}
+  const rows=LineCombinationAnalysis.forPlayer(L.rows,S.fullName);
+  if(!rows.length){
+    $('linesTbl').innerHTML='';
+    $('linesFlag').classList.remove('hide');
+    $('linesFlag').textContent='Aucun trio trouvé contenant ce joueur dans le fichier des lignes.';
+    return;}
+  $('linesFlag').classList.add('hide');
+  tbl($('linesTbl'),[
+    {t:'Trio',k:'line'},{t:'Min.',k:'toi'},
+    {t:'xGF%',f:r=>r.xgfPct!=null?r.xgfPct.toFixed(1):null,hi:r=>r.xgfPct>=55},
+    {t:'CF%',f:r=>r.cfPct!=null?r.cfPct.toFixed(1):null},
+    {t:'BP',k:'gf'},{t:'BC',k:'ga'},
+    {t:'xGF',f:r=>r.xgf!=null?(+r.xgf).toFixed(1):null},
+    {t:'xGA',f:r=>r.xga!=null?(+r.xga).toFixed(1):null}
+  ],rows);
+}
+
+/* ---------- comparaison entre saisons ---------- */
+function renderSeasons(){
+  const L=S.land;
+  const rows=(L.seasonTotals||[])
+    .filter(s=>s.leagueAbbrev==='NHL'&&s.gameTypeId===2&&(s.gamesPlayed||0)>0)
+    .sort((a,b)=>b.season-a.season).slice(0,6)
+    .map(s=>{
+      const gp=s.gamesPlayed,toi=toSec(s.avgToi);
+      const per60=v=>(v!=null&&toi)?v/(toi*gp/3600):null;
+      return{
+        season:`${String(s.season).slice(0,4)}-${String(s.season).slice(6,8)}`,
+        gp,g:s.goals,a:s.assists,p:s.points,
+        ppg:gp?s.points/gp:null,
+        g60:per60(s.goals),p60:per60(s.points),s60:per60(s.shots),
+        toi:toi
+      };
+    });
+  if(rows.length>1){
+    const[cur,prev]=rows;
+    const va=(a,b)=>(a!=null&&b!=null&&b!==0)?((a-b)/Math.abs(b)*100):null;
+    rows.forEach((r,i)=>{r.var=i===0?va(cur.ppg,prev.ppg):null;});
+  }
+  tbl($('seasonsTbl'),[
+    {t:'Saison',k:'season'},{t:'MJ',k:'gp'},{t:'B',k:'g'},{t:'A',k:'a'},{t:'PTS',k:'p'},
+    {t:'PTS/M',f:r=>r.ppg!=null?r.ppg.toFixed(2):null},
+    {t:'B/60',f:r=>r.g60!=null?r.g60.toFixed(2):null},
+    {t:'PTS/60',f:r=>r.p60!=null?r.p60.toFixed(2):null},
+    {t:'TIRS/60',f:r=>r.s60!=null?r.s60.toFixed(1):null},
+    {t:'TOI',f:r=>fmtTOI(r.toi)},
+    {t:'Var. PTS/M',f:r=>r.var==null?null:
+      `<span style="color:${r.var>=0?'#22C55E':'#F43F5E'}">${r.var>=0?'+':''}${r.var.toFixed(0)} %</span>`}
+  ],rows);
+}
+
+/* ---------- game log ---------- */
+function renderLog(){
+  let G=S.games.slice();
+  const q=$('logSearch').value.trim().toLowerCase();
+  if(q)G=G.filter(g=>(g.opp+' '+g.date).toLowerCase().includes(q));
+  const f=$('logFilter').value;
+  if(f==='p2')G=G.filter(g=>(g.p||0)>=2);
+  if(f==='g1')G=G.filter(g=>(g.g||0)>=1);
+  if(f==='toi17')G=G.filter(g=>g.toi!=null&&g.toi>17*60);
+  if(f==='s3')G=G.filter(g=>(g.sog||0)>=3);
+  if(f==='blank')G=G.filter(g=>(g.p||0)===0);
+  const k=S.logSort.k,d=S.logSort.dir;
+  G.sort((a,b)=>{const x=a[k],y=b[k];
+    if(x==null)return 1;if(y==null)return -1;
+    return(x>y?1:x<y?-1:0)*d;});
+  tbl($('logTbl'),[
+    {t:'#',k:'idx'},{t:'Date',k:'date'},
+    {t:'Adv.',f:r=>`${r.home?'vs':'@'} ${r.opp}`},
+    {t:'Score',k:'score'},
+    {t:'B',k:'g'},{t:'A',k:'a'},{t:'PTS',k:'p',hi:r=>(r.p||0)>=2},
+    {t:'T',k:'sog'},{t:'+/-',k:'plusMinus'},{t:'PUN',k:'pim'},
+    {t:'TOI',k:'toi',f:r=>fmtTOI(r.toi),hi:r=>r.toi>17*60},
+    {t:'PP TOI',f:()=>null},
+    {t:'xG',k:'xg',f:r=>r.xg!=null?r.xg.toFixed(2):null},
+    {t:'xGF%',k:'xgfPct',f:r=>r.xgfPct!=null?r.xgfPct.toFixed(1):null},
+    {t:'CF%',k:'cfPct',f:r=>r.cfPct!=null?r.cfPct.toFixed(1):null}
+  ],G,{sortable:true});
+  $('logNote').textContent=`${G.length} match(s) affiché(s) sur ${S.games.length}. `+
+    `Clique sur un en-tête pour trier. La colonne PP TOI reste vide : le game log NHL ne la fournit pas.`;
+}
+['logSearch','logFilter'].forEach(id=>$(id).addEventListener('input',renderLog));
+
+/* ---------- synthèse ---------- */
+function renderSynth(){
+  const G=S.games,P=[];
+  const first=G.slice(0,Math.max(5,Math.round(G.length/3)));
+  const last=G.slice(-Math.max(5,Math.round(G.length/3)));
+  const b=PlayerAnalysisEngine.block(G),bf=PlayerAnalysisEngine.block(first),bl=PlayerAnalysisEngine.block(last);
+  const nom=(S.land.lastName?.default||'Le joueur');
+  P.push(`<b>${nom}</b> a disputé <b>${b.gp}</b> matchs pour <b>${b.p}</b> points `+
+    `(${b.g} B, ${b.a} A), soit <b>${b.ppg.toFixed(2)}</b> point par match.`);
+  if(bf.toi!=null&&bl.toi!=null){
+    const d=bl.toi-bf.toi;
+    P.push(`Son temps de glace moyen est passé de <b>${fmtTOI(bf.toi)}</b> sur ses `+
+      `${bf.gp} premiers matchs à <b>${fmtTOI(bl.toi)}</b> sur ses ${bl.gp} derniers`+
+      (Math.abs(d)>45?`, ce qui traduit un rôle ${d>0?'en hausse':'en baisse'}.`:', un rôle globalement stable.'));
+  }
+  const dp=bl.ppg-bf.ppg;
+  if(Math.abs(dp)>0.08){
+    P.push(`Sa production a ${dp>0?'progressé':'reculé'} de <b>${bf.ppg.toFixed(2)}</b> à `+
+      `<b>${bl.ppg.toFixed(2)}</b> point par match sur la même période.`);
+  }
+  if(bf.spg!=null&&bl.spg!=null&&Math.abs(bl.spg-bf.spg)>0.3){
+    P.push(`Son volume de tirs est passé de <b>${bf.spg.toFixed(1)}</b> à `+
+      `<b>${bl.spg.toFixed(1)}</b> tir par match.`);
+  }
+  if(b.xgfPct!=null){
+    P.push(`Son xGF% moyen s'établit à <b>${b.xgfPct.toFixed(1)} %</b>`+
+      (b.xgfPct>52?`, ce qui indique que sa progression ne repose pas uniquement sur sa finition.`
+        :b.xgfPct<48?`, ce qui suggère que son équipe concède plus de chances qu'elle n'en génère quand il est sur la glace.`
+        :`, soit un équilibre entre chances générées et concédées.`));
+  }else{
+    P.push(`<span class="na">Les données d'impact à 5 contre 5 (xGF%, CF%) ne sont pas disponibles pour cette saison.</span>`);
+  }
+  if(b.shPct!=null){
+    P.push(`Il a marqué sur <b>${b.shPct.toFixed(1)} %</b> de ses tirs`+
+      (b.shPct>16?`, un taux élevé qui peut difficilement se maintenir sur la durée.`
+        :b.shPct<6?`, un taux faible qui laisse une marge de progression si son volume de tirs se maintient.`:'.'));
+  }
+  const blanks=G.filter(g=>g.p===0).length;
+  P.push(`Il est resté sans point lors de <b>${blanks}</b> de ses ${b.gp} matchs `+
+    `(${(blanks/b.gp*100).toFixed(0)} %).`);
+  $('synth').innerHTML=P.map(p=>`<p style="margin:0 0 10px">${p}</p>`).join('');
+}
+
+/* ---------- contrat ---------- */
+function renderContract(){
+  const c=ContractProvider.get(S.player)||{};
+  $('cAav').value=c.aav||'';$('cYears').value=c.years||'';
+  $('cEnd').value=c.end||'';$('cType').value=c.type||'';$('cClause').value=c.clause||'';
+  analyseContract(c);
+}
+$('cSave').addEventListener('click',()=>{
+  const c={aav:$('cAav').value.trim(),years:$('cYears').value.trim(),
+    end:$('cEnd').value.trim(),type:$('cType').value,clause:$('cClause').value.trim()};
+  ContractProvider.set(S.player,c);analyseContract(c);
+});
+function analyseContract(c){
+  const el=$('cAnalysis');
+  if(!c||!c.aav){el.innerHTML='<div class="note">Renseigne au moins l\'AAV pour obtenir une lecture.</div>';return;}
+  const b=PlayerAnalysisEngine.block(S.games);
+  const aav=parseFloat(c.aav);
+  const l=S.land;let age=null;
+  if(l.birthDate){const d=new Date(l.birthDate),n=new Date();age=n.getFullYear()-d.getFullYear();
+    const m=n.getMonth()-d.getMonth();if(m<0||(m===0&&n.getDate()<d.getDate()))age--;}
+  const costPerPoint=b.p>0?(aav*1e6/b.p):null;
+  const T=TrendDetectionEngine.run(S.games);
+  const prodT=T.find(t=>t.label==='Production');
+  const roleT=T.find(t=>t.label.startsWith('Rôle'));
+  const bits=[];
+  bits.push(`AAV de <b>${aav.toFixed(2)} M$</b>${c.years?` sur <b>${c.years}</b> an(s)`:''}${c.end?`, jusqu'en <b>${c.end}</b>`:''}${age?` · joueur de <b>${age} ans</b>`:''}.`);
+  bits.push(`Production actuelle : <b>${b.p}</b> points en ${b.gp} matchs (${b.ppg.toFixed(2)} pt/m)`+
+    (costPerPoint?`, soit environ <b>${(costPerPoint/1000).toFixed(0)} k$ par point</b>.`:'.'));
+  if(roleT)bits.push(`Rôle : ${roleT.detail}.`);
+  if(prodT)bits.push(`Production : ${prodT.detail}.`);
+  const young=age!=null&&age<=24;
+  const rising=(prodT&&prodT.dir==='up')||(roleT&&roleT.dir==='up');
+  bits.push(rising&&young
+    ? `Le contrat semble principalement miser sur la progression future plutôt que sur la production actuelle : le joueur est jeune et ses indicateurs de rôle et de production sont orientés à la hausse.`
+    : rising
+      ? `Les indicateurs sont orientés à la hausse sur la saison, ce qui soutient le niveau de rémunération actuel.`
+      : `Les indicateurs ne montrent pas de progression marquée sur la saison ; le contrat repose donc davantage sur la production déjà établie que sur une projection.`);
+  bits.push(`<span class="na">Lecture factuelle basée sur les données de la saison affichée. Aucune note globale n'est attribuée.</span>`);
+  el.innerHTML=bits.map(b=>`<p style="margin:0 0 8px">${b}</p>`).join('');
+}
+
+/* ---------- diagnostic MoneyPuck ---------- */
+$('runDiag').addEventListener('click',async()=>{
+  const out=$('diagOut');out.classList.remove('hide');
+  const season=String($('seasonSel').value).slice(0,4);
+  const ab=S.land?.currentTeamAbbrev||'';
+  const lines=[];
+  const log=s=>{lines.push(s);out.textContent=lines.join('\n');};
+  log(`Joueur : ${S.fullName} (id ${S.player})`);
+  log(`Saison MoneyPuck : ${season} · équipe : ${ab||'—'}`);
+  log('─'.repeat(46));
+  const tests=[
+    ['seasonSkaters',{kind:'seasonSkaters',season,playerId:S.player}],
+    ['teamGameByGame',{kind:'teamGameByGame',season,team:ab,playerId:S.player}],
+    ['seasonGameZip',{kind:'seasonGameZip',season,playerId:S.player}],
+    ['seasonLines',{kind:'seasonLines',season}],
+    ['bios',{kind:'bios',playerId:S.player}]
+  ];
+  for(const[nom,params]of tests){
+    log(`\n▸ ${nom}`);
+    const t0=performance.now();
+    try{
+      const j=await MoneyPuckProvider.call(params);
+      const ms=Math.round(performance.now()-t0);
+      log(`  OK · ${j.count} ligne(s) · ${j.columns.length} colonnes · ${ms} ms`);
+      if(j.rows&&j.rows.length){
+        const r=j.rows[0];
+        const utiles=['gameId','situation','I_F_xGoals','OnIce_F_xGoals','OnIce_A_xGoals',
+          'OnIce_F_shotAttempts','OnIce_A_shotAttempts','OnIce_F_highDangerShots',
+          'icetime','I_F_points','I_F_shotsOnGoal'];
+        const presentes=utiles.filter(k=>r[k]!==undefined);
+        log(`  Colonnes clés présentes : ${presentes.join(', ')||'aucune'}`);
+        const manquantes=utiles.filter(k=>r[k]===undefined);
+        if(manquantes.length)log(`  Absentes : ${manquantes.join(', ')}`);
+        if(r.gameId!==undefined)log(`  ✓ Données match par match exploitables`);
+      }
+    }catch(e){
+      log(`  ÉCHEC · ${e.message}`);
+    }
+  }
+  log('\n─'.repeat(46));
+  log('Rappel : /api/mp doit être déployé sur Vercel pour que ces tests passent.');
+});
+</script>
+</body>
+</html>
